@@ -33,6 +33,12 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 - remain backwards compatible where possible
 - include migration notes when breaking changes are unavoidable
 
+## Documentation
+
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 7 modules with function signatures, parameters, and descriptions
+
+See [docs/README.md](docs/README.md) for the full index.
+
 ## Files to read
 - LICENSE
 - PROJECT_IDENTITY.md
