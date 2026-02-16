@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-17
+
+### Added
+- **PhobosLib_Skill** — Generic perk/skill utilities for custom skill systems
+  - `perkExists(perkName)` — Check whether a named perk exists in the Perks table
+  - `getPerkLevel(player, perkEnum)` — Safe wrapper for player perk level query (returns 0 on failure)
+  - `addXP(player, perkEnum, amount)` — Safe wrapper for awarding XP (pcall-protected)
+  - `getXP(player, perkEnum)` — Safe wrapper for querying current XP total
+  - `mirrorXP(player, targetPerkEnum, amount, ratio)` — One-shot XP mirroring (award target perk XP based on source amount × ratio)
+  - `registerXPMirror(sourcePerkName, targetPerkName, ratio)` — Register persistent Events.AddXP hook for cross-skill XP mirroring with reentrance guard
+
 ## [1.0.0] - 2026-02-17
 ### Added
 - Initial stable release of PhobosLib as a shared utility dependency for Project Zomboid Build 42 mods.
