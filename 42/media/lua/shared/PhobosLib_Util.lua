@@ -225,3 +225,45 @@ function PhobosLib.setItemCondition(item, value)
     local ok = pcall(function() item:setCondition(math.floor(value)) end)
     return ok
 end
+
+
+---------------------------------------------------------------
+-- modData Helpers
+-- Safe wrappers around PZ's item:getModData() for persistent
+-- key-value storage on items. Used by quality/purity systems.
+---------------------------------------------------------------
+
+--- Safe modData table getter. Returns the modData table or nil.
+---@param item any  A PZ inventory item
+---@return table|nil
+function PhobosLib.getModData(item)
+    if not item or not item.getModData then return nil end
+    local ok, md = pcall(function() return item:getModData() end)
+    if ok and md then return md end
+    return nil
+end
+
+
+--- Read a single value from an item's modData with a default fallback.
+---@param item any
+---@param key string
+---@param default any
+---@return any
+function PhobosLib.getModDataValue(item, key, default)
+    local md = PhobosLib.getModData(item)
+    if md and md[key] ~= nil then return md[key] end
+    return default
+end
+
+
+--- Write a single value to an item's modData. Returns true on success.
+---@param item any
+---@param key string
+---@param value any
+---@return boolean
+function PhobosLib.setModDataValue(item, key, value)
+    local md = PhobosLib.getModData(item)
+    if not md then return false end
+    md[key] = value
+    return true
+end
