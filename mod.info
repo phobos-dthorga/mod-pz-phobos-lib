@@ -1,0 +1,7 @@
+name=Phobos Shared Library
+id=PhobosLib
+description=Shared utility library for all of Phobos' mods. Provides safe API probing, keyword-based item detection, fluid container helpers, and world-scanning utilities.
+poster=poster.png
+authors=phobosgekko
+versionMin=42.13.0
+modversion=1.0.0
