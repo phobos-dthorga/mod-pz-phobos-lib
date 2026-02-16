@@ -1,0 +1,26 @@
+graph LR
+    subgraph LIB["PhobosLib v1.1.0"]
+        INIT["PhobosLib.lua<br/>(aggregator)"]
+
+        UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
+
+        FLUID["Fluid<br/>tryGetFluidContainer<br/>tryAddFluid, tryDrainFluid<br/>tryGetAmount, tryGetCapacity"]
+
+        WORLD["World<br/>scanNearbySquares<br/>findNearbyObjectByKeywords"]
+
+        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier"]
+
+        QUALITY["Quality<br/>getQuality, setQuality<br/>calculateOutputQuality<br/>getTier, adjustBySeverity"]
+
+        HAZ["Hazard<br/>getRespiratoryProtection<br/>applyHazardEffect<br/>degradeFilterFromInputs<br/>isEHRActive, warnHazard"]
+
+        SKL["Skill<br/>perkExists, getPerkLevel<br/>addXP, getXP<br/>mirrorXP, registerXPMirror"]
+    end
+
+    INIT --> UTIL
+    INIT --> FLUID
+    INIT --> WORLD
+    INIT --> SANDBOX
+    INIT --> QUALITY
+    INIT --> HAZ
+    INIT --> SKL
