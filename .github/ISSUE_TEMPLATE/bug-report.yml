@@ -1,0 +1,67 @@
+name: Bug Report
+description: Something is not working correctly
+labels: ["bug"]
+body:
+  - type: input
+    id: mod-version
+    attributes:
+      label: PhobosLib Version
+      description: Which version of PhobosLib are you running?
+      placeholder: "e.g. 1.2.0"
+    validations:
+      required: true
+  - type: input
+    id: pz-version
+    attributes:
+      label: PZ Build Version
+      description: Which Project Zomboid build are you on?
+      placeholder: "e.g. 42.13.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: multiplayer
+    attributes:
+      label: Singleplayer or Multiplayer?
+      options:
+        - Singleplayer
+        - Multiplayer (host)
+        - Multiplayer (client)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what went wrong. Include the PhobosLib function name if relevant.
+      placeholder: "When calling PhobosLib.functionName(), the game..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we trigger this bug?
+      placeholder: |
+        1. Call PhobosLib.functionName(args)
+        2. Observe result
+        3. See error
+  - type: textarea
+    id: console-log
+    attributes:
+      label: Console log errors
+      description: |
+        Paste any relevant errors from console.txt
+        (found in C:\Users\[you]\Zomboid\ on Windows).
+      render: shell
+  - type: textarea
+    id: mod-list
+    attributes:
+      label: Which mod is using PhobosLib?
+      description: List the mod(s) that depend on PhobosLib where you encountered this issue.

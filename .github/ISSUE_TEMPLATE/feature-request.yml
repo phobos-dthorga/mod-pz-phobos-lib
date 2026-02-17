@@ -1,0 +1,37 @@
+name: Feature Request
+description: Suggest a new utility function or module
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What would you like to see added?
+      description: Describe the utility function, module, or helper you are suggesting.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this relate to?
+      options:
+        - New utility function
+        - API improvement
+        - New module
+        - Cross-mod detection / integration
+        - Documentation / examples
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Why is this useful?
+      description: What repeated code or pattern would this eliminate across mods?
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation ideas (optional)
+      description: |
+        If you have thoughts on the function signature, return values,
+        or which module it belongs in, share them here.

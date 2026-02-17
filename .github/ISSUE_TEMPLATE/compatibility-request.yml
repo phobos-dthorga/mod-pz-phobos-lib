@@ -1,0 +1,41 @@
+name: Compatibility Request
+description: Report a conflict or request integration with another mod
+labels: ["compatibility"]
+body:
+  - type: input
+    id: other-mod
+    attributes:
+      label: Other mod name
+      description: Which mod has a conflict or should be integrated?
+      placeholder: "e.g. EHR, ZScienceSkill"
+    validations:
+      required: true
+  - type: input
+    id: workshop-link
+    attributes:
+      label: Steam Workshop link (if available)
+      placeholder: "https://steamcommunity.com/sharedfiles/filedetails/?id=..."
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - Conflict / crash when both mods are loaded
+        - API overlap or naming collision
+        - Integration request (add runtime detection)
+        - Load order issue
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the conflict or desired integration in detail.
+    validations:
+      required: true
+  - type: textarea
+    id: console-log
+    attributes:
+      label: Console log errors (if conflict)
+      description: Paste any errors from console.txt if this is a conflict report.
+      render: shell

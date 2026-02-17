@@ -42,4 +42,15 @@ luac.out
 # Private development notes
 MEMORY.md
 
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
 .claude/
