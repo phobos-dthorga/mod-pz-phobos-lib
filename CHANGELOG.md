@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-18
+
+### Added
+- **PhobosLib_Reset** — Generic inventory/recipe/skill reset utilities for mod cleanup systems
+  - `iterateInventoryDeep(player, callback)` — Deep inventory traversal including nested containers (bags, backpacks), with visited-set loop guard
+  - `stripModDataKey(player, key)` — Remove a specific modData key from all items (deep scan)
+  - `forgetRecipesByPrefix(player, prefix)` — Two-pass recipe removal to avoid ConcurrentModificationException
+  - `resetPerkXP(player, perkEnum)` — Multi-strategy XP reset (setXP → setPerkLevel → LoseLevel loop)
+  - `removeItemsByModule(player, moduleId)` — Remove all items belonging to a module, matching via getModule() or fullType prefix
+- **`setSandboxVar(modId, varName, value)`** in PhobosLib_Sandbox — safely set sandbox variable values (used for one-shot option auto-reset)
+
 ## [1.1.0] - 2026-02-17
 
 ### Added

@@ -1,7 +1,7 @@
 name=Phobos Shared Library
 id=PhobosLib
-description=Shared utility library for Phobos PZ mods. Provides API probing, item/fluid helpers, world scanning, sandbox utilities, quality/purity tracking, and PPE/hazard systems.
+description=Shared utility library for Phobos PZ mods. Provides API probing, item/fluid helpers, world scanning, sandbox utilities, quality/purity tracking, PPE/hazard systems, and inventory reset/cleanup tools.
 poster=poster.png
 authors=phobosgekko
 versionMin=42.13.0
-modversion=1.1.0
+modversion=1.2.0

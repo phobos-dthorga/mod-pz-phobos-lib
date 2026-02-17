@@ -46,6 +46,21 @@ function PhobosLib.isModActive(modId)
     return false
 end
 
+--- Safely set a sandbox variable value.
+--- Used to auto-reset one-shot cleanup options back to false.
+--- @param modId   string  The mod namespace (e.g. "PCP")
+--- @param varName string  The variable name
+--- @param value   any     The value to set
+--- @return boolean        true if set succeeded
+function PhobosLib.setSandboxVar(modId, varName, value)
+    local ok = pcall(function()
+        if SandboxVars and SandboxVars[modId] then
+            SandboxVars[modId][varName] = value
+        end
+    end)
+    return ok
+end
+
 --- Apply a numeric multiplier from a sandbox variable to a base amount.
 -- Rounds to the nearest integer (minimum 1).
 -- @param baseAmount number  The unmodified output quantity
