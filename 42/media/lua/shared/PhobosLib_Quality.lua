@@ -8,6 +8,9 @@
 -- as parameters (tier tables, yield tables, modData keys) so any
 -- Phobos mod can define its own quality system.
 --
+-- MP: modData writes sync automatically. ZombRand runs in server-side OnCreate context.
+-- NPC: Uses getInventory() and modData — both available on IsoGameCharacter.
+--
 -- Part of PhobosLib — shared by all Phobos PZ mods.
 ---------------------------------------------------------------
 

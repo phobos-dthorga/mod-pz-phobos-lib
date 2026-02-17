@@ -3,6 +3,9 @@
 -- Build 42 fluid container helpers.
 -- Provides pcall-safe probing for the B42 fluid system which
 -- may change method signatures between beta builds.
+--
+-- MP: Functions modify item/fluid state via engine APIs that auto-sync in MP.
+-- NPC: All methods called exist on IsoGameCharacter (safe for IsoNpcPlayer).
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}

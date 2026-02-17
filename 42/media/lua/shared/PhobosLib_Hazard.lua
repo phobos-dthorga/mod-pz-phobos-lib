@@ -9,6 +9,10 @@
 --   - Filter degradation on mask items
 --   - EHR (Extensive Health Rework) soft-dependency dispatch
 --   - Vanilla stat fallback when EHR is not active
+--
+-- MP: degradeFilterFromInputs operates on recipe items (server context).
+--     applyHazardEffect uses player:getStats() (IsoGameCharacter).
+-- NPC: getWornItems(), getStats(), Say() all exist on IsoGameCharacter base class.
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}

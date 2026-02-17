@@ -143,6 +143,11 @@ end
 --- Call once at game startup. Multiple mirrors can be registered.
 --- Includes a reentrance guard to prevent infinite loops.
 ---
+--- MP: Events.AddXP fires per-player client-side. The mirror runs
+---     locally for each player. Reentrance guard prevents loops.
+--- NPC: Knox Event NPCs filter out XP gain internally; addXP()
+---     is pcall-wrapped so NPC edge cases fail silently.
+---
 --- Example:
 ---   PhobosLib.registerXPMirror("AppliedChemistry", "Science", 0.5)
 ---   -- Now whenever Applied Chemistry gains XP, Science gets 50%.
