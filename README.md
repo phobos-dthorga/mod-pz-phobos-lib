@@ -1,6 +1,6 @@
 # PhobosLib
 
-**Version:** 1.1.0 | **Requires:** Project Zomboid Build 42.13.0+
+**Version:** 1.2.0 | **Requires:** Project Zomboid Build 42.13.0+
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
@@ -20,6 +20,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Quality** | Generic quality/purity tracking: 0-100 scoring, tier lookup, equipment factors, severity scaling, yield penalties |
 | **PhobosLib_Hazard** | PPE detection, respiratory protection assessment, mask filter degradation, EHR disease dispatch with vanilla stat fallback |
 | **PhobosLib_Skill** | Perk existence checks, safe XP queries and awards, one-shot XP mirroring, persistent cross-skill XP mirror registration via Events.AddXP |
+| **PhobosLib_Reset** | Generic inventory/recipe/skill reset utilities: deep inventory traversal, modData stripping, recipe removal, XP reset, item removal by module |
 
 Usage: `require "PhobosLib"` loads all modules into the global `PhobosLib` table.
 
@@ -35,7 +36,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 7 modules with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 8 modules with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 
