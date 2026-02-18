@@ -5,3 +5,5 @@ poster=poster.png
 authors=phobosgekko
 versionMin=42.13.0
 modversion=1.2.0
+loadModBefore=\PhobosChemistryPathways
+category=library
