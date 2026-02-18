@@ -5,6 +5,6 @@ poster=poster.png
 url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
 authors=phobosgekko
 versionMin=42.14.0
-modversion=1.2.0
+modversion=1.2.1
 loadModBefore=\PhobosChemistryPathways
 category=library
