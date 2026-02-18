@@ -1,14 +1,14 @@
 [h1]Phobos Shared Library (PhobosLib)[/h1]
 A shared utility library for Project Zomboid Build 42 mods. PhobosLib provides reusable systems that other Phobos mods depend on — [b]it adds no gameplay content on its own[/b].
 
-If you're subscribing to [url=https://is.gd/PhobosChemPZ][b]Phobos' Chemistry Pathways[/b][/url], you need this mod installed.
+If you're subscribing to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831][b]Phobos' Chemistry Pathways[/b][/url], you need this mod installed.
 
 [hr][/hr]
 [h2]What It Provides[/h2]
 8 utility modules covering common PZ modding needs:
 
-[img]https://is.gd/PLib_modules[/img]
-[i][url=https://is.gd/PhobosLibDocs]Full API reference on GitHub[/url][/i]
+[img]https://raw.githubusercontent.com/phobos-dthorga/mod-pz-phobos-lib/main/docs/images/phoboslib-modules.png[/img]
+[i][url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/tree/main/docs]Full API reference on GitHub[/url][/i]
 
 [list]
 [*][b]Util[/b] — Safe method calling, API probing across Build 42 variants, keyword item search, modData helpers
@@ -24,7 +24,7 @@ If you're subscribing to [url=https://is.gd/PhobosChemPZ][b]Phobos' Chemistry Pa
 [hr][/hr]
 [h2]Used By[/h2]
 [list]
-[*][url=https://is.gd/PhobosChemPZ][b]Phobos' Chemistry Pathways[/b][/url] — 150-recipe chemistry suite (blackpowder, biodiesel, soap, recycling, and more)
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831][b]Phobos' Chemistry Pathways[/b][/url] — 150-recipe chemistry suite (blackpowder, biodiesel, soap, recycling, and more)
 [/list]
 
 [hr][/hr]
@@ -32,9 +32,9 @@ If you're subscribing to [url=https://is.gd/PhobosChemPZ][b]Phobos' Chemistry Pa
 PhobosLib is designed as a stable API dependency for your own PZ mods. All public functions follow semantic versioning with backwards compatibility guarantees.
 
 [list]
-[*]Full API reference with function signatures: [url=https://is.gd/PhobosLibDocs]Documentation[/url]
-[*]Contribution guidelines, versioning policy, and architecture: [url=https://is.gd/PhobosLibGH]GitHub Repository[/url]
-[*]File bugs or request new utilities: [url=https://is.gd/PhobosLibBugs]GitHub Issues[/url]
+[*]Full API reference with function signatures: [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/tree/main/docs]Documentation[/url]
+[*]Contribution guidelines, versioning policy, and architecture: [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib]GitHub Repository[/url]
+[*]File bugs or request new utilities: [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/issues]GitHub Issues[/url]
 [/list]
 
 Usage:
@@ -52,19 +52,19 @@ local hasMask = PhobosLib.Hazard.getRespiratoryProtection(player)
 [/tr]
 [tr]
 [td]Source Code & API Docs[/td]
-[td][url=https://is.gd/PhobosLibGH]GitHub Repository[/url][/td]
+[td][url=https://github.com/phobos-dthorga/mod-pz-phobos-lib]GitHub Repository[/url][/td]
 [/tr]
 [tr]
 [td]Bug Reports & Requests[/td]
-[td][url=https://is.gd/PhobosLibBugs]GitHub Issues[/url] (preferred)[/td]
+[td][url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/issues]GitHub Issues[/url] (preferred)[/td]
 [/tr]
 [tr]
 [td]Chemistry Pathways[/td]
-[td][url=https://is.gd/PhobosChemPZ]Steam Workshop[/url] | [url=https://is.gd/PhobosChemGH]GitHub[/url][/td]
+[td][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Steam Workshop[/url] | [url=https://github.com/phobos-dthorga/mod-pz-chemistry-pathways]GitHub[/url][/td]
 [/tr]
 [/table]
 
-[i]Please report bugs and request features on [url=https://is.gd/PhobosLibBugs]GitHub Issues[/url] rather than in Workshop comments — it helps us track and resolve them faster.[/i]
+[i]Please report bugs and request features on [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/issues]GitHub Issues[/url] rather than in Workshop comments — it helps us track and resolve them faster.[/i]
 
 [hr][/hr]
 [b]Version:[/b] 1.2.0 | [b]Build:[/b] 42.14.0+ | [b]License:[/b] MIT
