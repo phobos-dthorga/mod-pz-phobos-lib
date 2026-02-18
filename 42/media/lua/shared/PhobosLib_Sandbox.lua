@@ -123,33 +123,38 @@ end
 
 Events.OnGameStart.Add(PhobosLib.reapplyConsumedFlags)
 
+--- @deprecated Since 1.5.0 — B42 craftRecipe OnTest is a server-side execution
+--- gate, NOT a UI visibility gate. Use PhobosLib.registerRecipeFilter() from
+--- PhobosLib_RecipeFilter (client/) instead.
+---
 --- Create (or retrieve) a named global callback table.
---- PZ's built-in callback tables (RecipeCodeOnTest, RecipeCodeOnCreate, etc.)
---- are Java-exposed; Lua-defined additions are invisible to callLuaBool().
---- This function creates a mod-owned global Lua table that the engine CAN
---- resolve, following the same pattern vanilla mods use for OnCreate.
---- @param name string  The global table name (e.g. "PCP_RecipeOnTest")
+--- Kept for backward compatibility; logs a deprecation warning.
+--- @param name string  The global table name
 --- @return table       The global table (created if it did not exist)
 function PhobosLib.createCallbackTable(name)
+    print("[PhobosLib:Sandbox] DEPRECATED: createCallbackTable() — craftRecipe OnTest is an execution gate, not a visibility gate. Use PhobosLib.registerRecipeFilter() instead.")
     if type(name) ~= "string" or name == "" then
         print("[PhobosLib:Sandbox] createCallbackTable: invalid name")
         return {}
     end
     if not _G[name] then
         _G[name] = {}
-        print("[PhobosLib:Sandbox] created callback table: " .. name)
     end
     return _G[name]
 end
 
+--- @deprecated Since 1.5.0 — B42 craftRecipe OnTest is a server-side execution
+--- gate, NOT a UI visibility gate. Use PhobosLib.registerRecipeFilter() from
+--- PhobosLib_RecipeFilter (client/) instead.
+---
 --- Register a single OnTest callback in a named global table.
---- Convenience wrapper around createCallbackTable + assignment.
---- Recipe scripts reference callbacks as "TableName.funcName".
---- @param tableName string    The global table name (e.g. "PCP_RecipeOnTest")
---- @param funcName  string    The callback name (e.g. "pcpHeatRequiredCheck")
---- @param func      function  The callback function(params) → boolean
---- @return string             Fully-qualified reference for recipe scripts
+--- Kept for backward compatibility; logs a deprecation warning.
+--- @param tableName string    The global table name
+--- @param funcName  string    The callback name
+--- @param func      function  The callback function(params) -> boolean
+--- @return string             Fully-qualified reference (no longer useful)
 function PhobosLib.registerOnTest(tableName, funcName, func)
+    print("[PhobosLib:Sandbox] DEPRECATED: registerOnTest() — craftRecipe OnTest is an execution gate, not a visibility gate. Use PhobosLib.registerRecipeFilter() instead.")
     local tbl = PhobosLib.createCallbackTable(tableName)
     tbl[funcName] = func
     return tableName .. "." .. funcName

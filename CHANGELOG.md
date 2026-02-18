@@ -6,6 +6,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-02-19
+
+### Added
+- **PhobosLib_RecipeFilter** (client/) — Crafting menu recipe visibility filter
+  - `registerRecipeFilter(recipeName, filterFunc)` — Register a filter function for a single recipe; return true to show, false to hide
+  - `registerRecipeFilters(filterTable)` — Bulk-register from `{ [name] = func }` table
+  - Overrides `ISRecipeScrollingListBox:addGroup()` and `ISTiledIconPanel:setDataList()` to inject filter checks alongside vanilla `getOnAddToMenu()`
+  - Fills a gap in B42: `craftRecipe` `OnTest` is a **server-side execution gate**, not a UI visibility gate; `getOnAddToMenu()` only works for entity building recipes
+
+### Deprecated
+- **`createCallbackTable(name)`** in PhobosLib_Sandbox — craftRecipe OnTest is an execution gate, not a visibility gate; use `registerRecipeFilter()` instead
+- **`registerOnTest(tableName, funcName, func)`** in PhobosLib_Sandbox — same reason; functions still work but log deprecation warnings
+
 ## [1.4.2] - 2026-02-19
 
 ### Added
