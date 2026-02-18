@@ -1,6 +1,6 @@
 # PhobosLib
 
-**Version:** 1.2.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.4.0 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -27,6 +27,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Hazard** | PPE detection, respiratory protection assessment, mask filter degradation, EHR disease dispatch with vanilla stat fallback |
 | **PhobosLib_Skill** | Perk existence checks, safe XP queries and awards, one-shot XP mirroring, persistent cross-skill XP mirror registration via Events.AddXP |
 | **PhobosLib_Reset** | Generic inventory/recipe/skill reset utilities: deep inventory traversal, modData stripping, recipe removal, XP reset, item removal by module |
+| **PhobosLib_Validate** | Startup dependency validation: register expected items/fluids/perks at load time, validate during OnGameStart, log missing entries with requesting mod ID |
 
 Usage: `require "PhobosLib"` loads all modules into the global `PhobosLib` table.
 
@@ -51,6 +52,17 @@ See [docs/README.md](docs/README.md) for the full index.
 - PROJECT_IDENTITY.md
 - MODDING_PERMISSION.md
 - CONTRIBUTING.md
+
+## Verification Checklist
+
+After each intermediate or major version bump, verify:
+
+- [ ] All `PhobosLib_*.lua` modules load without errors in `console.txt`
+- [ ] `[PhobosLib:Validate]` log lines appear when dependent mods register expectations
+- [ ] `PhobosLib.perkExists()` correctly returns true/false for known/unknown perks
+- [ ] `PhobosLib.isModActive()` correctly detects active mods
+- [ ] World modData strip/get functions work (test via EPR cleanup or manual)
+- [ ] No `nil` or `NullPointerException` errors referencing PhobosLib in logs
 
 ## Release notes
 - See CHANGELOG.md

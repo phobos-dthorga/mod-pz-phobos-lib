@@ -6,6 +6,23 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-02-19
+
+### Added
+- **PhobosLib_Validate** — Startup dependency validation module
+  - `expectItem(modId, fullType)` — Register an expected item dependency
+  - `expectFluid(modId, fluidName)` — Register an expected fluid dependency
+  - `expectPerk(modId, perkName)` — Register an expected perk dependency
+  - `validateDependencies()` — Check all registered dependencies exist; logs missing entries with `[PhobosLib:Validate] [MOD_ID]` prefix for easy triage
+  - Mods register expectations at file-load time; single validation call during `OnGameStart` checks everything and returns a structured failure report
+
+## [1.3.0] - 2026-02-19
+
+### Added
+- **PhobosLib_Reset** — World modData utilities for mod cleanup
+  - `getWorldModDataValue(key, default)` — Read a single value from world modData (`getGameTime():getModData()`) with fallback default
+  - `stripWorldModDataKeys(keys)` — Remove one or more keys from world modData; returns count of keys actually removed
+
 ## [1.2.0] - 2026-02-18
 
 ### Added

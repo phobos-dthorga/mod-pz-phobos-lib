@@ -260,3 +260,44 @@ function PhobosLib.removeItemsByModule(player, moduleId)
     end
     return count
 end
+
+---------------------------------------------------------------
+-- World modData Utilities
+---------------------------------------------------------------
+
+--- Read a single value from world modData with a default fallback.
+--- World modData is accessed via getGameTime():getModData().
+---
+--- @param key string     The modData key to read
+--- @param default any    Value returned if the key is missing or nil
+--- @return any           The stored value or the default
+function PhobosLib.getWorldModDataValue(key, default)
+    local val = nil
+    pcall(function()
+        val = getGameTime():getModData()[key]
+    end)
+    if val ~= nil then return val end
+    return default
+end
+
+--- Remove one or more keys from world modData.
+--- Useful for cleaning up mod state after mod removal.
+---
+--- @param keys table    Array of string keys to remove
+--- @return number       Count of keys that were actually present and removed
+function PhobosLib.stripWorldModDataKeys(keys)
+    if not keys or #keys == 0 then return 0 end
+
+    local count = 0
+    pcall(function()
+        local md = getGameTime():getModData()
+        if not md then return end
+        for _, key in ipairs(keys) do
+            if md[key] ~= nil then
+                md[key] = nil
+                count = count + 1
+            end
+        end
+    end)
+    return count
+end
