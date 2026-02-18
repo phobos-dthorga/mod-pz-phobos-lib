@@ -1,0 +1,30 @@
+ALL RIGHTS RESERVED — Artwork License
+
+Copyright (c) 2026 phobosgekko. All rights reserved.
+
+The artwork contained in this branch (source-images/steam-workshop/poster_*.png)
+depicts phobosgekko's personal character ("Red Fluffy Dragon") and is a
+commissioned work. The original artist has stipulated the following restrictions,
+which phobosgekko upholds:
+
+  1. NO DERIVATIVE WORKS.  You may NOT modify, remix, transform, adapt, or
+     build upon this artwork in any form.
+
+  2. NO REDISTRIBUTION.  You may NOT copy, share, redistribute, mirror,
+     re-host, or otherwise make this artwork available through any medium or
+     channel without prior written permission from phobosgekko.
+
+  3. NO COMMERCIAL USE.  You may NOT use this artwork for any commercial
+     purpose whatsoever.
+
+  4. PERSONAL VIEWING ONLY.  This artwork is provided in this repository
+     solely for reference and to support the PhobosLib Project Zomboid mod.
+     End users who subscribe to the mod via Steam Workshop receive a copy as
+     part of normal mod distribution; no additional rights are granted.
+
+  5. PERMISSION REQUESTS.  To request permission for any use not covered
+     above, contact phobosgekko via GitHub Issues on this repository.
+
+This license applies ONLY to the artwork files listed above. Source code and
+other assets in this repository are covered by their own respective licenses
+(see the main branch LICENSE file).
