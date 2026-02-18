@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.4.1 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
+PhobosLib v1.4.2 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.4.1"]
+    subgraph LIB["PhobosLib v1.4.2"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -107,6 +107,8 @@ Safe sandbox variable access, runtime mod detection, and yield scaling.
 | `setSandboxVar(modId, varName, value)` | `modId, varName: string, value` | Set a sandbox variable value (for one-shot auto-reset) |
 | `consumeSandboxFlag(modId, varName)` | `modId, varName: string` | Clear sandbox flag in-memory AND persist to world modData for restart survival |
 | `reapplyConsumedFlags()` | *(none)* | Re-apply consumed flags from world modData on game start (auto-registered via OnGameStart) |
+| `createCallbackTable(name)` | `name: string` | Create/retrieve a global Lua callback table (PZ Java tables like RecipeCodeOnTest can't be extended from Lua) |
+| `registerOnTest(tableName, funcName, func)` | `tableName, funcName: string, func: function` | Register an OnTest callback in a mod-owned global table; returns fully-qualified reference string |
 
 ---
 

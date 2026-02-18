@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-02-19
+
+### Added
+- **`createCallbackTable(name)`** in PhobosLib_Sandbox — Creates (or retrieves) a named global Lua callback table; PZ's built-in tables like `RecipeCodeOnTest` are Java-exposed and invisible to `callLuaBool()` when extended from Lua; use this to create mod-owned tables the engine can resolve
+- **`registerOnTest(tableName, funcName, func)`** in PhobosLib_Sandbox — Convenience wrapper that creates the global table and registers a single OnTest callback; returns the fully-qualified `"TableName.funcName"` string for recipe script references
+
 ## [1.4.1] - 2026-02-19
 
 ### Added

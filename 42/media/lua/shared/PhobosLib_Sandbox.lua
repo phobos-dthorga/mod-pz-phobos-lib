@@ -122,3 +122,35 @@ function PhobosLib.reapplyConsumedFlags()
 end
 
 Events.OnGameStart.Add(PhobosLib.reapplyConsumedFlags)
+
+--- Create (or retrieve) a named global callback table.
+--- PZ's built-in callback tables (RecipeCodeOnTest, RecipeCodeOnCreate, etc.)
+--- are Java-exposed; Lua-defined additions are invisible to callLuaBool().
+--- This function creates a mod-owned global Lua table that the engine CAN
+--- resolve, following the same pattern vanilla mods use for OnCreate.
+--- @param name string  The global table name (e.g. "PCP_RecipeOnTest")
+--- @return table       The global table (created if it did not exist)
+function PhobosLib.createCallbackTable(name)
+    if type(name) ~= "string" or name == "" then
+        print("[PhobosLib:Sandbox] createCallbackTable: invalid name")
+        return {}
+    end
+    if not _G[name] then
+        _G[name] = {}
+        print("[PhobosLib:Sandbox] created callback table: " .. name)
+    end
+    return _G[name]
+end
+
+--- Register a single OnTest callback in a named global table.
+--- Convenience wrapper around createCallbackTable + assignment.
+--- Recipe scripts reference callbacks as "TableName.funcName".
+--- @param tableName string    The global table name (e.g. "PCP_RecipeOnTest")
+--- @param funcName  string    The callback name (e.g. "pcpHeatRequiredCheck")
+--- @param func      function  The callback function(params) → boolean
+--- @return string             Fully-qualified reference for recipe scripts
+function PhobosLib.registerOnTest(tableName, funcName, func)
+    local tbl = PhobosLib.createCallbackTable(tableName)
+    tbl[funcName] = func
+    return tableName .. "." .. funcName
+end
