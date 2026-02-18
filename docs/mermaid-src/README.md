@@ -7,7 +7,7 @@ These are the same diagrams embedded in [`../diagrams/*.md`](../diagrams/), extr
 
 | File | Diagram |
 |------|---------|
-| `phoboslib-modules.mmd` | PhobosLib v1.2.0 module architecture (8 modules) |
+| `phoboslib-modules.mmd` | PhobosLib v1.4.1 module architecture (9 modules) |
 
 ## Re-render all to PNG
 

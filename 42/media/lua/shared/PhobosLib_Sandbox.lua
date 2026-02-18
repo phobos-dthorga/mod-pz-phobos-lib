@@ -76,3 +76,49 @@ function PhobosLib.applyYieldMultiplier(baseAmount, modId, varName)
     if result < 1 then result = 1 end
     return result
 end
+
+--- Mark a one-shot sandbox boolean as consumed.
+--- Clears the in-memory value AND records a world modData flag so the
+--- value can be re-cleared on next game start (belt-and-suspenders).
+--- @param modId   string  The mod namespace (e.g. "PCP")
+--- @param varName string  The boolean sandbox variable name
+--- @return boolean        true if both operations succeeded
+function PhobosLib.consumeSandboxFlag(modId, varName)
+    local ok = pcall(function()
+        if SandboxVars and SandboxVars[modId] then
+            SandboxVars[modId][varName] = false
+        end
+        local md = getGameTime():getModData()
+        md["PhobosLib_consumed_" .. modId .. "_" .. varName] = true
+    end)
+    if ok then
+        print("[PhobosLib:Sandbox] consumed flag " .. modId .. "." .. varName)
+    end
+    return ok
+end
+
+--- Re-apply all previously consumed sandbox flags from world modData.
+--- Called automatically via Events.OnGameStart so that one-shot options
+--- remain cleared even after a game restart.
+function PhobosLib.reapplyConsumedFlags()
+    local count = 0
+    pcall(function()
+        local md = getGameTime():getModData()
+        local prefix = "PhobosLib_consumed_"
+        for key, val in pairs(md) do
+            if type(key) == "string" and key:sub(1, #prefix) == prefix and val == true then
+                local rest = key:sub(#prefix + 1)       -- "PCP_ResetStripPurity"
+                local modId, varName = rest:match("^([^_]+)_(.+)$")
+                if modId and varName and SandboxVars and SandboxVars[modId] then
+                    SandboxVars[modId][varName] = false
+                    count = count + 1
+                end
+            end
+        end
+    end)
+    if count > 0 then
+        print("[PhobosLib:Sandbox] reapplied " .. count .. " consumed flag(s)")
+    end
+end
+
+Events.OnGameStart.Add(PhobosLib.reapplyConsumedFlags)

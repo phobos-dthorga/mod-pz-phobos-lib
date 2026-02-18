@@ -1,14 +1,14 @@
 graph LR
-    subgraph LIB["PhobosLib v1.2.0"]
+    subgraph LIB["PhobosLib v1.4.1"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
 
         FLUID["Fluid<br/>tryGetFluidContainer<br/>tryAddFluid, tryDrainFluid<br/>tryGetAmount, tryGetCapacity"]
 
-        WORLD["World<br/>scanNearbySquares<br/>findNearbyObjectByKeywords"]
+        WORLD["World<br/>scanNearbySquares<br/>findNearbyObjectByKeywords<br/>findNearbyGenerator<br/>findNearbyVehicle"]
 
-        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier, setSandboxVar"]
+        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier, setSandboxVar<br/>consumeSandboxFlag"]
 
         QUALITY["Quality<br/>getQuality, setQuality<br/>calculateOutputQuality<br/>getTier, adjustBySeverity"]
 
@@ -16,7 +16,9 @@ graph LR
 
         SKL["Skill<br/>perkExists, getPerkLevel<br/>addXP, getXP<br/>mirrorXP, registerXPMirror"]
 
-        RST["Reset<br/>iterateInventoryDeep<br/>stripModDataKey<br/>forgetRecipesByPrefix<br/>resetPerkXP, removeItemsByModule"]
+        RST["Reset<br/>iterateInventoryDeep<br/>stripModDataKey<br/>forgetRecipesByPrefix<br/>resetPerkXP, removeItemsByModule<br/>getWorldModDataValue<br/>stripWorldModDataKeys"]
+
+        VAL["Validate<br/>expectItem, expectFluid<br/>expectPerk<br/>validateDependencies"]
     end
 
     INIT --> UTIL
@@ -27,3 +29,4 @@ graph LR
     INIT --> HAZ
     INIT --> SKL
     INIT --> RST
+    INIT --> VAL

@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.4.0 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
+PhobosLib v1.4.1 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.4.0"]
+    subgraph LIB["PhobosLib v1.4.1"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -104,6 +104,9 @@ Safe sandbox variable access, runtime mod detection, and yield scaling.
 | `getSandboxVar(modId, varName, default)` | `modId, varName: string, default` | Retrieve sandbox variable with fallback |
 | `isModActive(modId)` | `modId: string` | Check if a mod is in the active mod list |
 | `applyYieldMultiplier(baseAmount, modId, varName)` | `baseAmount: number, modId, varName: string` | Scale amount by a sandbox multiplier variable |
+| `setSandboxVar(modId, varName, value)` | `modId, varName: string, value` | Set a sandbox variable value (for one-shot auto-reset) |
+| `consumeSandboxFlag(modId, varName)` | `modId, varName: string` | Clear sandbox flag in-memory AND persist to world modData for restart survival |
+| `reapplyConsumedFlags()` | *(none)* | Re-apply consumed flags from world modData on game start (auto-registered via OnGameStart) |
 
 ---
 

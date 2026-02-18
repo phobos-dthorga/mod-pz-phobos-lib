@@ -6,6 +6,6 @@ icon=icon.png
 url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
 authors=phobosgekko
 versionMin=42.14.0
-modversion=1.4.0
+modversion=1.4.1
 loadModBefore=\PhobosChemistryPathways,\PhobosEPRCleanup
 category=library

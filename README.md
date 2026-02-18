@@ -1,6 +1,6 @@
 # PhobosLib
 
-**Version:** 1.4.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.4.1 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -22,7 +22,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Util** | General-purpose utilities: safe method calling, API probing, keyword-based item search, modData helpers, player speech bubbles |
 | **PhobosLib_Fluid** | Build 42 fluid container helpers with multi-strategy API fallbacks for add/drain/query operations |
 | **PhobosLib_World** | World-scanning: tile iteration, object keyword search, generator detection, vehicle proximity checks |
-| **PhobosLib_Sandbox** | Safe sandbox variable access with defaults, runtime mod detection, yield multiplier application |
+| **PhobosLib_Sandbox** | Safe sandbox variable access with defaults, runtime mod detection, yield multiplier application, persistent one-shot flag consumption |
 | **PhobosLib_Quality** | Generic quality/purity tracking: 0-100 scoring, tier lookup, equipment factors, severity scaling, yield penalties |
 | **PhobosLib_Hazard** | PPE detection, respiratory protection assessment, mask filter degradation, EHR disease dispatch with vanilla stat fallback |
 | **PhobosLib_Skill** | Perk existence checks, safe XP queries and awards, one-shot XP mirroring, persistent cross-skill XP mirror registration via Events.AddXP |

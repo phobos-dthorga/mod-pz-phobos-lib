@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-02-19
+
+### Added
+- **`consumeSandboxFlag(modId, varName)`** in PhobosLib_Sandbox — Sets sandbox variable to false AND records in world modData for persistence across restarts; used for one-shot sandbox options that must stay cleared
+- **`reapplyConsumedFlags()`** in PhobosLib_Sandbox — OnGameStart hook that re-applies consumed flags from world modData to SandboxVars, ensuring one-shot options remain cleared after restart
+
 ## [1.4.0] - 2026-02-19
 
 ### Added
