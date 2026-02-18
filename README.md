@@ -43,7 +43,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 8 modules with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 9 modules with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 

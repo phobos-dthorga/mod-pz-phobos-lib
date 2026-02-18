@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.2.0 provides 8 shared modules loaded via a single `require "PhobosLib"` call.
+PhobosLib v1.4.0 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.2.0"]
+    subgraph LIB["PhobosLib v1.4.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -17,6 +17,7 @@ graph LR
         HAZARD["PhobosLib_Hazard<br/>PPE detection + hazard dispatch"]
         SKILL["PhobosLib_Skill<br/>Perk queries + XP mirroring"]
         RESET["PhobosLib_Reset<br/>Inventory/recipe/skill reset"]
+        VALIDATE["PhobosLib_Validate<br/>Startup dependency validation"]
     end
 
     INIT --> UTIL
@@ -27,6 +28,7 @@ graph LR
     INIT --> HAZARD
     INIT --> SKILL
     INIT --> RESET
+    INIT --> VALIDATE
 ```
 
 > All modules load into the global `PhobosLib` table. Individual modules cannot be loaded independently.
@@ -180,3 +182,32 @@ Generic inventory/recipe/skill reset utilities for mod cleanup systems. Deep inv
 | `forgetRecipesByPrefix(player, prefix)` | `player, prefix: string` | Two-pass recipe removal to avoid ConcurrentModificationException |
 | `resetPerkXP(player, perkEnum)` | `player, perkEnum` | Multi-strategy XP reset (setXP → setPerkLevel → LoseLevel loop) |
 | `removeItemsByModule(player, moduleId)` | `player, moduleId: string` | Remove all items belonging to a module, matching via getModule() or fullType prefix |
+| `getWorldModDataValue(key, default)` | `key: string, default` | Read a value from the global world modData table with fallback |
+| `stripWorldModDataKeys(prefix)` | `prefix: string` | Remove all world modData keys matching a prefix |
+
+---
+
+## PhobosLib_Validate
+
+Startup dependency validation: register expected items, fluids, and perks at load time, then validate during OnGameStart. Missing entries are logged with the requesting mod ID.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `expectItem(modId, fullType)` | `modId, fullType: string` | Register an expected item type to be verified at startup |
+| `expectFluid(modId, fluidType)` | `modId, fluidType: string` | Register an expected fluid type to be verified at startup |
+| `expectPerk(modId, perkName)` | `modId, perkName: string` | Register an expected perk to be verified at startup |
+| `validateDependencies()` | *(none)* | Run all registered validations and log results; called automatically via OnGameStart |
+
+### Usage Pattern
+
+```lua
+-- In your mod's shared/ init file (runs before OnGameStart):
+local PL = require "PhobosLib"
+PL.expectItem("MyMod", "Base.SomeItem")
+PL.expectFluid("MyMod", "SomeFluid")
+PL.expectPerk("MyMod", "SomePerk")
+
+-- PhobosLib automatically calls validateDependencies() during OnGameStart.
+-- Missing entries appear in console.txt as:
+--   [PhobosLib:Validate] MISSING item 'Base.SomeItem' expected by MyMod
+```
