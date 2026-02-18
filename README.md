@@ -2,7 +2,13 @@
 
 **Version:** 1.2.0 | **Requires:** Project Zomboid Build 42.13.0+
 
+> **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
+>
+> **Modders & Developers:** Full API reference in [docs/](docs/). Bug reports and feature requests via [GitHub Issues](https://github.com/phobos-dthorga/mod-pz-phobos-lib/issues).
+
 A shared utility library for Project Zomboid mods (Build 42 focused).
+
+**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 150-recipe chemistry suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)

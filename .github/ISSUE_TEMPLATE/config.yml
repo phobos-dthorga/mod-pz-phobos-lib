@@ -1,1 +1,8 @@
 blank_issues_enabled: true
+contact_links:
+  - name: Steam Workshop
+    url: https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
+    about: Subscribe, rate, and discuss on Steam Workshop
+  - name: Chemistry Pathways on Steam Workshop
+    url: https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831
+    about: "Phobos' Chemistry Pathways — the main gameplay mod powered by PhobosLib"
