@@ -1,5 +1,5 @@
 graph LR
-    subgraph LIB["PhobosLib v1.1.0"]
+    subgraph LIB["PhobosLib v1.2.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
@@ -8,13 +8,15 @@ graph LR
 
         WORLD["World<br/>scanNearbySquares<br/>findNearbyObjectByKeywords"]
 
-        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier"]
+        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier, setSandboxVar"]
 
         QUALITY["Quality<br/>getQuality, setQuality<br/>calculateOutputQuality<br/>getTier, adjustBySeverity"]
 
         HAZ["Hazard<br/>getRespiratoryProtection<br/>applyHazardEffect<br/>degradeFilterFromInputs<br/>isEHRActive, warnHazard"]
 
         SKL["Skill<br/>perkExists, getPerkLevel<br/>addXP, getXP<br/>mirrorXP, registerXPMirror"]
+
+        RST["Reset<br/>iterateInventoryDeep<br/>stripModDataKey<br/>forgetRecipesByPrefix<br/>resetPerkXP, removeItemsByModule"]
     end
 
     INIT --> UTIL
@@ -24,3 +26,4 @@ graph LR
     INIT --> QUALITY
     INIT --> HAZ
     INIT --> SKL
+    INIT --> RST

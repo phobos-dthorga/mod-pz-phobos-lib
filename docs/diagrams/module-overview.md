@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.1.0 provides 7 shared modules loaded via a single `require "PhobosLib"` call.
+PhobosLib v1.2.0 provides 8 shared modules loaded via a single `require "PhobosLib"` call.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.1.0"]
+    subgraph LIB["PhobosLib v1.2.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -16,6 +16,7 @@ graph LR
         QUALITY["PhobosLib_Quality<br/>Quality/purity tracking"]
         HAZARD["PhobosLib_Hazard<br/>PPE detection + hazard dispatch"]
         SKILL["PhobosLib_Skill<br/>Perk queries + XP mirroring"]
+        RESET["PhobosLib_Reset<br/>Inventory/recipe/skill reset"]
     end
 
     INIT --> UTIL
@@ -25,6 +26,7 @@ graph LR
     INIT --> QUALITY
     INIT --> HAZARD
     INIT --> SKILL
+    INIT --> RESET
 ```
 
 > All modules load into the global `PhobosLib` table. Individual modules cannot be loaded independently.
@@ -164,3 +166,17 @@ Perk existence checks, safe XP queries and awards, one-shot XP mirroring, persis
 | `getXP(player, perkEnum)` | `player, perkEnum` | Safe XP total query; returns 0 on failure |
 | `mirrorXP(player, targetPerkEnum, amount, ratio)` | `player, target, amount, ratio: number` | One-shot XP mirror (no event hook) |
 | `registerXPMirror(sourcePerkName, targetPerkName, ratio)` | `source, target: string, ratio: number` | Register persistent Events.AddXP mirror with reentrance guard |
+
+---
+
+## PhobosLib_Reset
+
+Generic inventory/recipe/skill reset utilities for mod cleanup systems. Deep inventory traversal, modData stripping, recipe removal, XP reset, and item removal by module.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `iterateInventoryDeep(player, callback)` | `player, callback: function` | Deep inventory traversal including nested containers (bags, backpacks), with visited-set loop guard |
+| `stripModDataKey(player, key)` | `player, key: string` | Remove a specific modData key from all items (deep scan) |
+| `forgetRecipesByPrefix(player, prefix)` | `player, prefix: string` | Two-pass recipe removal to avoid ConcurrentModificationException |
+| `resetPerkXP(player, perkEnum)` | `player, perkEnum` | Multi-strategy XP reset (setXP → setPerkLevel → LoseLevel loop) |
+| `removeItemsByModule(player, moduleId)` | `player, moduleId: string` | Remove all items belonging to a module, matching via getModule() or fullType prefix |
