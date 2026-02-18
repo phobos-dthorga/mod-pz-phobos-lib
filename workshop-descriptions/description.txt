@@ -67,5 +67,5 @@ local hasMask = PhobosLib.Hazard.getRespiratoryProtection(player)
 [i]Please report bugs and request features on [url=https://is.gd/PhobosLibBugs]GitHub Issues[/url] rather than in Workshop comments — it helps us track and resolve them faster.[/i]
 
 [hr][/hr]
-[b]Version:[/b] 1.2.0 | [b]Build:[/b] 42.13.0+ | [b]License:[/b] MIT
+[b]Version:[/b] 1.2.0 | [b]Build:[/b] 42.14.0+ | [b]License:[/b] MIT
 [i]by phobosgekko[/i]
