@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.4.2 provides 9 shared modules loaded via a single `require "PhobosLib"` call.
+PhobosLib v1.6.0 provides 10 modules (9 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.4.2"]
+    subgraph LIB["PhobosLib v1.6.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -20,6 +20,10 @@ graph LR
         VALIDATE["PhobosLib_Validate<br/>Startup dependency validation"]
     end
 
+    subgraph CLIENT["Client-side (loaded by PZ)"]
+        RF["PhobosLib_RecipeFilter<br/>Recipe visibility filter<br/>(vanilla + Neat Crafting)"]
+    end
+
     INIT --> UTIL
     INIT --> FLUID
     INIT --> WORLD
@@ -31,7 +35,7 @@ graph LR
     INIT --> VALIDATE
 ```
 
-> All modules load into the global `PhobosLib` table. Individual modules cannot be loaded independently.
+> The 9 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
 
 ---
 
@@ -107,8 +111,8 @@ Safe sandbox variable access, runtime mod detection, and yield scaling.
 | `setSandboxVar(modId, varName, value)` | `modId, varName: string, value` | Set a sandbox variable value (for one-shot auto-reset) |
 | `consumeSandboxFlag(modId, varName)` | `modId, varName: string` | Clear sandbox flag in-memory AND persist to world modData for restart survival |
 | `reapplyConsumedFlags()` | *(none)* | Re-apply consumed flags from world modData on game start (auto-registered via OnGameStart) |
-| `createCallbackTable(name)` | `name: string` | Create/retrieve a global Lua callback table (PZ Java tables like RecipeCodeOnTest can't be extended from Lua) |
-| `registerOnTest(tableName, funcName, func)` | `tableName, funcName: string, func: function` | Register an OnTest callback in a mod-owned global table; returns fully-qualified reference string |
+| `createCallbackTable(name)` | `name: string` | **DEPRECATED v1.5.0** — craftRecipe OnTest is execution-only, not visibility. Use `registerRecipeFilter()` instead |
+| `registerOnTest(tableName, funcName, func)` | `tableName, funcName: string, func: function` | **DEPRECATED v1.5.0** — craftRecipe OnTest is execution-only, not visibility. Use `registerRecipeFilter()` instead |
 
 ---
 
@@ -215,4 +219,40 @@ PL.expectPerk("MyMod", "SomePerk")
 -- PhobosLib automatically calls validateDependencies() during OnGameStart.
 -- Missing entries appear in console.txt as:
 --   [PhobosLib:Validate] MISSING item 'Base.SomeItem' expected by MyMod
+```
+
+---
+
+## PhobosLib_RecipeFilter
+
+Client-side crafting menu recipe visibility filter. B42 `craftRecipe` `OnTest` is a server-side execution gate, NOT a UI visibility gate — `getOnAddToMenu()` returns nil for all craftRecipe objects. This module fills the gap by overriding the crafting UI to inject filter checks.
+
+Supports three UI code paths:
+- **Path 1**: Vanilla `ISRecipeScrollingListBox:addGroup()` (list view)
+- **Path 2**: Vanilla `ISTiledIconPanel:setDataList()` (grid view)
+- **Path 3**: Neat Crafting `NC_FilterBar:shouldIncludeRecipe()` — runtime-detected, installed immediately or deferred via `Events.OnGameStart`
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerRecipeFilter(recipeName, filterFunc)` | `recipeName: string, filterFunc: function` | Register a visibility filter for a single recipe; filter receives no args, returns `true` to show, `false` to hide |
+| `registerRecipeFilters(filterTable)` | `filterTable: table` | Bulk-register from `{ ["RecipeName"] = filterFunc, ... }` table |
+| `_checkRecipeFilter(recipeName)` | `recipeName: string` | Internal: check filter registry for a recipe name; pcall-wrapped, fail-open (returns `true` on error) |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerRecipeFilter("MyModRecipeName", function()
+    return SandboxVars.MyMod.EnableFeature
+end)
+
+-- Or bulk register:
+PhobosLib.registerRecipeFilters({
+    ["MyRecipeA"] = function() return SandboxVars.MyMod.OptionA end,
+    ["MyRecipeB"] = function() return SandboxVars.MyMod.OptionB end,
+})
 ```

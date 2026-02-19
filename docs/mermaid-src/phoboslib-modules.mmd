@@ -1,5 +1,5 @@
 graph LR
-    subgraph LIB["PhobosLib v1.4.2"]
+    subgraph LIB["PhobosLib v1.6.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
@@ -8,7 +8,7 @@ graph LR
 
         WORLD["World<br/>scanNearbySquares<br/>findNearbyObjectByKeywords<br/>findNearbyGenerator<br/>findNearbyVehicle"]
 
-        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier, setSandboxVar<br/>consumeSandboxFlag<br/>createCallbackTable, registerOnTest"]
+        SANDBOX["Sandbox<br/>getSandboxVar, isModActive<br/>applyYieldMultiplier, setSandboxVar<br/>consumeSandboxFlag"]
 
         QUALITY["Quality<br/>getQuality, setQuality<br/>calculateOutputQuality<br/>getTier, adjustBySeverity"]
 
@@ -19,6 +19,10 @@ graph LR
         RST["Reset<br/>iterateInventoryDeep<br/>stripModDataKey<br/>forgetRecipesByPrefix<br/>resetPerkXP, removeItemsByModule<br/>getWorldModDataValue<br/>stripWorldModDataKeys"]
 
         VAL["Validate<br/>expectItem, expectFluid<br/>expectPerk<br/>validateDependencies"]
+    end
+
+    subgraph CLIENT["Client-side"]
+        RF["RecipeFilter<br/>registerRecipeFilter<br/>registerRecipeFilters<br/>(vanilla + Neat Crafting)"]
     end
 
     INIT --> UTIL

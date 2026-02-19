@@ -6,7 +6,7 @@ Technical reference for the PhobosLib shared utility library.
 
 | Document | Description |
 |----------|-------------|
-| [Module Overview & API Reference](diagrams/module-overview.md) | All 9 modules with function signatures, parameters, and descriptions |
+| [Module Overview & API Reference](diagrams/module-overview.md) | All 10 modules with function signatures, parameters, and descriptions |
 
 PhobosLib is a dependency library with no user-facing recipes, items, or sandbox options. It provides safe wrappers, helpers, and reusable systems for all Phobos PZ mods.
 

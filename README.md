@@ -1,6 +1,6 @@
 # PhobosLib
 
-**Version:** 1.4.2 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.6.0 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -28,8 +28,9 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Skill** | Perk existence checks, safe XP queries and awards, one-shot XP mirroring, persistent cross-skill XP mirror registration via Events.AddXP |
 | **PhobosLib_Reset** | Generic inventory/recipe/skill reset utilities: deep inventory traversal, modData stripping, recipe removal, XP reset, item removal by module |
 | **PhobosLib_Validate** | Startup dependency validation: register expected items/fluids/perks at load time, validate during OnGameStart, log missing entries with requesting mod ID |
+| **PhobosLib_RecipeFilter** | Client-side crafting menu recipe visibility filter: register filter functions to hide/show `craftRecipe` entries based on sandbox settings or runtime conditions. Supports vanilla list view, vanilla grid view, and Neat Crafting mod compatibility |
 
-Usage: `require "PhobosLib"` loads all modules into the global `PhobosLib` table.
+Usage: `require "PhobosLib"` loads all shared modules into the global `PhobosLib` table. The RecipeFilter module is loaded separately by PZ from `client/`.
 
 ## Intended usage
 - As a dependency: your mod can require PhobosLib and call its helpers.
@@ -43,7 +44,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 9 modules with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 10 modules with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 
@@ -62,6 +63,7 @@ After each intermediate or major version bump, verify:
 - [ ] `PhobosLib.perkExists()` correctly returns true/false for known/unknown perks
 - [ ] `PhobosLib.isModActive()` correctly detects active mods
 - [ ] World modData strip/get functions work (test via EPR cleanup or manual)
+- [ ] Recipe filters work: `[PhobosLib:RecipeFilter]` log lines confirm UI overrides installed (vanilla or Neat Crafting)
 - [ ] No `nil` or `NullPointerException` errors referencing PhobosLib in logs
 
 ## Release notes
