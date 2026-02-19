@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-02-19
+
+### Fixed
+- **Recipe filter load order** — `PhobosLib_RecipeFilter.lua` now explicitly requires `Entity/ISUI/CraftRecipe/ISRecipeScrollingListBox` and `Entity/ISUI/CraftRecipe/ISTiledIconPanel` before overriding them. Previously only the parent class `ISScrollingListBox` was required, causing the vanilla subclasses to either not exist yet (silent nil crash) or load afterward (stomping the overrides). This resulted in zero console output and no recipe filtering.
+
 ## [1.5.0] - 2026-02-19
 
 ### Added

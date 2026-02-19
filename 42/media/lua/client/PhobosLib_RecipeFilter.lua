@@ -16,6 +16,8 @@
 ---------------------------------------------------------------
 
 require "ISUI/ISScrollingListBox"
+require "Entity/ISUI/CraftRecipe/ISRecipeScrollingListBox"
+require "Entity/ISUI/CraftRecipe/ISTiledIconPanel"
 
 PhobosLib = PhobosLib or {}
 
