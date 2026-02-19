@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-02-20
+
+### Added
+- **PhobosLib_Migrate** (shared/) — Generic versioned migration framework for save upgrades
+  - `compareVersions(v1, v2)` — Semver comparison, returns -1/0/1
+  - `getInstalledVersion(modId)` — Read mod version from world modData (nil for first install)
+  - `setInstalledVersion(modId, version)` — Write mod version to world modData
+  - `registerMigration(modId, from, to, fn, label)` — Register a versioned migration function
+  - `runMigrations(modId, currentVersion, players)` — Execute pending migrations with world modData guards; skips on first install, idempotent on reload
+  - `notifyMigrationResult(player, modId, result)` — Send migration result to client via sendServerCommand
+
 ## [1.7.1] - 2026-02-20
 
 ### Fixed
