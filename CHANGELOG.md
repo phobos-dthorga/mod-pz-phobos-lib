@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-02-20
+
+### Fixed
+- **Fluid validation API** — `_fluidExists()` in PhobosLib_Validate was calling `ScriptManager.instance:getFluid()`, which does not exist in B42. Replaced with `Fluid.Get(fluidName)` (the correct B42 API). This caused 9 `RuntimeException: Object tried to call nil` stack traces during OnGameStart validation and false "MISSING FLUID" warnings for all registered fluids (including vanilla Water).
+
 ## [1.7.0] - 2026-02-19
 
 ### Added

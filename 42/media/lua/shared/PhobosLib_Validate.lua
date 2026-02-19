@@ -69,7 +69,7 @@ end
 
 local function _fluidExists(fluidName)
     local ok, result = pcall(function()
-        return ScriptManager.instance:getFluid(fluidName) ~= nil
+        return Fluid.Get(fluidName) ~= nil
     end)
     return ok and result == true
 end
