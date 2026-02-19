@@ -188,6 +188,4 @@ end
 -- Startup confirmation
 ---------------------------------------------------------------
 
-local filterCount = 0
-for _ in pairs(PhobosLib._recipeFilters) do filterCount = filterCount + 1 end
-print("[PhobosLib:RecipeFilter] UI overrides installed (list + tiled), " .. filterCount .. " filter(s) pre-registered")
+print("[PhobosLib:RecipeFilter] UI overrides installed (list + tiled)")
