@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-02-20
+
+### Fixed
+- **Recover saves poisoned by v1.8.0 migration bug** — The v1.8.1 nil→"0.0.0" fix prevented future occurrences, but saves that already loaded with v1.8.0 had `PhobosLib_version_<modId>` stamped without any migrations running. These saves appeared "already at current version" and migrations never fired. Fix: when the version is stamped but none of the registered migration guard keys (`PhobosLib_migration_<modId>_<to>_done`) exist, reset installed version to `"0.0.0"` so all migrations re-run. This recovery is framework-level and protects all mods using PhobosLib_Migrate.
+
 ## [1.8.1] - 2026-02-20
 
 ### Fixed

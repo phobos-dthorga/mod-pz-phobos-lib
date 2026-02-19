@@ -129,8 +129,27 @@ function PhobosLib.runMigrations(modId, currentVersion, players)
 
     -- Already at or beyond current version
     if PhobosLib.compareVersions(installed, currentVersion) >= 0 then
-        print("[PhobosLib:Migrate] " .. modId .. " already at " .. installed)
-        return {}
+        -- Consistency check: if version is stamped but NO migration guard
+        -- keys exist, the version was stamped without migrations running
+        -- (PhobosLib v1.8.0 bug). Reset to "0.0.0" so migrations re-run.
+        local anyGuardExists = false
+        for _, mig in ipairs(migrations) do
+            local guardKey = _PREFIX .. "migration_" .. modId .. "_" .. mig.to .. "_done"
+            if PhobosLib.getWorldModDataValue(guardKey, false) == true then
+                anyGuardExists = true
+                break
+            end
+        end
+
+        if anyGuardExists then
+            print("[PhobosLib:Migrate] " .. modId .. " already at " .. installed)
+            return {}
+        end
+
+        -- Version stamped but no migrations ever ran — recover
+        print("[PhobosLib:Migrate] " .. modId .. " RECOVERY — version " .. installed
+            .. " stamped without migrations (v1.8.0 bug), resetting")
+        installed = "0.0.0"
     end
 
     print("[PhobosLib:Migrate] " .. modId .. " upgrading " .. installed .. " → " .. currentVersion)

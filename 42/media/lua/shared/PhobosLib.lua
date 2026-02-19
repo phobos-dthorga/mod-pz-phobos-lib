@@ -5,7 +5,7 @@
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.8.1"
+PhobosLib.VERSION = "1.8.2"
 
 require "PhobosLib_Util"
 require "PhobosLib_Fluid"
