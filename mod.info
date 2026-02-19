@@ -6,7 +6,7 @@ icon=icon.png
 url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
 authors=phobosgekko
 versionMin=42.14.0
-modversion=1.8.0
+modversion=1.8.1
 loadModAfter=\DynamicTradingCommon
 loadModBefore=\PhobosChemistryPathways,\PhobosEPRCleanup
 category=library

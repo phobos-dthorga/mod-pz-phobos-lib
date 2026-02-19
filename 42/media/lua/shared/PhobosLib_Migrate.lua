@@ -79,6 +79,10 @@ end
 --- Migrations run in registration order when the installed
 --- version is < `to`.
 ---
+--- IMPORTANT: Migration functions must be safe to run on empty/fresh
+--- state (no mod items, no known recipes). When no prior version is
+--- recorded, all migrations run to handle pre-framework upgrades.
+---
 ---@param modId string   Mod identifier (e.g. "PCP")
 ---@param from  string   Minimum installed version to trigger (nil = any)
 ---@param to    string   Target version this migration upgrades to
@@ -115,11 +119,12 @@ function PhobosLib.runMigrations(modId, currentVersion, players)
 
     local installed = PhobosLib.getInstalledVersion(modId)
 
-    -- Fresh install: stamp version and skip all migrations
+    -- No prior version recorded: treat as "0.0.0" so all migrations run.
+    -- This handles both genuine fresh installs (migrations are no-ops on
+    -- empty state) and pre-migration upgrades (e.g. v0.17.x -> current).
     if not installed then
-        print("[PhobosLib:Migrate] " .. modId .. " first install — stamping " .. currentVersion)
-        PhobosLib.setInstalledVersion(modId, currentVersion)
-        return {}
+        installed = "0.0.0"
+        print("[PhobosLib:Migrate] " .. modId .. " no prior version — treating as " .. installed)
     end
 
     -- Already at or beyond current version

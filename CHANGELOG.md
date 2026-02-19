@@ -6,6 +6,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-02-20
+
+### Fixed
+- **Migration framework skipped pre-framework upgrades** — `PhobosLib.runMigrations()` treated `nil` installed version as "first install" and skipped all migrations. But saves upgrading from versions before the migration framework (e.g. PCP v0.17.x → v0.19.0) had no version stamped in world modData, making them indistinguishable from fresh installs. Fix: treat `nil` as `"0.0.0"` so all registered migrations run. Migration functions must be idempotent on empty state (this was already the case for all existing migrations).
+
 ## [1.8.0] - 2026-02-20
 
 ### Added
