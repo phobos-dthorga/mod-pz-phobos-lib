@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-02-19
+
+### Added
+- **Neat Crafting compatibility** — `PhobosLib_RecipeFilter` now hooks `NC_FilterBar:shouldIncludeRecipe()` when the Neat Crafting mod is installed. Neat Crafting replaces the vanilla crafting window entirely, so the vanilla `ISRecipeScrollingListBox:addGroup()` override was never called. The hook is installed immediately if Neat Crafting loads first, or deferred via `Events.OnGameStart` as a fallback.
+
+### Fixed
+- **Recipe filters now work with Neat Crafting** — Root cause: Neat Crafting overrides `ISEntityUI.OpenHandcraftWindow()` and substitutes its own `NC_HandcraftWindow` / `NC_RecipeList_Panel` classes, bypassing the vanilla `ISRecipeScrollingListBox` entirely. PhobosLib now supports three code paths: vanilla list view, vanilla grid view, and Neat Crafting's `NC_FilterBar`.
+
 ## [1.5.1] - 2026-02-19
 
 ### Fixed
