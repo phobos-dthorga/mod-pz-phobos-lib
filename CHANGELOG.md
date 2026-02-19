@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-02-19
+
+### Added
+- **PhobosLib_Trading** (shared/) — Generic wrapper for the Dynamic Trading mod API
+  - `isDynamicTradingActive()` — Lazy runtime detection of DynamicTradingCommon
+  - `registerTradeTag(tag, data)` — Register custom price/rarity tags
+  - `registerTradeArchetype(id, data)` — Register NPC trader archetypes
+  - `registerTradeItems(list)` — Batch item registration for NPC trading
+  - `registerTradeItem(uniqueID, data)` — Single item registration
+  - All functions are no-ops when DynamicTrading is not installed; all DT calls are pcall-wrapped for mid-save safety
+
 ## [1.6.0] - 2026-02-19
 
 ### Added

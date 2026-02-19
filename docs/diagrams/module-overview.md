@@ -1,12 +1,12 @@
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.6.0 provides 10 modules (9 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.7.0 provides 11 modules (10 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.6.0"]
+    subgraph LIB["PhobosLib v1.7.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -18,6 +18,7 @@ graph LR
         SKILL["PhobosLib_Skill<br/>Perk queries + XP mirroring"]
         RESET["PhobosLib_Reset<br/>Inventory/recipe/skill reset"]
         VALIDATE["PhobosLib_Validate<br/>Startup dependency validation"]
+        TRADING["PhobosLib_Trading<br/>Dynamic Trading wrapper"]
     end
 
     subgraph CLIENT["Client-side (loaded by PZ)"]
@@ -33,9 +34,10 @@ graph LR
     INIT --> SKILL
     INIT --> RESET
     INIT --> VALIDATE
+    INIT --> TRADING
 ```
 
-> The 9 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
+> The 10 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
 
 ---
 
@@ -219,6 +221,47 @@ PL.expectPerk("MyMod", "SomePerk")
 -- PhobosLib automatically calls validateDependencies() during OnGameStart.
 -- Missing entries appear in console.txt as:
 --   [PhobosLib:Validate] MISSING item 'Base.SomeItem' expected by MyMod
+```
+
+---
+
+## PhobosLib_Trading
+
+Generic wrapper for the Dynamic Trading mod (DynamicTradingCommon). All functions are no-ops when DynamicTrading is not installed. All DT calls are pcall-wrapped for safety if the mod is removed mid-save. Detection is lazy: the first call to any function checks whether the DynamicTrading global exists.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `isDynamicTradingActive()` | *(none)* | Lazy runtime detection; returns `true` if DynamicTrading API is available |
+| `registerTradeTag(tag, data)` | `tag: string, data: table` | Register a custom price/rarity tag; data = `{ priceMult = number, weight = number }` |
+| `registerTradeArchetype(id, data)` | `id: string, data: table` | Register an NPC trader archetype; data = `{ name, allocations, wants, forbid }` |
+| `registerTradeItems(list)` | `list: table` | Batch item registration; list = array of `{ item, basePrice, tags, stockRange }` — returns `ok, count` |
+| `registerTradeItem(uniqueID, data)` | `uniqueID: string, data: table` | Single item registration; data = `{ item, basePrice, tags, stockRange }` |
+
+### Usage Pattern
+
+```lua
+require "PhobosLib"
+
+local function registerMyTradeData()
+    if isClient() then return end
+    if not PhobosLib.isDynamicTradingActive() then return end
+
+    PhobosLib.registerTradeTag("MyTag", { priceMult = 1.5, weight = 20 })
+
+    PhobosLib.registerTradeArchetype("MyMod_Trader", {
+        name = "Specialist",
+        allocations = { MyTag = 80, Common = 20 },
+        wants = { MyTag = 1.3 },
+        forbid = { "Illegal" },
+    })
+
+    PhobosLib.registerTradeItems({
+        { item = "MyMod.ItemA", basePrice = 50, tags = { "MyTag", "Uncommon" }, stockRange = { min = 1, max = 3 } },
+        { item = "MyMod.ItemB", basePrice = 20, tags = { "MyTag", "Common" }, stockRange = { min = 2, max = 6 } },
+    })
+end
+
+Events.OnGameStart.Add(registerMyTradeData)
 ```
 
 ---

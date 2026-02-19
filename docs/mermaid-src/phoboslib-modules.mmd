@@ -1,5 +1,5 @@
 graph LR
-    subgraph LIB["PhobosLib v1.6.0"]
+    subgraph LIB["PhobosLib v1.7.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
@@ -19,6 +19,8 @@ graph LR
         RST["Reset<br/>iterateInventoryDeep<br/>stripModDataKey<br/>forgetRecipesByPrefix<br/>resetPerkXP, removeItemsByModule<br/>getWorldModDataValue<br/>stripWorldModDataKeys"]
 
         VAL["Validate<br/>expectItem, expectFluid<br/>expectPerk<br/>validateDependencies"]
+
+        TRADING["Trading<br/>isDynamicTradingActive<br/>registerTradeTag<br/>registerTradeArchetype<br/>registerTradeItems<br/>registerTradeItem"]
     end
 
     subgraph CLIENT["Client-side"]
@@ -34,3 +36,4 @@ graph LR
     INIT --> SKL
     INIT --> RST
     INIT --> VAL
+    INIT --> TRADING

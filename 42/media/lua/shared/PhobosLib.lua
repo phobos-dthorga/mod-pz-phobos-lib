@@ -5,7 +5,7 @@
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.6.0"
+PhobosLib.VERSION = "1.7.0"
 
 require "PhobosLib_Util"
 require "PhobosLib_Fluid"
@@ -16,3 +16,4 @@ require "PhobosLib_Hazard"
 require "PhobosLib_Skill"
 require "PhobosLib_Reset"
 require "PhobosLib_Validate"
+require "PhobosLib_Trading"
