@@ -33,6 +33,8 @@
 
 PhobosLib = PhobosLib or {}
 
+local _TAG = "[PhobosLib:Hazard]"
+
 
 ---------------------------------------------------------------
 -- Worn Item Detection
@@ -135,6 +137,8 @@ function PhobosLib.degradeFilterFromInputs(items, maskTypes, amount)
     if not items or not maskTypes or not amount then return false end
     if amount <= 0 then return false end
 
+    print(_TAG .. " degradeFilter: amount=" .. tostring(amount))
+
     local ok, applied = pcall(function()
         for i = 0, items:size() - 1 do
             local item = items:get(i)
@@ -211,26 +215,40 @@ function PhobosLib.applyHazardEffect(player, config)
     if not player or not config then return end
     local protMult = config.protectionMultiplier or 1.0
 
+    print(_TAG .. " applyHazardEffect: protMult=" .. tostring(protMult))
+
     if PhobosLib.isEHRActive() then
         -- EHR path: trigger diseases with probability
         pcall(function()
             local scaledChance = (config.ehrChance or 0) * protMult
             if scaledChance > 0 and config.ehrDisease then
+                print(_TAG .. " EHR TryContract: disease=" .. tostring(config.ehrDisease) .. " scaledChance=" .. tostring(scaledChance))
                 EHR.Disease.TryContract(player, config.ehrDisease, scaledChance)
             end
             -- Rare severe disease (chance applied AFTER base trigger)
             if config.ehrSevereDisease and config.ehrSevereChance then
                 local severeScaled = config.ehrSevereChance * protMult
                 if severeScaled > 0 then
+                    print(_TAG .. " EHR TryContract (severe): disease=" .. tostring(config.ehrSevereDisease) .. " scaledChance=" .. tostring(severeScaled))
                     EHR.Disease.TryContract(player, config.ehrSevereDisease, severeScaled)
                 end
             end
         end)
     else
-        -- Vanilla fallback: apply stat penalties directly
+        -- Vanilla fallback: apply stat penalties with before/after logging
         pcall(function()
             local stats = player:getStats()
             if not stats then return end
+
+            -- Capture before
+            local beforeSick = 0
+            local beforePain = 0
+            local beforeStress = 0
+            if CharacterStat then
+                beforeSick = stats:get(CharacterStat.SICKNESS) or 0
+                beforePain = stats:get(CharacterStat.PAIN) or 0
+                beforeStress = stats:get(CharacterStat.STRESS) or 0
+            end
 
             local function addStat(statEnum, delta)
                 if delta and delta > 0 and statEnum then
@@ -245,6 +263,21 @@ function PhobosLib.applyHazardEffect(player, config)
                 addStat(CharacterStat.PAIN, config.vanillaPain)
                 addStat(CharacterStat.STRESS, config.vanillaStress)
             end
+
+            -- Capture after and log deltas
+            if CharacterStat then
+                local afterSick = stats:get(CharacterStat.SICKNESS) or 0
+                local afterPain = stats:get(CharacterStat.PAIN) or 0
+                local afterStress = stats:get(CharacterStat.STRESS) or 0
+                local dSick = afterSick - beforeSick
+                local dPain = afterPain - beforePain
+                local dStress = afterStress - beforeStress
+                if dSick > 0 or dPain > 0 or dStress > 0 then
+                    print(_TAG .. " vanilla stat delta: sickness=+" .. string.format("%.3f", dSick) .. " pain=+" .. string.format("%.3f", dPain) .. " stress=+" .. string.format("%.3f", dStress))
+                else
+                    print(_TAG .. " vanilla stat delta: (no change)")
+                end
+            end
         end)
     end
 end
@@ -256,5 +289,6 @@ end
 ---@param msg string  Warning message
 function PhobosLib.warnHazard(player, msg)
     if not player or not msg then return end
+    print(_TAG .. " warnHazard: " .. tostring(msg))
     PhobosLib.say(player, msg)
 end

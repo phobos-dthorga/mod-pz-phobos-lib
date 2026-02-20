@@ -28,6 +28,8 @@
 -- other world containers that server-side OnGameStart migrations
 -- cannot reach (because those cells may not be loaded).
 --
+-- MP: Uses sendItemStats to sync condition changes to the server.
+--
 -- Hook: Events.OnRefreshInventoryWindowContainers
 --   Fires when the inventory panel refreshes its container list
 --   (opening loot panel, approaching containers, etc.)
@@ -73,6 +75,7 @@ local function stampContainer(container, entry)
                     local scaledValue = math.floor(entry.value / 100 * maxCond + 0.5)
                     scaledValue = math.min(maxCond - 1, scaledValue)
                     item:setCondition(scaledValue)
+                    pcall(sendItemStats, item)
                     count = count + 1
                 end
             end
