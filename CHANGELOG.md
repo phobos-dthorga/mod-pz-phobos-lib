@@ -23,6 +23,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-02-20
+
+### Added
+- **PhobosLib_VesselReplace** (client/) — Empty vessel replacement system
+  - `registerEmptyVesselReplacement(modulePrefix, mappings, guardFunc)` — Register mappings that replace empty FluidContainer items with vanilla vessels when the player opens a container. Supports simple string mappings (e.g. `"Base.EmptyJar"`) and table mappings with bonus items (e.g. `{vessel="Base.EmptyJar", bonus={"Base.JarLid"}}`). Bonus item condition matched to vessel condition.
+  - Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration, filtered to `"end"` stage.
+  - MP sync via `sendRemoveItemFromContainer`, `sendAddItemToContainer`, and `sendItemStats`. Uses `setDrawDirty(true)` to force UI refresh.
+- **MP sync for LazyStamp** — `sendItemStats(item)` now called after `setCondition()` in PhobosLib_LazyStamp for dedicated server persistence.
+- **Hazard diagnostic logging** — PhobosLib_Hazard now includes diagnostic print statements for troubleshooting PPE detection and hazard dispatch.
+
 ## [1.9.1] - 2026-02-20
 
 ### Fixed

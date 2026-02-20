@@ -1,12 +1,12 @@
 name=Phobos Shared Library
 id=PhobosLib
-description=Shared utility library for Phobos PZ mods. Provides API probing, item/fluid helpers, world scanning, sandbox utilities, quality/purity tracking, PPE/hazard systems, inventory reset/cleanup tools, crafting menu recipe visibility filters, item tooltip customisation, lazy container stamping, versioned migration framework, and Dynamic Trading wrapper.
+description=Shared utility library for Phobos PZ mods. Provides API probing, item/fluid helpers, world scanning, sandbox utilities, quality/purity tracking, PPE/hazard systems, inventory reset/cleanup tools, crafting menu recipe visibility filters, item tooltip customisation, lazy container stamping, empty vessel replacement, versioned migration framework, and Dynamic Trading wrapper.
 poster=poster.png
 icon=icon.png
 url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865
 authors=phobosgekko
 versionMin=42.14.0
-modversion=1.9.1
+modversion=1.10.0
 loadModAfter=\DynamicTradingCommon
 loadModBefore=\PhobosChemistryPathways,\PhobosEPRCleanup
 category=library
