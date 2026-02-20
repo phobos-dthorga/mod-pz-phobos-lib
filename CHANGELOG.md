@@ -30,9 +30,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   - `compareVersions(v1, v2)` — Semver comparison, returns -1/0/1
   - `getInstalledVersion(modId)` — Read mod version from world modData (nil for first install)
   - `setInstalledVersion(modId, version)` — Write mod version to world modData
-  - `registerMigration(modId, from, to, fn, label)` — Register a versioned migration function
-  - `runMigrations(modId, currentVersion, players)` — Execute pending migrations with world modData guards; skips on first install, idempotent on reload
-  - `notifyMigrationResult(player, modId, result)` — Send migration result to client via sendServerCommand
+  - `registerMigration(modId, from, to, fn, label)` — Register a versioned migration function. The `from` parameter is retained for documentation/readability but does not gate execution; all migrations where `installed < to` run automatically.
+  - `runMigrations(modId, currentVersion, players)` — Execute pending migrations with world modData guards; skips on first install, idempotent on reload. Three outcomes: normal (run pending), recovery (reset poisoned saves), incompatible (invoke handler).
+  - `registerIncompatibleHandler(modId, handler)` — Register a callback for incompatible version states (downgrade or invalid version string). Handler receives `{modId, installed, currentVersion, reason, guardCount}` and returns a policy: `"skip"` (stamp, no migrations), `"reset"` (treat as 0.0.0, run all), or `"abort"` (do nothing). Sensible defaults used when no handler is registered.
+  - `notifyMigrationResult(player, modId, result)` — Send migration result to client via sendServerCommand (now includes optional `reason` field)
 - **PhobosLib_Tooltip** (client/) — Generic tooltip line appender for item tooltips
   - `registerTooltipProvider(modulePrefix, provider)` — Register a callback that appends coloured text lines below the vanilla item tooltip for items matching a module prefix. The provider receives the hovered item and returns an array of `{text, r, g, b}` line tables (or nil to skip). Multiple providers can match the same item; lines are concatenated in registration order.
   - Hooks `ISToolTipInv.render()` once on first registration. Uses a full render replacement that replicates the vanilla render flow with expanded dimensions for provider lines. For items with no matching providers, delegates to the original render unchanged. Entire render block is pcall-wrapped for B42 API resilience.
