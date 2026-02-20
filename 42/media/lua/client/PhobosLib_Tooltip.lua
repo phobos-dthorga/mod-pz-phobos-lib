@@ -22,13 +22,21 @@
 -- coloured text lines below the vanilla item tooltip.
 --
 -- Hooks ISToolTipInv.render() once (on first registration).
--- After the vanilla tooltip is fully drawn, checks item type
--- against registered prefixes and draws extra lines below.
+-- For items with matching providers, performs a FULL RENDER
+-- REPLACEMENT that replicates the vanilla render flow with
+-- expanded dimensions to accommodate extra lines. For items
+-- with no matching providers, delegates to the original render
+-- unchanged.
 --
--- Drawing approach proven by EHR (Extensive Health Rework B42):
---   self:drawText()  for coloured text lines
---   self:drawRect()  for background fill
---   self:drawRectBorder()  for border outline
+-- Why full replacement? The vanilla render draws background,
+-- border, and Java DoTooltip at the measured size. Trying to
+-- extend AFTER the original render causes clipping because
+-- the Java ObjectTooltip already rendered at its measured dims.
+-- By replicating the flow with expanded dimensions, we draw
+-- background/border at the full size BEFORE Java renders, and
+-- our extra lines fit below the Java content.
+--
+-- Reference: ISToolTipInv.lua (vanilla), EHR_TooltipSystem.lua
 --
 -- Part of PhobosLib >= 1.9.0
 ---------------------------------------------------------------
@@ -80,74 +88,146 @@ local function collectLines(item)
     return allLines
 end
 
---- Draw extra lines below the vanilla tooltip.
---- Called after originalRender() completes.
+--- Full render replacement for items with provider lines.
+--- Replicates the vanilla ISToolTipInv.render() flow (lines 43-107)
+--- but with expanded dimensions to accommodate extra lines below
+--- the Java ObjectTooltip content.
 ---@param self any  ISToolTipInv instance
----@param lines table  Array of {text, r, g, b}
-local function drawExtraLines(self, lines)
-    local font = UIFont.Small
-    local tm = getTextManager()
-    local fontHgt = tm:getFontHeight(font)
-    local padding = 10
-    local lineSpacing = 2
-
-    -- Calculate total extra height needed
-    local totalExtraH = padding  -- top gap before first line
-    for _ = 1, #lines do
-        totalExtraH = totalExtraH + fontHgt + lineSpacing
-    end
-
-    -- Calculate max width of new lines
-    local maxLineW = 0
-    for _, line in ipairs(lines) do
-        local w = tm:MeasureStringX(font, line.text or "")
-        if w > maxLineW then maxLineW = w end
-    end
-    local neededW = maxLineW + (padding * 2)
-
-    -- Expand tooltip dimensions
-    local oldH = self.height
-    local newH = oldH + totalExtraH
-    self:setHeight(newH)
-
-    if neededW > self.width then
-        self:setWidth(neededW)
-    end
-
-    -- Draw background extension
-    local bg = self.backgroundColor
-    self:drawRect(0, oldH, self.width, totalExtraH, bg.a, bg.r, bg.g, bg.b)
-
-    -- Redraw border at full expanded size
-    local bd = self.borderColor
-    self:drawRectBorder(0, 0, self.width, newH, bd.a, bd.r, bd.g, bd.b)
-
-    -- Draw each line
-    local y = oldH + padding / 2
-    for _, line in ipairs(lines) do
-        local r = line.r or 1.0
-        local g = line.g or 1.0
-        local b = line.b or 1.0
-        self:drawText(line.text or "", padding, y, r, g, b, 1.0, font)
-        y = y + fontHgt + lineSpacing
-    end
-end
-
---- Replacement ISToolTipInv.render that appends extra lines.
 local function hookedRender(self)
-    -- Call original render first (vanilla tooltip fully drawn)
-    _originalRender(self)
+    -- Fast path: if no item or no matching providers, delegate unchanged
+    local item = self.item
+    if not item then
+        return _originalRender(self)
+    end
 
-    -- Append extra lines (all in pcall for B42 resilience)
+    local lines = nil
     pcall(function()
-        local item = self.item
-        if not item then return end
-
-        local lines = collectLines(item)
-        if not lines or #lines == 0 then return end
-
-        drawExtraLines(self, lines)
+        lines = collectLines(item)
     end)
+
+    if not lines or #lines == 0 then
+        return _originalRender(self)
+    end
+
+    -- From here: full render replacement (matching vanilla flow)
+    -- Wrapped in pcall for B42 API resilience — if anything fails,
+    -- fall back to original render
+    local renderOk = pcall(function()
+        -- Context menu guard (same as vanilla line 45)
+        if ISContextMenu.instance and ISContextMenu.instance.visibleCheck then
+            return
+        end
+
+        -- Mouse position (same as vanilla lines 47-56)
+        local mx = getMouseX() + 24
+        local my = getMouseY() + 24
+        if not self.followMouse then
+            mx = self:getX()
+            my = self:getY()
+            if self.anchorBottomLeft then
+                mx = self.anchorBottomLeft.x
+                my = self.anchorBottomLeft.y
+            end
+        end
+
+        -- PADX (vanilla uses 0, kept for compatibility)
+        local PADX = 0
+
+        -- Measure-only pass (same as vanilla lines 58-66)
+        self.tooltip:setX(mx + PADX)
+        self.tooltip:setY(my)
+        self.tooltip:setWidth(50)
+        self.tooltip:setMeasureOnly(true)
+        self.item:DoTooltip(self.tooltip)
+        self.tooltip:setMeasureOnly(false)
+
+        -- Get vanilla measured dimensions
+        local tw = self.tooltip:getWidth()
+        local th = self.tooltip:getHeight()
+
+        -- Calculate extra height for provider lines
+        local font = UIFont.Small
+        local tm = getTextManager()
+        local fontHgt = tm:getFontHeight(font)
+        local padding = 10
+        local lineSpacing = 2
+
+        local extraH = padding  -- gap above first provider line
+        for _ = 1, #lines do
+            extraH = extraH + fontHgt + lineSpacing
+        end
+
+        -- Calculate max provider line width
+        local maxLineW = 0
+        for _, line in ipairs(lines) do
+            local w = tm:MeasureStringX(font, line.text or "")
+            if w > maxLineW then maxLineW = w end
+        end
+
+        -- Expanded dimensions
+        local totalW = math.max(tw, maxLineW + padding * 2)
+        local totalH = th + extraH
+
+        -- Screen clamping (same as vanilla lines 68-81)
+        local myCore = getCore()
+        local maxX = myCore:getScreenWidth()
+        local maxY = myCore:getScreenHeight()
+
+        self.tooltip:setX(math.max(0, math.min(mx + PADX, maxX - totalW - 1)))
+        if not self.followMouse and self.anchorBottomLeft then
+            self.tooltip:setY(math.max(0, math.min(my - totalH, maxY - totalH - 1)))
+        else
+            self.tooltip:setY(math.max(0, math.min(my, maxY - totalH - 1)))
+        end
+
+        -- Joyfocus / context menu positioning (same as vanilla lines 83-92)
+        if self.contextMenu and self.contextMenu.joyfocus then
+            local playerNum = self.contextMenu.player
+            self.tooltip:setX(getPlayerScreenLeft(playerNum) + 60)
+            self.tooltip:setY(getPlayerScreenTop(playerNum) + 60)
+        elseif self.contextMenu and self.contextMenu.currentOptionRect then
+            if self.contextMenu.currentOptionRect.height > 32 then
+                self:setY(my + self.contextMenu.currentOptionRect.height)
+            end
+            self:adjustPositionToAvoidOverlap(self.contextMenu.currentOptionRect)
+        end
+
+        -- Set panel dimensions with EXPANDED size (same as vanilla lines 94-97)
+        self:setX(self.tooltip:getX() - PADX)
+        self:setY(self.tooltip:getY())
+        self:setWidth(totalW + PADX)
+        self:setHeight(totalH)
+
+        -- Avoid overlap with mouse cursor (same as vanilla lines 99-101)
+        if self.followMouse and (self.contextMenu == nil) then
+            self:adjustPositionToAvoidOverlap({ x = mx - 24 * 2, y = my - 24 * 2, width = 24 * 2, height = 24 * 2 })
+        end
+
+        -- Draw background and border at EXPANDED size (same as vanilla lines 103-104)
+        self:drawRect(0, 0, self.width, self.height,
+            self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
+        self:drawRectBorder(0, 0, self.width, self.height,
+            self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
+
+        -- Render Java tooltip content (same as vanilla line 105)
+        -- Java renders at its original measured size within the expanded panel
+        self.item:DoTooltip(self.tooltip)
+
+        -- Draw provider lines below vanilla content
+        local y = th + padding / 2
+        for _, line in ipairs(lines) do
+            local r = line.r or 1.0
+            local g = line.g or 1.0
+            local b = line.b or 1.0
+            self:drawText(line.text or "", padding, y, r, g, b, 1.0, font)
+            y = y + fontHgt + lineSpacing
+        end
+    end)
+
+    -- If pcall failed, fall back to original render
+    if not renderOk then
+        _originalRender(self)
+    end
 end
 
 ---------------------------------------------------------------
@@ -165,7 +245,7 @@ local function installHook()
     _originalRender = ISToolTipInv.render
     ISToolTipInv.render = hookedRender
     _hookInstalled = true
-    print(_TAG .. " ISToolTipInv.render hook installed")
+    print(_TAG .. " ISToolTipInv.render hook installed (full render replacement)")
 end
 
 ---------------------------------------------------------------

@@ -26,27 +26,6 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ## [1.9.0] - 2026-02-20
 
 ### Added
-- **PhobosLib_Tooltip** (client/) — Generic tooltip line appender for item tooltips
-  - `registerTooltipProvider(modulePrefix, provider)` — Register a callback that appends coloured text lines below the vanilla item tooltip for items matching a module prefix. The provider receives the hovered item and returns an array of `{text, r, g, b}` line tables (or nil to skip). Multiple providers can match the same item; lines are concatenated in registration order.
-  - Hooks `ISToolTipInv.render()` once on first registration. Uses `self:drawText()` to draw lines below the Java `ObjectTooltip` content, extending the tooltip background and border to fit. Rendering approach proven by EHR (Extensive Health Rework B42).
-  - Entire extension block is pcall-wrapped for B42 API resilience.
-- **PhobosLib_LazyStamp** (client/) — Lazy container condition stamper
-  - `registerLazyConditionStamp(modulePrefix, stampValue, guardFunc)` — Register a stamper that sets item condition on unstamped items (condition == ConditionMax) matching a module prefix whenever the player opens or views a container. Useful for mods that repurpose item condition as a metadata channel (purity, charge level, etc.) and need to cover items in world containers that server-side migrations cannot reach.
-  - Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration. Optional guard function controls when stamping is active (e.g. sandbox option checks).
-
-## [1.8.2] - 2026-02-20
-
-### Fixed
-- **Recover saves poisoned by v1.8.0 migration bug** — The v1.8.1 nil→"0.0.0" fix prevented future occurrences, but saves that already loaded with v1.8.0 had `PhobosLib_version_<modId>` stamped without any migrations running. These saves appeared "already at current version" and migrations never fired. Fix: when the version is stamped but none of the registered migration guard keys (`PhobosLib_migration_<modId>_<to>_done`) exist, reset installed version to `"0.0.0"` so all migrations re-run. This recovery is framework-level and protects all mods using PhobosLib_Migrate.
-
-## [1.8.1] - 2026-02-20
-
-### Fixed
-- **Migration framework skipped pre-framework upgrades** — `PhobosLib.runMigrations()` treated `nil` installed version as "first install" and skipped all migrations. But saves upgrading from versions before the migration framework (e.g. PCP v0.17.x → v0.19.0) had no version stamped in world modData, making them indistinguishable from fresh installs. Fix: treat `nil` as `"0.0.0"` so all registered migrations run. Migration functions must be idempotent on empty state (this was already the case for all existing migrations).
-
-## [1.8.0] - 2026-02-20
-
-### Added
 - **PhobosLib_Migrate** (shared/) — Generic versioned migration framework for save upgrades
   - `compareVersions(v1, v2)` — Semver comparison, returns -1/0/1
   - `getInstalledVersion(modId)` — Read mod version from world modData (nil for first install)
@@ -54,6 +33,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   - `registerMigration(modId, from, to, fn, label)` — Register a versioned migration function
   - `runMigrations(modId, currentVersion, players)` — Execute pending migrations with world modData guards; skips on first install, idempotent on reload
   - `notifyMigrationResult(player, modId, result)` — Send migration result to client via sendServerCommand
+- **PhobosLib_Tooltip** (client/) — Generic tooltip line appender for item tooltips
+  - `registerTooltipProvider(modulePrefix, provider)` — Register a callback that appends coloured text lines below the vanilla item tooltip for items matching a module prefix. The provider receives the hovered item and returns an array of `{text, r, g, b}` line tables (or nil to skip). Multiple providers can match the same item; lines are concatenated in registration order.
+  - Hooks `ISToolTipInv.render()` once on first registration. Uses a full render replacement that replicates the vanilla render flow with expanded dimensions for provider lines. For items with no matching providers, delegates to the original render unchanged. Entire render block is pcall-wrapped for B42 API resilience.
+- **PhobosLib_LazyStamp** (client/) — Lazy container condition stamper
+  - `registerLazyConditionStamp(modulePrefix, stampValue, guardFunc)` — Register a stamper that sets item condition on unstamped items (condition == ConditionMax) matching a module prefix whenever the player opens or views a container. Useful for mods that repurpose item condition as a metadata channel (purity, charge level, etc.) and need to cover items in world containers that server-side migrations cannot reach.
+  - Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration. Runs only at `"end"` stage when all containers are finalized. Optional guard function controls when stamping is active (e.g. sandbox option checks).
+
+### Fixed
+- **Migration framework skipped pre-framework upgrades** — `PhobosLib.runMigrations()` treated `nil` installed version as "first install" and skipped all migrations. Fix: treat `nil` as `"0.0.0"` so all registered migrations run.
+- **Recover saves poisoned by early migration bug** — Saves that loaded with the initial migration framework had version stamped without migrations running. Fix: when version is stamped but no migration guard keys exist, reset to `"0.0.0"` so all migrations re-run.
 
 ## [1.7.1] - 2026-02-20
 

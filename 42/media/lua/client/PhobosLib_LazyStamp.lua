@@ -79,8 +79,14 @@ local function stampContainer(container, entry)
 end
 
 --- Event handler for OnRefreshInventoryWindowContainers.
+--- Event fires with (ISInventoryPage, stage_string) where stage is
+--- "begin", "beforeFloor", "buttonsAdded", or "end".
+--- We only stamp at "end" when all containers are finalized.
 ---@param inventoryPage any  ISInventoryPage
-local function onRefreshContainers(inventoryPage)
+---@param stage string       Refresh stage
+local function onRefreshContainers(inventoryPage, stage)
+    if stage ~= "end" then return end
+
     pcall(function()
         if not inventoryPage or not inventoryPage.backpacks then return end
 
@@ -97,7 +103,10 @@ local function onRefreshContainers(inventoryPage)
             -- Iterate all visible containers
             for _, backpack in ipairs(inventoryPage.backpacks) do
                 if backpack and backpack.inventory then
-                    stampContainer(backpack.inventory, entry)
+                    local count = stampContainer(backpack.inventory, entry)
+                    if count > 0 then
+                        print(_TAG .. " stamped " .. count .. " item(s) in container for prefix '" .. entry.prefix .. "'")
+                    end
                 end
             end
 
