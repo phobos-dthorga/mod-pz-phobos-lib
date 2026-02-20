@@ -112,7 +112,7 @@ local function hookedRender(self)
     -- From here: full render replacement (matching vanilla flow)
     -- Wrapped in pcall for B42 API resilience — if anything fails,
     -- fall back to original render
-    local renderOk = pcall(function()
+    local renderOk, renderErr = pcall(function()
         -- Context menu guard (same as vanilla line 45)
         if ISContextMenu.instance and ISContextMenu.instance.visibleCheck then
             return
@@ -226,6 +226,7 @@ local function hookedRender(self)
 
     -- If pcall failed, fall back to original render
     if not renderOk then
+        print(_TAG .. " render error: " .. tostring(renderErr))
         _originalRender(self)
     end
 end

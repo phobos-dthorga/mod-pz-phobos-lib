@@ -23,6 +23,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-02-20
+
+### Fixed
+- **LazyStamp Lua 5.1 compatibility** — `goto continue` syntax caused silent parse failure in PZ's Kahlua VM (Lua 5.1). Replaced with boolean flag pattern. The entire file failed to load, preventing all lazy stamper registrations.
+- **LazyStamp ConditionMax scaling** — stampValue was set as raw integer (e.g. 99) regardless of item's ConditionMax. Now scales: `math.floor(value / 100 * maxCond + 0.5)`. Critical for FluidContainer items whose ConditionMax may differ from 100.
+- **Migration skip notification suppressed** — Incompatible version handler's "skip" policy no longer generates a notification entry, avoiding confusing "Version policy: skip" messages on every game load for downgrade scenarios.
+- **Tooltip diagnostic logging removed** — Cleaned up debug `_diagSeen` tracking and DIAG print statements from `PhobosLib_Tooltip.lua`.
+
 ## [1.9.0] - 2026-02-20
 
 ### Added

@@ -137,9 +137,9 @@ local function invokeIncompatibleHandler(modId, installed, currentVersion, reaso
     if policy == "skip" then
         print(_TAG .. " " .. modId .. " policy=skip: stamping " .. currentVersion .. ", no migrations")
         PhobosLib.setInstalledVersion(modId, currentVersion)
-        return {{ label = "Version policy: skip", ok = true,
-                  msg = "Skipped from " .. tostring(installed) .. " to " .. currentVersion,
-                  to = currentVersion, reason = reason }}, nil
+        -- Return empty results — skip is routine/expected and should not
+        -- produce a client notification dialog. The server log above is sufficient.
+        return {}, nil
     elseif policy == "reset" then
         print(_TAG .. " " .. modId .. " policy=reset: treating as 0.0.0, running all migrations")
         return nil, "0.0.0"

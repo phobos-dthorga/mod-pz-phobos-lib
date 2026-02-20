@@ -69,7 +69,10 @@ local function stampContainer(container, entry)
             if fullType and string.find(fullType, entry.prefix, 1, true) then
                 local maxCond = item:getConditionMax()
                 if maxCond and maxCond > 0 and item:getCondition() == maxCond then
-                    item:setCondition(entry.value)
+                    -- Scale stampValue (percentage) to item's ConditionMax
+                    local scaledValue = math.floor(entry.value / 100 * maxCond + 0.5)
+                    scaledValue = math.min(maxCond - 1, scaledValue)
+                    item:setCondition(scaledValue)
                     count = count + 1
                 end
             end
@@ -92,25 +95,25 @@ local function onRefreshContainers(inventoryPage, stage)
 
         for _, entry in ipairs(PhobosLib._lazyStampEntries) do
             -- Check guard function (e.g. sandbox option enabled)
+            local shouldRun = true
             if entry.guard then
                 local guardOk, guardResult = pcall(entry.guard)
                 if not guardOk or guardResult ~= true then
-                    -- Guard failed or returned false; skip this entry
-                    goto continue
+                    shouldRun = false
                 end
             end
 
-            -- Iterate all visible containers
-            for _, backpack in ipairs(inventoryPage.backpacks) do
-                if backpack and backpack.inventory then
-                    local count = stampContainer(backpack.inventory, entry)
-                    if count > 0 then
-                        print(_TAG .. " stamped " .. count .. " item(s) in container for prefix '" .. entry.prefix .. "'")
+            if shouldRun then
+                -- Iterate all visible containers
+                for _, backpack in ipairs(inventoryPage.backpacks) do
+                    if backpack and backpack.inventory then
+                        local count = stampContainer(backpack.inventory, entry)
+                        if count > 0 then
+                            print(_TAG .. " stamped " .. count .. " item(s) in container for prefix '" .. entry.prefix .. "'")
+                        end
                     end
                 end
             end
-
-            ::continue::
         end
     end)
 end
@@ -142,7 +145,7 @@ end
 --- in world containers get stamped when first accessed.
 ---
 ---@param modulePrefix string     Item fullType prefix (e.g. "PhobosChemistryPathways.")
----@param stampValue   number     Condition value to stamp (e.g. 99)
+---@param stampValue   number     Purity percentage to stamp (e.g. 99 = 99%), scaled to ConditionMax
 ---@param guardFunc    function|nil  Optional guard: function() -> boolean.
 ---                                   Stamping only occurs when guard returns true.
 ---                                   Use for sandbox option checks.
