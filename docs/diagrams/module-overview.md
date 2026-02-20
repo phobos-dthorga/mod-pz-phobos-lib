@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.8.2 provides 12 modules (11 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.9.0 provides 14 modules (11 shared + 3 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.8.2"]
+    subgraph LIB["PhobosLib v1.9.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -41,6 +41,8 @@ graph LR
 
     subgraph CLIENT["Client-side (loaded by PZ)"]
         RF["PhobosLib_RecipeFilter<br/>Recipe visibility filter<br/>(vanilla + Neat Crafting)"]
+        TT["PhobosLib_Tooltip<br/>Item tooltip line appender<br/>(full render replacement)"]
+        LS["PhobosLib_LazyStamp<br/>Lazy container condition stamper"]
     end
 
     INIT --> UTIL
@@ -56,7 +58,7 @@ graph LR
     INIT --> MIGRATE
 ```
 
-> The 11 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
+> The 11 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 3 client-side modules (RecipeFilter, Tooltip, LazyStamp) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
 
 ---
 
@@ -294,13 +296,20 @@ Versioned save migration framework for mod upgrades. Tracks installed mod versio
 | `compareVersions(v1, v2)` | `v1, v2: string` | Semantic version comparison; returns -1 (v1 < v2), 0 (equal), or 1 (v1 > v2) |
 | `getInstalledVersion(modId)` | `modId: string` | Read mod version from world modData; returns nil for first install |
 | `setInstalledVersion(modId, version)` | `modId, version: string` | Write mod version to world modData |
-| `registerMigration(modId, from, to, fn, label)` | `modId: string, from: string?, to: string, fn: function, label: string` | Register a migration function; `from` = nil means "any version before `to`"; `fn(player)` returns `ok, msg` |
-| `runMigrations(modId, currentVersion, players)` | `modId, currentVersion: string, players: table` | Execute all pending migrations in version order; stamps version on completion; returns array of `{label, status, msg}` results |
-| `notifyMigrationResult(player, modId, result)` | `player, modId: string, result: table` | Send migration result to client via `sendServerCommand(modId, "migrateResult", result)` |
+| `registerMigration(modId, from, to, fn, label)` | `modId: string, from: string?, to: string, fn: function, label: string` | Register a migration function; `from` is documentation-only (not used in execution logic); all migrations where `installed < to` run automatically; `fn(player)` returns `ok, msg` |
+| `registerIncompatibleHandler(modId, handler)` | `modId: string, handler: function` | Register a callback for incompatible version states (downgrade or invalid version string). Handler receives `{modId, installed, currentVersion, reason, guardCount}` and returns `"skip"` (stamp, no migrations), `"reset"` (treat as 0.0.0, run all), or `"abort"` (do nothing). Sensible defaults used when no handler is registered (downgrade→skip, invalid→reset). |
+| `runMigrations(modId, currentVersion, players)` | `modId, currentVersion: string, players: table` | Execute all pending migrations in version order; stamps version on completion; returns array of `{label, ok, msg, to, reason?}` results |
+| `notifyMigrationResult(player, modId, result)` | `player, modId: string, result: table` | Send migration result to client via `sendServerCommand(modId, "migrateResult", result)`; includes optional `reason` field |
 
-### Recovery Mechanism (v1.8.2)
+### Migration Outcomes (v1.9.0)
 
-If a version is stamped but no migration guard keys exist (caused by v1.8.0 bug where version was stamped without migrations running), the installed version is reset to `"0.0.0"` so all migrations re-run. Migration functions must be idempotent on empty state.
+Three possible outcomes when `runMigrations` is called:
+
+1. **Normal** — installed < currentVersion: run all pending migrations where `installed < mig.to`
+2. **Recovery** — version stamped but no guard keys exist (v1.8.0 bug): reset to `"0.0.0"`, re-run all migrations
+3. **Incompatible** — downgrade or invalid version string: invoke registered handler (or default), which returns `"skip"`, `"reset"`, or `"abort"`
+
+Migration functions must be idempotent on empty state (safe to re-run on fresh installs).
 
 ### Usage Pattern
 
@@ -360,4 +369,60 @@ PhobosLib.registerRecipeFilters({
     ["MyRecipeA"] = function() return SandboxVars.MyMod.OptionA end,
     ["MyRecipeB"] = function() return SandboxVars.MyMod.OptionB end,
 })
+```
+
+---
+
+## PhobosLib_Tooltip
+
+Client-side generic tooltip line appender for item tooltips. Registers provider callbacks that append coloured text lines below the vanilla item tooltip for items matching a module prefix. Uses a full render replacement of `ISToolTipInv.render()` that replicates the vanilla render flow with expanded dimensions for provider lines. For items with no matching providers, delegates to the original render unchanged. Entire render block is pcall-wrapped for B42 API resilience.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerTooltipProvider(modulePrefix, provider)` | `modulePrefix: string, provider: function` | Register a tooltip provider for items whose `fullType` contains the given prefix. The provider receives the hovered item and returns an array of `{text=string, r=number, g=number, b=number}` line tables (or nil to skip). Multiple providers can match the same item; lines are concatenated in registration order. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerTooltipProvider("MyMod.", function(item)
+    local value = item:getCondition()
+    return {{
+        text = "Quality: " .. value .. "%",
+        r = 0.4, g = 0.8, b = 1.0,
+    }}
+end)
+```
+
+---
+
+## PhobosLib_LazyStamp
+
+Client-side lazy container condition stamper. When the player opens or views a container, all items matching a registered module prefix that still have condition == ConditionMax (unstamped) are stamped to the configured value. Covers items in safehouse storage, vehicle trunks, and other world containers that server-side OnGameStart migrations cannot reach (because those cells may not be loaded).
+
+Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration. Runs only at the `"end"` stage when all containers are finalized. Optional guard function controls when stamping is active (e.g. sandbox option checks).
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerLazyConditionStamp(modulePrefix, stampValue, guardFunc)` | `modulePrefix: string, stampValue: number, guardFunc: function?` | Register a stamper for items whose `fullType` contains the given prefix. Items at condition == ConditionMax get stamped to `stampValue`. Optional `guardFunc` returns `true` to enable stamping (e.g. sandbox option check). |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerLazyConditionStamp(
+    "MyMod.",                            -- module prefix
+    99,                                   -- stamp value
+    function()                            -- optional guard
+        return SandboxVars.MyMod.EnablePurity == true
+    end
+)
 ```

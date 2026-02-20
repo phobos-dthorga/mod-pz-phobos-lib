@@ -1,5 +1,5 @@
 graph LR
-    subgraph LIB["PhobosLib v1.7.0"]
+    subgraph LIB["PhobosLib v1.9.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
@@ -21,10 +21,16 @@ graph LR
         VAL["Validate<br/>expectItem, expectFluid<br/>expectPerk<br/>validateDependencies"]
 
         TRADING["Trading<br/>isDynamicTradingActive<br/>registerTradeTag<br/>registerTradeArchetype<br/>registerTradeItems<br/>registerTradeItem"]
+
+        MIGRATE["Migrate<br/>compareVersions<br/>registerMigration<br/>registerIncompatibleHandler<br/>runMigrations<br/>notifyMigrationResult"]
     end
 
     subgraph CLIENT["Client-side"]
         RF["RecipeFilter<br/>registerRecipeFilter<br/>registerRecipeFilters<br/>(vanilla + Neat Crafting)"]
+
+        TT["Tooltip<br/>registerTooltipProvider<br/>(full render replacement)"]
+
+        LS["LazyStamp<br/>registerLazyConditionStamp<br/>(container open hook)"]
     end
 
     INIT --> UTIL
@@ -37,3 +43,4 @@ graph LR
     INIT --> RST
     INIT --> VAL
     INIT --> TRADING
+    INIT --> MIGRATE
