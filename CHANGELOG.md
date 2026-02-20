@@ -23,6 +23,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-02-20
+
+### Added
+- **PhobosLib_Tooltip** (client/) — Generic tooltip line appender for item tooltips
+  - `registerTooltipProvider(modulePrefix, provider)` — Register a callback that appends coloured text lines below the vanilla item tooltip for items matching a module prefix. The provider receives the hovered item and returns an array of `{text, r, g, b}` line tables (or nil to skip). Multiple providers can match the same item; lines are concatenated in registration order.
+  - Hooks `ISToolTipInv.render()` once on first registration. Uses `self:drawText()` to draw lines below the Java `ObjectTooltip` content, extending the tooltip background and border to fit. Rendering approach proven by EHR (Extensive Health Rework B42).
+  - Entire extension block is pcall-wrapped for B42 API resilience.
+- **PhobosLib_LazyStamp** (client/) — Lazy container condition stamper
+  - `registerLazyConditionStamp(modulePrefix, stampValue, guardFunc)` — Register a stamper that sets item condition on unstamped items (condition == ConditionMax) matching a module prefix whenever the player opens or views a container. Useful for mods that repurpose item condition as a metadata channel (purity, charge level, etc.) and need to cover items in world containers that server-side migrations cannot reach.
+  - Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration. Optional guard function controls when stamping is active (e.g. sandbox option checks).
+
 ## [1.8.2] - 2026-02-20
 
 ### Fixed
