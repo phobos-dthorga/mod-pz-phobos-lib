@@ -1,6 +1,23 @@
+<!--
+  ________________________________________________________________________
+ / Copyright (c) 2026 Phobos A. D'thorga                                \
+ |                                                                        |
+ |           /\_/\                                                         |
+ |         =/ o o \=    Phobos' PZ Modding                                |
+ |          (  V  )     All rights reserved.                              |
+ |     /\  / \   / \                                                      |
+ |    /  \/   '-'   \   This source code is part of the Phobos            |
+ |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+ |  (__/    \_/ \/  \__)                                                  |
+ |     |   | |  | |     Unauthorised copying, modification, or            |
+ |     |___|_|  |_|     distribution of this file is prohibited.          |
+ |                                                                        |
+ \________________________________________________________________________/
+-->
+
 # PhobosLib
 
-**Version:** 1.7.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.8.2 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -8,7 +25,7 @@
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
-**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 150-recipe chemistry suite
+**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 154-recipe chemistry suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)
@@ -29,9 +46,10 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Reset** | Generic inventory/recipe/skill reset utilities: deep inventory traversal, modData stripping, recipe removal, XP reset, item removal by module |
 | **PhobosLib_Validate** | Startup dependency validation: register expected items/fluids/perks at load time, validate during OnGameStart, log missing entries with requesting mod ID |
 | **PhobosLib_Trading** | Generic wrapper for Dynamic Trading mod API: lazy runtime detection, custom tag/archetype/item registration, batch item registration — all functions are no-ops when DynamicTrading is not installed; all DT calls are pcall-wrapped for mid-save safety |
+| **PhobosLib_Migrate** | Versioned save migration framework: semver comparison, version tracking in world modData, migration registration with guard keys, idempotent execution — mods register migration functions that run once per version upgrade |
 | **PhobosLib_RecipeFilter** | Client-side crafting menu recipe visibility filter: register filter functions to hide/show `craftRecipe` entries based on sandbox settings or runtime conditions. Supports vanilla list view, vanilla grid view, and Neat Crafting mod compatibility |
 
-Usage: `require "PhobosLib"` loads all 10 shared modules into the global `PhobosLib` table. The RecipeFilter module is loaded separately by PZ from `client/`.
+Usage: `require "PhobosLib"` loads all 11 shared modules into the global `PhobosLib` table. The RecipeFilter module is loaded separately by PZ from `client/`.
 
 ## Intended usage
 - As a dependency: your mod can require PhobosLib and call its helpers.
@@ -45,7 +63,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 11 modules with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 12 modules with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 

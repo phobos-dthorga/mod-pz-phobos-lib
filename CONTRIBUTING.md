@@ -1,3 +1,20 @@
+<!--
+  ________________________________________________________________________
+ / Copyright (c) 2026 Phobos A. D'thorga                                \
+ |                                                                        |
+ |           /\_/\                                                         |
+ |         =/ o o \=    Phobos' PZ Modding                                |
+ |          (  V  )     All rights reserved.                              |
+ |     /\  / \   / \                                                      |
+ |    /  \/   '-'   \   This source code is part of the Phobos            |
+ |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+ |  (__/    \_/ \/  \__)                                                  |
+ |     |   | |  | |     Unauthorised copying, modification, or            |
+ |     |___|_|  |_|     distribution of this file is prohibited.          |
+ |                                                                        |
+ \________________________________________________________________________/
+-->
+
 # Contributing to PhobosLib
 
 Thanks for contributing! PhobosLib is a shared dependency library, so stability and compatibility matter more than feature quantity.

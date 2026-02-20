@@ -1,3 +1,19 @@
+--  ________________________________________________________________________
+-- / Copyright (c) 2026 Phobos A. D'thorga                                \
+-- |                                                                        |
+-- |           /\_/\                                                         |
+-- |         =/ o o \=    Phobos' PZ Modding                                |
+-- |          (  V  )     All rights reserved.                              |
+-- |     /\  / \   / \                                                      |
+-- |    /  \/   '-'   \   This source code is part of the Phobos            |
+-- |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+-- |  (__/    \_/ \/  \__)                                                  |
+-- |     |   | |  | |     Unauthorised copying, modification, or            |
+-- |     |___|_|  |_|     distribution of this file is prohibited.          |
+-- |                                                                        |
+-- \________________________________________________________________________/
+--
+
 ---------------------------------------------------------------
 -- PhobosLib_Reset.lua
 -- Generic inventory/recipe/skill reset utilities for PZ B42.

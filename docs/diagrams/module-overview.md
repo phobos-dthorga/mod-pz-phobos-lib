@@ -1,12 +1,29 @@
+<!--
+  ________________________________________________________________________
+ / Copyright (c) 2026 Phobos A. D'thorga                                \
+ |                                                                        |
+ |           /\_/\                                                         |
+ |         =/ o o \=    Phobos' PZ Modding                                |
+ |          (  V  )     All rights reserved.                              |
+ |     /\  / \   / \                                                      |
+ |    /  \/   '-'   \   This source code is part of the Phobos            |
+ |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+ |  (__/    \_/ \/  \__)                                                  |
+ |     |   | |  | |     Unauthorised copying, modification, or            |
+ |     |___|_|  |_|     distribution of this file is prohibited.          |
+ |                                                                        |
+ \________________________________________________________________________/
+-->
+
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.7.0 provides 11 modules (10 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.8.2 provides 12 modules (11 shared + 1 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.7.0"]
+    subgraph LIB["PhobosLib v1.8.2"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -19,6 +36,7 @@ graph LR
         RESET["PhobosLib_Reset<br/>Inventory/recipe/skill reset"]
         VALIDATE["PhobosLib_Validate<br/>Startup dependency validation"]
         TRADING["PhobosLib_Trading<br/>Dynamic Trading wrapper"]
+        MIGRATE["PhobosLib_Migrate<br/>Versioned save migration"]
     end
 
     subgraph CLIENT["Client-side (loaded by PZ)"]
@@ -35,9 +53,10 @@ graph LR
     INIT --> RESET
     INIT --> VALIDATE
     INIT --> TRADING
+    INIT --> MIGRATE
 ```
 
-> The 10 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
+> The 11 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The RecipeFilter module is loaded separately by PZ from `client/` and also attaches to the `PhobosLib` table.
 
 ---
 
@@ -262,6 +281,49 @@ local function registerMyTradeData()
 end
 
 Events.OnGameStart.Add(registerMyTradeData)
+```
+
+---
+
+## PhobosLib_Migrate
+
+Versioned save migration framework for mod upgrades. Tracks installed mod versions in world modData and executes registered migration functions exactly once per version transition. Uses guard keys (`PhobosLib_migration_<modId>_<toVersion>_done`) to prevent re-execution on reload.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `compareVersions(v1, v2)` | `v1, v2: string` | Semantic version comparison; returns -1 (v1 < v2), 0 (equal), or 1 (v1 > v2) |
+| `getInstalledVersion(modId)` | `modId: string` | Read mod version from world modData; returns nil for first install |
+| `setInstalledVersion(modId, version)` | `modId, version: string` | Write mod version to world modData |
+| `registerMigration(modId, from, to, fn, label)` | `modId: string, from: string?, to: string, fn: function, label: string` | Register a migration function; `from` = nil means "any version before `to`"; `fn(player)` returns `ok, msg` |
+| `runMigrations(modId, currentVersion, players)` | `modId, currentVersion: string, players: table` | Execute all pending migrations in version order; stamps version on completion; returns array of `{label, status, msg}` results |
+| `notifyMigrationResult(player, modId, result)` | `player, modId: string, result: table` | Send migration result to client via `sendServerCommand(modId, "migrateResult", result)` |
+
+### Recovery Mechanism (v1.8.2)
+
+If a version is stamped but no migration guard keys exist (caused by v1.8.0 bug where version was stamped without migrations running), the installed version is reset to `"0.0.0"` so all migrations re-run. Migration functions must be idempotent on empty state.
+
+### Usage Pattern
+
+```lua
+require "PhobosLib"
+
+PhobosLib.registerMigration("MyMod", nil, "1.0.0", function(player)
+    -- First install or pre-framework upgrade
+    return true, "Initial setup complete."
+end, "MyMod v1.0.0: Initial migration")
+
+PhobosLib.registerMigration("MyMod", "1.0.0", "1.1.0", function(player)
+    -- Upgrade from 1.0.0 to 1.1.0
+    return true, "Upgraded data format."
+end, "MyMod v1.1.0: Data format upgrade")
+
+-- In your OnGameStart handler:
+local results = PhobosLib.runMigrations("MyMod", "1.1.0", players)
+for _, result in ipairs(results) do
+    for _, player in ipairs(players) do
+        PhobosLib.notifyMigrationResult(player, "MyMod", result)
+    end
+end
 ```
 
 ---
