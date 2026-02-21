@@ -68,8 +68,9 @@ local _originalRender = nil
 ---@param item any  InventoryItem
 ---@return table|nil  Array of {text=string, r=number, g=number, b=number} or nil
 local function collectLines(item)
-    local fullType = item:getFullType()
-    if not fullType then return nil end
+    if not item then return nil end
+    local ok, fullType = pcall(function() return item:getFullType() end)
+    if not ok or not fullType then return nil end
 
     local allLines = nil
 
@@ -94,6 +95,11 @@ end
 --- the Java ObjectTooltip content.
 ---@param self any  ISToolTipInv instance
 local function hookedRender(self)
+    -- Guard against corrupted self from upstream mod chain
+    if not self then
+        if _originalRender then return _originalRender(self) end
+        return
+    end
     -- Fast path: if no item or no matching providers, delegate unchanged
     local item = self.item
     if not item then
