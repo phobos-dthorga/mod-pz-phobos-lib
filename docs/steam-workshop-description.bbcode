@@ -1,0 +1,68 @@
+[h1]PhobosLib — Shared Utility Library[/h1]
+
+[b]Version:[/b] 1.11.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
+
+A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib provides stable, reusable helpers so mod authors can focus on gameplay features instead of reimplementing safe wrappers, API probing, and boilerplate Lua glue.
+
+[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Chemistry Pathways[/url] — 185-recipe chemistry suite
+
+[hr][/hr]
+
+[h2]Modules (17 total)[/h2]
+
+[h3]Shared Modules (12)[/h3]
+[list]
+[*] [b]Util[/b] — Safe method calling, API probing, keyword-based item search, modData helpers, player speech bubbles
+[*] [b]Fluid[/b] — Build 42 FluidContainer helpers with multi-strategy API fallbacks
+[*] [b]World[/b] — Tile iteration, object keyword search, generator and vehicle detection
+[*] [b]Sandbox[/b] — Safe sandbox variable access, runtime mod detection, yield multiplier scaling, persistent one-shot flag consumption
+[*] [b]Quality[/b] — Generic quality/purity tracking (0-100), tier lookup, equipment factors, severity scaling, yield penalties
+[*] [b]Hazard[/b] — PPE detection, respiratory protection assessment, EHR disease dispatch with vanilla stat fallback
+[*] [b]Skill[/b] — Perk queries, safe XP awards, persistent cross-skill XP mirroring
+[*] [b]Reset[/b] — Deep inventory traversal, modData stripping, recipe removal, XP reset, world modData utilities
+[*] [b]Validate[/b] — Startup dependency validation for items, fluids, and perks
+[*] [b]Trading[/b] — Dynamic Trading mod wrapper for custom tags, archetypes, and item registration
+[*] [b]Migrate[/b] — Versioned save migration framework with incompatible version handling
+[/list]
+
+[h3]Client Modules (5)[/h3]
+[list]
+[*] [b]RecipeFilter[/b] — Crafting menu recipe visibility filter (vanilla + Neat Crafting compatible)
+[*] [b]Tooltip[/b] — Custom item tooltip lines via full ISToolTipInv.render() replacement
+[*] [b]LazyStamp[/b] — Condition stamping on container open for items using condition as metadata
+[*] [b]VesselReplace[/b] — Empty FluidContainer replacement with vanilla vessels (MP-synced)
+[*] [b]FarmingSpray[/b] — Custom crop cure spray registration via ISFarmingMenu monkey-patch
+[/list]
+
+[hr][/hr]
+
+[h2]For Players[/h2]
+
+PhobosLib is a [b]required dependency[/b] for Phobos' Chemistry Pathways. Subscribe to both mods, enable both in the mod manager, and load PhobosLib first. PhobosLib has no user-facing content — no recipes, items, or sandbox options.
+
+[h2]For Modders[/h2]
+
+Add PhobosLib as a dependency in your mod.info:
+[code]require=\PhobosLib[/code]
+
+Then in your Lua:
+[code]require "PhobosLib"
+local item = PhobosLib.findItemByKeywords(player:getInventory(), {"charcoal"})
+local sandboxVal = PhobosLib.getSandboxVar("MyMod", "Option", default)[/code]
+
+Full API reference: [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/blob/develop/docs/diagrams/module-overview.md]Module Overview & API Reference[/url]
+
+[hr][/hr]
+
+[h2]Soft Dependencies[/h2]
+[list]
+[*] [b]EHR[/b] (Extensive Health Rework) — Hazard module dispatches EHR diseases when available
+[*] [b]Dynamic Trading[/b] — Trading module wraps DT API for item/archetype registration
+[*] [b]Neat Crafting[/b] — RecipeFilter module hooks NC_FilterBar for recipe visibility
+[/list]
+
+[h2]Links[/h2]
+[list]
+[*] [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib]GitHub Repository[/url]
+[*] [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/blob/develop/CHANGELOG.md]Changelog[/url]
+[/list]

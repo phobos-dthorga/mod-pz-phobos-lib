@@ -17,7 +17,7 @@
 
 # PhobosLib
 
-**Version:** 1.9.1 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.11.0 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -25,7 +25,7 @@
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
-**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 154-recipe chemistry suite
+**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 185-recipe chemistry suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)
@@ -50,8 +50,10 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_RecipeFilter** | *(client)* Crafting menu recipe visibility filter: register filter functions to hide/show `craftRecipe` entries based on sandbox settings or runtime conditions. Supports vanilla list view, vanilla grid view, and Neat Crafting mod compatibility |
 | **PhobosLib_Tooltip** | *(client)* Generic tooltip line appender: register provider callbacks that append coloured text lines below the vanilla item tooltip for matching items. Uses full render replacement of `ISToolTipInv.render()` with expanded dimensions |
 | **PhobosLib_LazyStamp** | *(client)* Lazy container condition stamper: register stampers that set item condition on unstamped items when the player opens a container. Useful for mods that repurpose item condition as a metadata channel (purity, charge level) |
+| **PhobosLib_VesselReplace** | *(client)* Empty vessel replacement: register mappings that replace empty FluidContainer items with vanilla vessels (EmptyJar, Bucket, etc.) when the player opens a container. Supports bonus items (e.g. JarLid for jar-type vessels). MP-synced |
+| **PhobosLib_FarmingSpray** | *(client)* Farming spray registration: register custom spray items that cure vanilla plant diseases (Mildew, Flies, Aphids, Slugs). Monkey-patches ISFarmingMenu and CFarming_Interact once on first registration. pcall-wrapped |
 
-Usage: `require "PhobosLib"` loads all 11 shared modules into the global `PhobosLib` table. The 3 client-side modules (RecipeFilter, Tooltip, LazyStamp) are loaded automatically by PZ from `client/`.
+Usage: `require "PhobosLib"` loads all 12 shared modules into the global `PhobosLib` table. The 5 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray) are loaded automatically by PZ from `client/`.
 
 ## Intended usage
 - As a dependency: your mod can require PhobosLib and call its helpers.
@@ -65,7 +67,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 14 modules (11 shared + 3 client) with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 17 modules (12 shared + 5 client) with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 
@@ -88,6 +90,8 @@ After each intermediate or major version bump, verify:
 - [ ] Tooltip providers work: `[PhobosLib:Tooltip]` log line confirms ISToolTipInv.render hook installed; hover over registered items to verify extra lines appear
 - [ ] Lazy stamper works: `[PhobosLib:LazyStamp]` log line confirms OnRefreshInventoryWindowContainers hook installed
 - [ ] Migration framework works: `[PhobosLib:Migrate]` log lines show version check and migration execution on game start
+- [ ] Vessel replacement works: `[PhobosLib:VesselReplace]` log line confirms OnRefreshInventoryWindowContainers hook installed; empty FluidContainers replaced with vessels on container open
+- [ ] Farming spray works: `[PhobosLib:FarmingSpray]` log line confirms ISFarmingMenu patch installed; registered sprays appear in "Treat Problem" submenu on diseased plants
 - [ ] No `nil` or `NullPointerException` errors referencing PhobosLib in logs
 
 ## Release notes

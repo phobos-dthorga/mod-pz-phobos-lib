@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.9.0 provides 14 modules (11 shared + 3 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.11.0 provides 17 modules (12 shared + 5 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.9.0"]
+    subgraph LIB["PhobosLib v1.11.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -43,6 +43,8 @@ graph LR
         RF["PhobosLib_RecipeFilter<br/>Recipe visibility filter<br/>(vanilla + Neat Crafting)"]
         TT["PhobosLib_Tooltip<br/>Item tooltip line appender<br/>(full render replacement)"]
         LS["PhobosLib_LazyStamp<br/>Lazy container condition stamper"]
+        VR["PhobosLib_VesselReplace<br/>Empty vessel replacement<br/>(container open hook, MP sync)"]
+        FS["PhobosLib_FarmingSpray<br/>Farming spray registration<br/>(ISFarmingMenu hook)"]
     end
 
     INIT --> UTIL
@@ -58,7 +60,7 @@ graph LR
     INIT --> MIGRATE
 ```
 
-> The 11 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 3 client-side modules (RecipeFilter, Tooltip, LazyStamp) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
+> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 5 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
 
 ---
 
@@ -425,4 +427,63 @@ PhobosLib.registerLazyConditionStamp(
         return SandboxVars.MyMod.EnablePurity == true
     end
 )
+```
+
+---
+
+## PhobosLib_VesselReplace
+
+Client-side empty vessel replacement system. When the player opens or views a container, all empty FluidContainer items matching a registered module prefix are replaced with their vanilla vessel equivalents. Supports simple string mappings (e.g. `"Base.EmptyJar"`) and table mappings with bonus items (e.g. `{vessel="Base.EmptyJar", bonus={"Base.JarLid"}}`). Bonus item condition is matched to the vessel condition.
+
+Hooks `Events.OnRefreshInventoryWindowContainers` once on first registration. Runs only at the `"end"` stage. Uses MP sync via `sendRemoveItemFromContainer`, `sendAddItemToContainer`, and `sendItemStats`. Calls `setDrawDirty(true)` to force UI refresh after replacement.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerEmptyVesselReplacement(modulePrefix, mappings, guardFunc)` | `modulePrefix: string, mappings: table, guardFunc: function?` | Register vessel replacement mappings for items whose `fullType` contains the given prefix. Mappings: `{ ["Mod.FluidItem"] = "Base.EmptyJar" }` (simple) or `{ ["Mod.FluidItem"] = { vessel = "Base.EmptyJar", bonus = {"Base.JarLid"} } }` (with bonus items). Optional guard function controls when replacement is active. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerEmptyVesselReplacement(
+    "MyMod.",
+    {
+        ["MyMod.AcidJar"]    = { vessel = "Base.EmptyJar", bonus = {"Base.JarLid"} },
+        ["MyMod.AcidBottle"] = "Base.BottleCrafted",
+        ["MyMod.AcidBucket"] = "Base.Bucket",
+    },
+    function()
+        return SandboxVars.MyMod.EnableVesselReplacement == true
+    end
+)
+```
+
+---
+
+## PhobosLib_FarmingSpray
+
+Client-side farming spray registration for custom crop cures. B42's farming system recognises spray items entirely by hardcoded type-string checks in `ISFarmingMenu.doFarmingMenu2` and `CFarming_Interact.onContextKey`. This module provides a generic registration API so mods can add custom sprays that cure vanilla plant diseases without conflicting monkey-patches.
+
+The monkey-patches are installed once on first registration and are pcall-wrapped for resilience.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerFarmingSpray(fullType, cureType, guardFunc)` | `fullType: string, cureType: string, guardFunc: function?` | Register a spray item that cures a specific plant disease. Valid cure types: `"Mildew"`, `"Flies"`, `"Aphids"`, `"Slugs"`. Optional guard function controls when the spray is available. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerFarmingSpray(
+    "MyMod.MySulphurSpray", "Mildew")
+PhobosLib.registerFarmingSpray(
+    "MyMod.MyInsecticideSpray", "Aphids")
 ```

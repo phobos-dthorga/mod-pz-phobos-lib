@@ -23,6 +23,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-02-22
+
+### Added
+- **PhobosLib_FarmingSpray** (client/) — Farming spray registration API for custom crop cures
+  - `registerFarmingSpray(fullType, cureType, guardFunc)` — Register a spray item that cures a vanilla plant disease. Monkey-patches `ISFarmingMenu.doFarmingMenu2` and `CFarming_Interact.onContextKey` once on first registration so registered sprays appear in the "Treat Problem" submenu and respond to the Interact hotkey on diseased plants. All patches pcall-wrapped.
+  - Valid cure types: `"Mildew"`, `"Flies"`, `"Aphids"`, `"Slugs"`
+
+### Fixed
+- **Tooltip nil guard for multi-mod safety** — `PhobosLib_Tooltip.lua` render replacement now guards against nil `self.tooltip` during edge-case render calls, preventing crashes when multiple tooltip-modifying mods are active.
+
+### Changed
+- **`PhobosLib.VERSION`** synced to `"1.11.0"`
+
 ## [1.10.0] - 2026-02-20
 
 ### Added
