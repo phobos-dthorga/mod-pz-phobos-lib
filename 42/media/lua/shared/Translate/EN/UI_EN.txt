@@ -18,4 +18,7 @@ UI_EN = {
 	IGUI_PhobosLib_NoPower = "Requires Electricity",
 	IGUI_PhobosLib_NoPowerTooltip = "Connect a generator or use grid power to operate this workstation.",
 	IGUI_PhobosLib_PowerLost = "Power lost! Crafting cancelled.",
+	IGUI_PhobosLib_DontShowAgain = "Don't show this again",
+	IGUI_PhobosLib_GotIt = "Got it!",
+	IGUI_PhobosLib_OpenGuide = "Open Guide",
 }
