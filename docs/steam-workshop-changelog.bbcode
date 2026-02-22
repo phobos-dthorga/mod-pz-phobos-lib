@@ -1,0 +1,57 @@
+[h1]PhobosLib — Changelog[/h1]
+
+[h2]v1.13.0 — Popup System & Workstation Labels (2026-02-23)[/h2]
+
+[h3]New Modules[/h3]
+[list]
+[*] [b]PhobosLib_Popup[/b] (client) — Generic popup system for PZ B42 mods. Two registration functions:
+  [b]registerGuidePopup[/b] — First-time welcome guide with "Don't show again" checkbox, per-character persistence, MP sync.
+  [b]registerChangelogPopup[/b] — Version-based "What's New" popup that fires once per major.minor version change with content filtering.
+  Queue system shows guides first, then changelogs, one at a time.
+[*] [b]PhobosLib_WorkstationLabel[/b] (client) — Automatically filters untranslated tags (e.g. CannotBeResearched) from the crafting window's "Requires: ..." workstation label. Supports both vanilla and Neat Crafting UIs. No public API — fully self-contained.
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] Workstation label filter now hooks Neat Crafting's NC_RecipeInfoPanel when installed
+[*] Changelog popup correctly detects fresh installs (nil stored version = show all)
+[*] buildContent callback now receives lastSeenVersion for filtering
+[*] Corrected translation table reference from IG_UI to IGUI
+[/list]
+
+[hr][/hr]
+
+[h2]v1.12.0 — Powered Workstations (2026-02-23)[/h2]
+
+[h3]New Module[/h3]
+[list]
+[*] [b]PhobosLib_Power[/b] (client) — Powered CraftBench entity support with 5 public functions:
+  [b]isGridPowerActive()[/b] — Check if the electrical grid is still on.
+  [b]hasPower(square)[/b] — Check any power source (grid, generator, custom).
+  [b]registerPowerSource(checkFunc)[/b] — Register custom power sources (e.g. battery+inverter).
+  [b]registerPoweredCraftBench(entity, options)[/b] — Register an entity as requiring electricity. Greys out craft button with tooltip when no power. Options: messageKey, drainPerMinute, guardFunc.
+  [b]startPowerDrain / stopPowerDrain[/b] — Time-based generator fuel drain sessions.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.11.0 — Farming Sprays & Tooltip Guards (2026-02-22)[/h2]
+
+[h3]New Module[/h3]
+[list]
+[*] [b]PhobosLib_FarmingSpray[/b] (client) — Register custom crop cure sprays that appear in the B42 "Treat Problem" submenu and respond to the Interact hotkey on diseased plants. Hooks ISFarmingMenu and CFarming_Interact, pcall-wrapped. Supports Mildew, Flies, Aphids, and Slugs cure types.
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] Tooltip render replacement now guards against nil self.tooltip during edge-case render calls, preventing crashes when multiple tooltip-modifying mods are active
+[/list]
+
+[hr][/hr]
+
+[h2]Summary[/h2]
+[list]
+[*] [b]20 modules[/b] total (12 shared + 8 client) — up from 17
+[*] [b]~110 public functions[/b]
+[*] 3 new client modules: Power, Popup, WorkstationLabel
+[/list]
