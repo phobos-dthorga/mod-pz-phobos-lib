@@ -218,8 +218,11 @@ function _ChangelogWindow:createChildren()
     self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.07 }
     self:addChild(self.richText)
 
-    -- Build content via callback
-    local contentOk, content = pcall(self._registration.buildContent)
+    -- Build content via callback (pass lastSeenVersion so mod can filter)
+    local contentOk, content = pcall(
+        self._registration.buildContent,
+        self._registration._lastSeenVersion
+    )
     if not contentOk then
         content = "<TEXT> <RGB:1,0.3,0.3> Error building changelog content: "
                   .. tostring(content) .. " <LINE> "
@@ -396,7 +399,8 @@ local function onGameStart()
             print(_TAG .. " changelog stamped " .. currentMM
                   .. " for " .. modId .. " (fresh install)")
         elseif stored ~= currentMM then
-            -- Version bump: show changelog
+            -- Version bump: show changelog (pass last-seen version for filtering)
+            reg._lastSeenVersion = stored
             table.insert(queue, { type = "changelog", registration = reg })
             print(_TAG .. " changelog queued for " .. modId
                   .. " (" .. stored .. " -> " .. currentMM .. ")")
@@ -462,7 +466,10 @@ end
 ---@param modId   string   Unique mod identifier (e.g. "PCP")
 ---@param options table    Registration options
 --- options.title           string     Window title
---- options.buildContent    function() Returns rich text string
+--- options.buildContent    function(lastSeenVersion) Returns rich text string
+---                         lastSeenVersion is the "major.minor" the player last
+---                         saw (e.g. "0.22"), or nil if unknown. Use this to
+---                         filter which version blocks to include.
 --- options.currentVersion  string     Current mod version (semver, e.g. "0.24.0")
 --- options.width           number     Window width  (default 620)
 --- options.height          number     Window height (default 680)
