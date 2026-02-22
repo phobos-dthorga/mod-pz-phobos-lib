@@ -23,12 +23,6 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
-### Fixed
-- **Workstation label filter Neat Crafting compatibility** — `PhobosLib_WorkstationLabel.lua` now hooks `NC_RecipeInfoPanel.prerender()` and `drawText()` when Neat Crafting is installed, filtering untranslated tags from the "Requires: ..." workstation text in both vanilla and NC crafting windows.
-- **Changelog fresh-install logic** — Changelog popup now correctly detects fresh installs (nil stored version treated as "show all" rather than matching current version).
-- **Changelog lastSeenVersion callback** — `buildContent` callback now receives `lastSeenVersion` parameter so mods can filter which version blocks to display.
-- **Translation table name** — Corrected translation table reference in popup system from `IG_UI` to `IGUI`.
-
 ## [1.13.0] - 2026-02-23
 
 ### Added
@@ -40,6 +34,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   - Auto-hooks `ISWidgetTitleHeader.updateLabels()` on load (vanilla path)
   - Runtime-detects Neat Crafting and hooks `NC_RecipeInfoPanel.prerender()` + `drawText()` at OnGameStart (NC path)
   - Filters out tags like `CannotBeResearched` that have no `IGUI_CraftingWindow_*` translation entry
+
+### Fixed
+- **Workstation label filter Neat Crafting compatibility** — `PhobosLib_WorkstationLabel.lua` now hooks `NC_RecipeInfoPanel.prerender()` and `drawText()` when Neat Crafting is installed, filtering untranslated tags from the "Requires: ..." workstation text in both vanilla and NC crafting windows.
+- **Changelog fresh-install logic** — Changelog popup now correctly detects fresh installs (nil stored version treated as "show all" rather than matching current version).
+- **Changelog lastSeenVersion callback** — `buildContent` callback now receives `lastSeenVersion` parameter so mods can filter which version blocks to display.
+- **Translation table name** — Corrected translation table reference in popup system from `IG_UI` to `IGUI`.
 
 ### Changed
 - **`PhobosLib.VERSION`** synced to `"1.13.0"`
