@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.11.0 provides 17 modules (12 shared + 5 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.13.0 provides 20 modules (12 shared + 8 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.11.0"]
+    subgraph LIB["PhobosLib v1.13.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -45,6 +45,9 @@ graph LR
         LS["PhobosLib_LazyStamp<br/>Lazy container condition stamper"]
         VR["PhobosLib_VesselReplace<br/>Empty vessel replacement<br/>(container open hook, MP sync)"]
         FS["PhobosLib_FarmingSpray<br/>Farming spray registration<br/>(ISFarmingMenu hook)"]
+        PW["PhobosLib_Power<br/>Powered workstation support<br/>(grid/generator/custom)"]
+        PP["PhobosLib_Popup<br/>Guide & changelog popups<br/>(queue system, per-character)"]
+        WL["PhobosLib_WorkstationLabel<br/>Untranslated tag filter<br/>(auto-install)"]
     end
 
     INIT --> UTIL
@@ -60,7 +63,7 @@ graph LR
     INIT --> MIGRATE
 ```
 
-> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 5 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
+> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 8 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
 
 ---
 
@@ -487,3 +490,84 @@ PhobosLib.registerFarmingSpray(
 PhobosLib.registerFarmingSpray(
     "MyMod.MyInsecticideSpray", "Aphids")
 ```
+
+---
+
+## PhobosLib_Power
+
+Client-side powered workstation support for CraftBench entities. Detects grid power, generator power, and custom power sources. Registers entities as requiring electricity to craft, with UI gating (greyed-out craft button + tooltip) and generator fuel drain during crafting.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `isGridPowerActive()` | *(none)* | Check whether the electrical grid is still active (replicates vanilla ISButtonPrompt.lua pattern using SandboxVars.ElecShutModifier + world age) |
+| `hasPower(square)` | `square: IsoGridSquare` | Check whether a square has power from any source (custom registered sources, grid power, or generator via `square:haveElectricity()`) |
+| `registerPowerSource(checkFunc)` | `checkFunc: function` | Register a custom power source checker (e.g. for battery+inverter systems); checkFunc receives `(square)` and returns boolean |
+| `registerPoweredCraftBench(entityScriptName, options)` | `entityScriptName: string, options: table` | Register an entity as requiring electricity to craft. Hooks `ISWidgetHandCraftControl.prerender()` to grey out craft button + show tooltip when no power, and `startHandcraft()` as safety net + fuel drain session start. Options: `{messageKey, drainPerMinute, guardFunc}` |
+| `startPowerDrain(square, drainPerMinute)` | `square: IsoGridSquare, drainPerMinute: number` | Start a fuel drain session on the nearest generator; returns sessionId. Grid power = free (no drain). Generator drain via `gen:setFuel()` + `gen:sync()` |
+| `stopPowerDrain(sessionId)` | `sessionId: number` | Stop an active fuel drain session |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerPoweredCraftBench("MyMod_MyStation", {
+    messageKey = "IGUI_MyMod_NoPower",
+    drainPerMinute = 0.5,
+    guardFunc = function()
+        return SandboxVars.MyMod.EnableMyStation == true
+    end,
+})
+```
+
+---
+
+## PhobosLib_Popup
+
+Client-side popup system for PZ B42 mods. Provides first-time welcome guides and version-based changelog popups with per-character persistence, queue management, and MP sync via `transmitModData()`.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerGuidePopup(modId, options)` | `modId: string, options: table` | Register a first-time welcome guide popup. Options: `{title, buildContent, width, height, modDataKey}`. `buildContent(richTextPanel)` populates the scrollable content. Persists via player modData with `transmitModData()` for MP sync. ISCollapsableWindow with ISRichTextPanel body and ISTickBox "Don't show again" checkbox. |
+| `registerChangelogPopup(modId, options)` | `modId: string, options: table` | Register a version-based "What's New" popup. Options: `{title, currentVersion, buildContent, width, height, modDataKey}`. `buildContent(richTextPanel, lastSeenVersion)` populates content filtered by version. "Got it!" dismiss button with optional "Open Guide" link. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerGuidePopup("MyMod", {
+    title = "Welcome to My Mod!",
+    buildContent = function(panel)
+        panel:setText("Welcome text here...")
+        panel:paginate()
+    end,
+})
+
+PhobosLib.registerChangelogPopup("MyMod", {
+    title = "My Mod - What's New",
+    currentVersion = "1.2.0",
+    buildContent = function(panel, lastSeenVersion)
+        panel:setText("Changelog text here...")
+        panel:paginate()
+    end,
+})
+```
+
+---
+
+## PhobosLib_WorkstationLabel
+
+Client-side filter for untranslated tags in the crafting window's "Requires: ..." workstation label. When a recipe is bound to a CraftBench entity via Tags, the crafting UI displays the tag names. Tags like `CannotBeResearched` have no `IGUI_CraftingWindow_*` translation entry and appear as raw technical strings. This module automatically filters them out.
+
+Auto-installs on file load (vanilla path) and runtime-detects Neat Crafting at OnGameStart (NC path). No public API functions -- the module is entirely self-contained.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+*No public API -- auto-installs on load.*

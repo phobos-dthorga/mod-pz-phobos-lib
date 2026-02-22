@@ -1,5 +1,5 @@
 graph LR
-    subgraph LIB["PhobosLib v1.11.0"]
+    subgraph LIB["PhobosLib v1.13.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["Util<br/>pcallMethod, probeMethod<br/>findItemByKeywords<br/>matchesKeywords, say"]
@@ -35,6 +35,12 @@ graph LR
         VR["VesselReplace<br/>registerEmptyVesselReplacement<br/>(container open hook, MP sync)"]
 
         FS["FarmingSpray<br/>registerFarmingSpray<br/>(ISFarmingMenu hook)"]
+
+        PW["Power<br/>isGridPowerActive, hasPower<br/>registerPowerSource<br/>registerPoweredCraftBench<br/>startPowerDrain, stopPowerDrain"]
+
+        PP["Popup<br/>registerGuidePopup<br/>registerChangelogPopup<br/>(queue system, per-character)"]
+
+        WL["WorkstationLabel<br/>(auto-install, filters<br/>untranslated tags)"]
     end
 
     INIT --> UTIL
