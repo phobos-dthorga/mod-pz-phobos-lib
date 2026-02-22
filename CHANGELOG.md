@@ -23,6 +23,40 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Fixed
+- **Workstation label filter Neat Crafting compatibility** — `PhobosLib_WorkstationLabel.lua` now hooks `NC_RecipeInfoPanel.prerender()` and `drawText()` when Neat Crafting is installed, filtering untranslated tags from the "Requires: ..." workstation text in both vanilla and NC crafting windows.
+- **Changelog fresh-install logic** — Changelog popup now correctly detects fresh installs (nil stored version treated as "show all" rather than matching current version).
+- **Changelog lastSeenVersion callback** — `buildContent` callback now receives `lastSeenVersion` parameter so mods can filter which version blocks to display.
+- **Translation table name** — Corrected translation table reference in popup system from `IG_UI` to `IGUI`.
+
+## [1.13.0] - 2026-02-23
+
+### Added
+- **PhobosLib_Popup** (client/) — Generic popup system for PZ B42 mods
+  - `registerGuidePopup(modId, options)` — Register a first-time welcome guide popup with "Don't show again" checkbox. Persists per-character via player modData with `transmitModData()` for MP sync. ISCollapsableWindow with ISRichTextPanel body and ISTickBox.
+  - `registerChangelogPopup(modId, options)` — Register a version-based "What's New" popup that fires once per major.minor version change. `buildContent` callback receives `lastSeenVersion` for content filtering. "Got it!" dismiss button with optional "Open Guide" link.
+  - Queue system: guides shown first, then changelogs, one popup at a time. OnGameStart evaluates all registrations.
+- **PhobosLib_WorkstationLabel** (client/) — Filters untranslated tags from crafting window "Requires: ..." workstation label
+  - Auto-hooks `ISWidgetTitleHeader.updateLabels()` on load (vanilla path)
+  - Runtime-detects Neat Crafting and hooks `NC_RecipeInfoPanel.prerender()` + `drawText()` at OnGameStart (NC path)
+  - Filters out tags like `CannotBeResearched` that have no `IGUI_CraftingWindow_*` translation entry
+
+### Changed
+- **`PhobosLib.VERSION`** synced to `"1.13.0"`
+
+## [1.12.0] - 2026-02-23
+
+### Added
+- **PhobosLib_Power** (client/) — Powered workstation support for CraftBench entities
+  - `isGridPowerActive()` — Check whether the electrical grid is still active (replicates vanilla ISButtonPrompt.lua pattern using SandboxVars.ElecShutModifier + world age)
+  - `hasPower(square)` — Check whether a square has power from any source (custom registered sources, grid power, or generator via `square:haveElectricity()`)
+  - `registerPowerSource(checkFunc)` — Register a custom power source checker (e.g. for PhobosPortableEnergySolutions battery+inverter systems)
+  - `registerPoweredCraftBench(entityScriptName, options)` — Register an entity as requiring electricity to craft. Options: `messageKey` (tooltip translation key), `drainPerMinute` (fuel drain rate), `guardFunc` (optional sandbox gate). Hooks `ISWidgetHandCraftControl.prerender()` to grey out the craft button and `ISWidgetHandCraftControl.startHandcraft()` as safety net + fuel drain session start.
+  - `startPowerDrain(square, drainPerMinute)` / `stopPowerDrain(sessionId)` — Time-based generator fuel drain sessions with OnTick throttling (~1 second intervals). Grid power = free (no drain). Generator drain via `gen:setFuel()` + `gen:sync()`.
+
+### Changed
+- **`PhobosLib.VERSION`** synced to `"1.12.0"`
+
 ## [1.11.0] - 2026-02-22
 
 ### Added

@@ -1,14 +1,14 @@
 [h1]PhobosLib — Shared Utility Library[/h1]
 
-[b]Version:[/b] 1.11.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
+[b]Version:[/b] 1.13.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
 
 A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib provides stable, reusable helpers so mod authors can focus on gameplay features instead of reimplementing safe wrappers, API probing, and boilerplate Lua glue.
 
-[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Chemistry Pathways[/url] — 185-recipe chemistry suite
+[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Chemistry Pathways[/url] — 198-recipe chemistry suite
 
 [hr][/hr]
 
-[h2]Modules (17 total)[/h2]
+[h2]Modules (20 total)[/h2]
 
 [h3]Shared Modules (12)[/h3]
 [list]
@@ -25,13 +25,16 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]Migrate[/b] — Versioned save migration framework with incompatible version handling
 [/list]
 
-[h3]Client Modules (5)[/h3]
+[h3]Client Modules (8)[/h3]
 [list]
 [*] [b]RecipeFilter[/b] — Crafting menu recipe visibility filter (vanilla + Neat Crafting compatible)
 [*] [b]Tooltip[/b] — Custom item tooltip lines via full ISToolTipInv.render() replacement
 [*] [b]LazyStamp[/b] — Condition stamping on container open for items using condition as metadata
 [*] [b]VesselReplace[/b] — Empty FluidContainer replacement with vanilla vessels (MP-synced)
 [*] [b]FarmingSpray[/b] — Custom crop cure spray registration via ISFarmingMenu monkey-patch
+[*] [b]Power[/b] — Powered workstation support: grid/generator detection, CraftBench UI gating, time-based fuel drain
+[*] [b]Popup[/b] — Welcome guide and changelog popup system: first-time tutorials, version-based "What's New" popups
+[*] [b]WorkstationLabel[/b] — Workstation label filter: removes untranslated tags from crafting "Requires: ..." text
 [/list]
 
 [hr][/hr]
