@@ -392,18 +392,12 @@ local function onGameStart()
         if not currentMM then
             print(_TAG .. " WARNING: invalid currentVersion for "
                   .. modId .. ": " .. tostring(reg.currentVersion))
-        elseif stored == nil then
-            -- Fresh install: stamp current version, skip changelog
-            md[changelogKey(modId)] = currentMM
-            pcall(function() player:transmitModData() end)
-            print(_TAG .. " changelog stamped " .. currentMM
-                  .. " for " .. modId .. " (fresh install)")
         elseif stored ~= currentMM then
-            -- Version bump: show changelog (pass last-seen version for filtering)
+            -- nil (fresh/pre-popup) or different version → show changelog
             reg._lastSeenVersion = stored
             table.insert(queue, { type = "changelog", registration = reg })
             print(_TAG .. " changelog queued for " .. modId
-                  .. " (" .. stored .. " -> " .. currentMM .. ")")
+                  .. " (" .. tostring(stored) .. " -> " .. currentMM .. ")")
         end
     end
 
@@ -456,8 +450,8 @@ end
 ---
 --- The changelog shows once per major.minor version change.
 --- Patch-level bumps (e.g. 0.23.0 -> 0.23.1) are ignored.
---- On fresh installs, the current version is stamped without
---- showing the changelog.
+--- On fresh installs (or upgrades from pre-popup versions), the
+--- full changelog history is shown.
 ---
 --- Registration should happen at file load time (before
 --- OnGameStart). The buildContent callback is called at
