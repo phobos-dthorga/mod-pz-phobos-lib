@@ -325,7 +325,7 @@ local function patchFarmingInteract()
 
     local _original_onContextKey = CFarming_Interact.onContextKey
 
-    CFarming_Interact.onContextKey = function(key)
+    CFarming_Interact.onContextKey = function(player, timePressedContext)
         -- Let vanilla handle its own logic first
         -- But we need to intercept BEFORE vanilla returns, if the held item
         -- is one of our custom sprays.
@@ -335,18 +335,13 @@ local function patchFarmingInteract()
         -- Otherwise, fall through to vanilla.
 
         -- Only intercept the Interact key
-        if not getCore():isKey("Interact", key) then
-            return _original_onContextKey(key)
-        end
-
-        local player = getSpecificPlayer(0)
-        if not player then
-            return _original_onContextKey(key)
+        if not getCore():isKey("Interact", timePressedContext) then
+            return _original_onContextKey(player, timePressedContext)
         end
 
         local item = player:getPrimaryHandItem()
         if not item then
-            return _original_onContextKey(key)
+            return _original_onContextKey(player, timePressedContext)
         end
 
         -- Check if the held item is one of our registered sprays
@@ -372,7 +367,7 @@ local function patchFarmingInteract()
 
         if not matchedEntry then
             -- Not one of our sprays — let vanilla handle it
-            return _original_onContextKey(key)
+            return _original_onContextKey(player, timePressedContext)
         end
 
         -- Check if we're near a seeded plant
@@ -408,7 +403,7 @@ local function patchFarmingInteract()
         end
 
         -- Didn't find a plant — let vanilla handle it
-        return _original_onContextKey(key)
+        return _original_onContextKey(player, timePressedContext)
     end
 
     print(_TAG .. " CFarming_Interact.onContextKey patched")
