@@ -267,6 +267,58 @@ function PhobosLib.removeExcessItems(player, itemType, baseCount, keepCount)
 end
 
 
+--- Recover a quality value from a recently-drained FluidContainer's modData.
+--- B42's `-fluid` recipe syntax drains fluid from containers without consuming
+--- them, so OnCreate's `items` list does not include the drained container.
+--- This scans inventory for items carrying the given modData key, preferring
+--- empty/drained FluidContainers (recently drained) over full ones.
+--- Reads the first match and removes the key to prevent double-counting.
+---
+--- Companion to averageInputQuality(): use averageInputQuality for `item`
+--- inputs (consumed, present in OnCreate items list), and this function
+--- for `-fluid` inputs (drained, NOT present in OnCreate items list).
+---
+---@param player any        The player character
+---@param modDataKey string The modData key to search for (e.g. "PCP_FluidPurity")
+---@param default number    Fallback if no match found
+---@return number           The recovered quality value, or default
+function PhobosLib.recoverDrainedFluidQuality(player, modDataKey, default)
+    if not player then return default end
+    local result = default
+    pcall(function()
+        local inv = player:getInventory()
+        if not inv then return end
+        local items = inv:getItems()
+
+        -- Two-pass: prefer empty/drained FluidContainers, fall back to any match
+        local drainedMatch, anyMatch
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            if it then
+                local md = PhobosLib.getModData(it)
+                if md and md[modDataKey] ~= nil then
+                    anyMatch = anyMatch or it
+                    local fc = PhobosLib.tryGetFluidContainer(it)
+                    if fc and (PhobosLib.tryGetAmount(fc) or 0) < 0.01 then
+                        drainedMatch = it
+                        break
+                    end
+                end
+            end
+        end
+
+        local target = drainedMatch or anyMatch
+        if target then
+            local md = PhobosLib.getModData(target)
+            local val = md[modDataKey]
+            md[modDataKey] = nil  -- cleanup to prevent double-counting
+            if type(val) == "number" then result = val end
+        end
+    end)
+    return result
+end
+
+
 --- Stamp quality on all unstamped items of a given type in player inventory.
 -- Handles multi-output recipes where OnCreate only receives the first result.
 ---@param player any         The player character
