@@ -26,7 +26,7 @@
 -- Hook: Events.OnFillWorldObjectContextMenu
 --   Fires when the player right-clicks a world object.
 --
--- Part of PhobosLib >= 1.12.0
+-- Part of PhobosLib >= 1.12.0 (red-unavailable support added 1.14.0)
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
@@ -73,6 +73,38 @@ local function matchesSprite(obj, sprites)
 end
 
 ---------------------------------------------------------------
+-- Tooltip formatting
+---------------------------------------------------------------
+
+--- Format test failure reason(s) into a red-coloured tooltip string.
+--- Handles string, table-of-strings, or nil (generic fallback).
+--- All <RGB>/<LINE> markup is centralised here — mods provide plain text only.
+---@param baseTooltip string|nil  The normal tooltip text (shown above reasons)
+---@param reasons string|table|nil  Failure reason(s) from the test function
+---@return string  Formatted tooltip with red-coloured requirement lines
+local function formatFailureTooltip(baseTooltip, reasons)
+    local lines = {}
+
+    -- Normal tooltip first (if present)
+    if baseTooltip then
+        table.insert(lines, baseTooltip)
+    end
+
+    -- Failure reasons in red
+    if type(reasons) == "table" then
+        for _, r in ipairs(reasons) do
+            table.insert(lines, "<RGB:1,0,0> " .. tostring(r))
+        end
+    elseif type(reasons) == "string" then
+        table.insert(lines, "<RGB:1,0,0> " .. reasons)
+    else
+        table.insert(lines, "<RGB:1,0,0> Requirements not met.")
+    end
+
+    return table.concat(lines, " <LINE> ")
+end
+
+---------------------------------------------------------------
 -- Context menu handler
 ---------------------------------------------------------------
 
@@ -108,10 +140,15 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
             end
 
             -- Check test function (e.g. player has required items)
+            -- Test failures show the option in red (notAvailable) instead
+            -- of hiding it, so the player knows the interaction exists.
+            local testFailed = false
+            local testReasons = nil
             if shouldShow and entry.test then
-                local testOk, testResult = pcall(entry.test, player, obj)
+                local testOk, testResult, tReasons = pcall(entry.test, player, obj)
                 if not testOk or testResult ~= true then
-                    shouldShow = false
+                    testFailed = true
+                    if testOk then testReasons = tReasons end
                 end
             end
 
@@ -119,10 +156,23 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                 local label = entry.label or "Action"
                 local option = context:addOption(label, player, entry.action, obj)
 
-                if entry.tooltip and option then
+                -- Mark red/unclickable when test failed
+                if testFailed and option then
+                    option.notAvailable = true
+                end
+
+                -- Build tooltip: failure reasons in red, or normal tooltip
+                local tooltipText = nil
+                if testFailed then
+                    tooltipText = formatFailureTooltip(entry.tooltip, testReasons)
+                elseif entry.tooltip then
+                    tooltipText = entry.tooltip
+                end
+
+                if tooltipText and option then
                     local tooltipObj = ISWorldObjectContextMenu.addToolTip()
                     if tooltipObj then
-                        tooltipObj.description = entry.tooltip
+                        tooltipObj.description = tooltipText
                         option.toolTip = tooltipObj
                     end
                 end
@@ -157,13 +207,22 @@ end
 ---   sprites  (table)     List of sprite name strings to match (required)
 ---   label    (string)    Context menu display text (required)
 ---   action   (function)  Callback: function(player, obj) (required)
----   test     (function)  Optional: function(player, obj) -> boolean.
----                          Return true to show the option. Use for
----                          inventory checks, distance checks, etc.
+---   test     (function)  Optional: function(player, obj) -> boolean [, reasons].
+---                          Return true to show the option as normal.
+---                          Return false to show the option in red (notAvailable)
+---                          with an optional reason tooltip.  The second return
+---                          value can be a plain string or a table of plain
+---                          strings — PhobosLib handles all <RGB>/<LINE> markup.
+---                          Examples:
+---                            return false                          -- generic fallback
+---                            return false, "Requires: Empty Jar"   -- single reason
+---                            return false, {"Need A", "Need B"}    -- multiple reasons
 ---   guard    (function)  Optional: function() -> boolean.
 ---                          Global guard (sandbox option, mod active).
----                          Checked before test().
----   tooltip  (string)    Optional: tooltip description text.
+---                          Checked before test().  Guard failures hide
+---                          the option entirely (not shown in red).
+---   tooltip  (string)    Optional: tooltip description text.  When test
+---                          fails, this text is shown above the red reasons.
 function PhobosLib.registerWorldObjectAction(config)
     if type(config) ~= "table" then
         print(_TAG .. " registerWorldObjectAction: config must be a table")
