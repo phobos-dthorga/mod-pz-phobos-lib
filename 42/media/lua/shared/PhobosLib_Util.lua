@@ -265,6 +265,45 @@ function PhobosLib.setItemCondition(item, value)
 end
 
 
+--- Get item condition as a percentage (0-100), normalised to ConditionMax.
+--- Useful for mods that store metadata in condition (e.g. purity tracking).
+--- Returns nil if item has no ConditionMax or ConditionMax <= 0.
+---@param item any
+---@return number|nil  Percentage 0-100, or nil
+function PhobosLib.getConditionPercent(item)
+    if not item then return nil end
+    local ok, result = pcall(function()
+        local maxCond = item:getConditionMax()
+        if not maxCond or maxCond <= 0 then return nil end
+        return math.floor(item:getCondition() / maxCond * 100 + 0.5)
+    end)
+    if ok then return result end
+    return nil
+end
+
+
+--- Set item condition from a percentage (0-100), scaled to ConditionMax.
+--- Clamps to [0, ConditionMax]. Calls sendItemStats for MP sync.
+--- Useful for mods that store metadata in condition (e.g. purity tracking).
+---@param item any
+---@param percent number  Value 0-100
+---@return boolean  true on success
+function PhobosLib.setConditionPercent(item, percent)
+    if not item then return false end
+    percent = math.max(0, math.min(100, math.floor(percent + 0.5)))
+    local ok = pcall(function()
+        local maxCond = item:getConditionMax()
+        if maxCond and maxCond > 0 then
+            local scaled = math.floor(percent / 100 * maxCond + 0.5)
+            scaled = math.max(0, math.min(maxCond, scaled))
+            item:setCondition(scaled)
+            pcall(sendItemStats, item)
+        end
+    end)
+    return ok
+end
+
+
 ---------------------------------------------------------------
 -- modData Helpers
 -- Safe wrappers around PZ's item:getModData() for persistent
