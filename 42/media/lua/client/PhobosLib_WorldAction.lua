@@ -120,8 +120,16 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
     local player = getSpecificPlayer(playerNum)
     if not player then return end
 
+    -- Deduplicate: when a square has multiple stacked objects with the
+    -- same sprite, avoid showing the same entry more than once.
+    local shownEntries = {}
+
     for _, obj in ipairs(worldobjects) do
-        for _, entry in ipairs(PhobosLib._worldActionEntries) do
+        for idx, entry in ipairs(PhobosLib._worldActionEntries) do
+            if shownEntries[idx] then
+                -- Already shown (or shown-as-red) for a previous object
+            else
+
             local shouldShow = true
 
             -- Check sprite match
@@ -153,6 +161,8 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
             end
 
             if shouldShow then
+                shownEntries[idx] = true
+
                 local label = entry.label or "Action"
                 local option = context:addOption(label, player, entry.action, obj)
 
@@ -177,6 +187,8 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                     end
                 end
             end
+
+            end -- else (not already shown)
         end
     end
 end

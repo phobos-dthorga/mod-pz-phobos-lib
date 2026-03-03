@@ -94,12 +94,31 @@ function PhobosLib.matchesKeywords(item, keywords)
 end
 
 
+--- Resolve an inventory-or-player argument to an ItemContainer.
+--- If the argument has getInventory() (e.g. IsoGameCharacter), call
+--- it to get the main inventory.  Otherwise return as-is.
+--- This lets all find* functions accept either a player or a container.
+---@param inventoryOrPlayer any  ItemContainer or IsoGameCharacter
+---@return any  The resolved ItemContainer (or original arg on failure)
+local function resolveInventory(inventoryOrPlayer)
+    if not inventoryOrPlayer then return nil end
+    local ok, inv = pcall(function()
+        if inventoryOrPlayer.getInventory then
+            return inventoryOrPlayer:getInventory()
+        end
+        return inventoryOrPlayer
+    end)
+    return ok and inv or inventoryOrPlayer
+end
+
+
 --- Find the first item in an inventory whose fullType or displayName
 --- matches one of the given keywords.
----@param inventory any     A PZ ItemContainer
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
 ---@param keywords table    List of keyword strings
 ---@return any|nil          The matching item, or nil
 function PhobosLib.findItemByKeywords(inventory, keywords)
+    inventory = resolveInventory(inventory)
     if not inventory or not keywords then return nil end
     local items = inventory:getItems()
     for i = 0, items:size() - 1 do
@@ -113,11 +132,12 @@ end
 
 
 --- Find ALL items in an inventory matching the given keywords.
----@param inventory any
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
 ---@param keywords table
 ---@return table            List of matching items (may be empty)
 function PhobosLib.findAllItemsByKeywords(inventory, keywords)
     local results = {}
+    inventory = resolveInventory(inventory)
     if not inventory or not keywords then return results end
     local items = inventory:getItems()
     for i = 0, items:size() - 1 do
@@ -131,10 +151,11 @@ end
 
 
 --- Find an item by exact fullType string.
----@param inventory any
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
 ---@param fullType string
 ---@return any|nil
 function PhobosLib.findItemByFullType(inventory, fullType)
+    inventory = resolveInventory(inventory)
     if not inventory or not fullType then return nil end
     local ok, result = pcall(function()
         return inventory:FindAndReturn(fullType)
@@ -145,11 +166,12 @@ end
 
 
 --- Find ALL items matching an exact fullType string.
----@param inventory any
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
 ---@param fullType string
 ---@return table
 function PhobosLib.findAllItemsByFullType(inventory, fullType)
     local results = {}
+    inventory = resolveInventory(inventory)
     if not inventory or not fullType then return results end
     local items = inventory:getItems()
     for i = 0, items:size() - 1 do
