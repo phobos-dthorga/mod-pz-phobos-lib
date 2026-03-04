@@ -1,5 +1,19 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.15.0 — Empty FluidContainer Condition Reset (2026-03-05)[/h2]
+
+[h3]New Function[/h3]
+[list]
+[*] [b]registerEmptyConditionReset(modulePrefix, guardFunc)[/b] — Register a condition reset for empty FluidContainer items. When the player opens or views a container, any empty FluidContainer matching the prefix has its condition restored to ConditionMax. Removes the "(Worn)" suffix from items that repurpose condition as a metadata channel (e.g. purity). Optional guard function controls when resets are active.
+[/list]
+
+[h3]Changed[/h3]
+[list]
+[*] [b]PhobosLib_VesselReplace[/b] refactored to two-phase system — Condition reset (phase 1) runs before vessel replacement (phase 2) in the same event hook, guaranteeing correct execution order.
+[/list]
+
+[hr][/hr]
+
 [h2]v1.14.0 — World Actions, Entity Rebinding & Fluid Utilities (2026-03-05)[/h2]
 
 [h3]New Modules[/h3]
@@ -77,7 +91,7 @@
 
 [h2]Summary[/h2]
 [list]
-[*] [b]22 modules[/b] total (12 shared + 10 client/server) — up from 20
+[*] [b]22 modules[/b] total (12 shared + 10 client/server)
 [*] [b]~120 public functions[/b]
-[*] 2 new modules since v1.13.0: WorldAction, EntityRebind
+[*] New since v1.14.0: registerEmptyConditionReset() API, two-phase VesselReplace system
 [/list]
