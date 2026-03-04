@@ -71,26 +71,43 @@ end
 
 --- Attempt to add fluid to a container using multiple strategies.
 --- Returns true if any strategy succeeded.
+---
+--- NOTE: The B42 Java addFluid() method requires a FluidType Java object,
+--- NOT a raw string. When a string is passed, this function resolves it via
+--- FluidType.FromNameLower() first. Without this resolution, fluid is added
+--- but the recipe system's -fluid matching cannot find it.
 ---@param fc any            The fluid container object
----@param fluidType string  The fluid's full type identifier
+---@param fluidType string  The fluid's full type identifier (e.g. "Brine", "Petrol")
 ---@param liters number     Amount to add in litres (must be > 0)
 ---@return boolean
 function PhobosLib.tryAddFluid(fc, fluidType, liters)
     if not fc or not fluidType or liters <= 0 then return false end
 
+    -- Resolve string to FluidType Java object (required for recipe system matching)
+    local ftObj = nil
+    pcall(function()
+        ftObj = FluidType.FromNameLower(string.lower(fluidType))
+    end)
+
     local strategies = {
-        -- Strategy 1: addFluid(type, amount)
+        -- Strategy 1: addFluid(FluidType, amount) — preferred, vanilla pattern
         function()
-            if fc.addFluid then return fc:addFluid(fluidType, liters) end
+            if fc.addFluid then
+                if ftObj then return fc:addFluid(ftObj, liters) end
+                return fc:addFluid(fluidType, liters)
+            end
         end,
-        -- Strategy 2: add(type, amount)
+        -- Strategy 2: add(FluidType, amount)
         function()
-            if fc.add then return fc:add(fluidType, liters) end
+            if fc.add then
+                if ftObj then return fc:add(ftObj, liters) end
+                return fc:add(fluidType, liters)
+            end
         end,
         -- Strategy 3: setFluid + setAmount
         function()
             if fc.setFluid then
-                fc:setFluid(fluidType)
+                fc:setFluid(ftObj or fluidType)
                 if fc.setAmount then fc:setAmount(liters) end
                 return true
             end
@@ -98,7 +115,7 @@ function PhobosLib.tryAddFluid(fc, fluidType, liters)
         -- Strategy 4: setFluidType + setAmount
         function()
             if fc.setFluidType then
-                fc:setFluidType(fluidType)
+                fc:setFluidType(ftObj or fluidType)
                 if fc.setAmount then fc:setAmount(liters) end
                 return true
             end
