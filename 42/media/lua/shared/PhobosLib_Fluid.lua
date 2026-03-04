@@ -113,6 +113,35 @@ function PhobosLib.tryAddFluid(fc, fluidType, liters)
 end
 
 
+--- Probe the name of the fluid currently stored in a fluid container.
+--- Returns a plain string (e.g. "CrudeVegetableOil"), or nil if empty/unknown.
+---@param fc any    A fluid container object
+---@return string|nil
+function PhobosLib.tryGetFluidName(fc)
+    if not fc then return nil end
+    -- Strategy 1: getPrimaryFluid() -> FluidType -> getName()
+    local ok, name = pcall(function()
+        local ft = fc:getPrimaryFluid()
+        if ft then return ft:getName() end
+    end)
+    if ok and name then return tostring(name) end
+    -- Strategy 2: getFluidType() -> FluidType -> getName()
+    ok, name = pcall(function()
+        local ft = fc:getFluidType()
+        if ft then return ft:getName() end
+    end)
+    if ok and name then return tostring(name) end
+    -- Strategy 3: direct string accessor
+    local direct = PhobosLib.probeMethod(fc, {
+        "getContainedFluidName",
+        "getFluidName",
+        "getFluidTypeName",
+    })
+    if direct then return tostring(direct) end
+    return nil
+end
+
+
 --- Attempt to drain/remove fluid from a container.
 ---@param fc any
 ---@param liters number

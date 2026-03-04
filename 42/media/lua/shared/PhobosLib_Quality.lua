@@ -267,6 +267,52 @@ function PhobosLib.removeExcessItems(player, itemType, baseCount, keepCount)
 end
 
 
+--- Stamp a modData quality value on recently-filled FluidContainers by fluid name.
+--- B42's `+fluid` recipe syntax fills generic containers (EmptyJar, Bucket, etc.)
+--- with named fluids. Since OnCreate's `result` no longer references these filled
+--- containers, this function scans inventory for containers holding the named fluid
+--- and stamps modData on up to `count` unstamped matches.
+---
+--- Companion to recoverDrainedFluidQuality(): stamp fills containers after crafting,
+--- recover reads them when a downstream recipe drains the fluid.
+---
+---@param player any        The player character
+---@param fluidName string  The fluid name to search for (e.g. "CrudeBiodiesel")
+---@param modDataKey string The modData key to stamp (e.g. "PCP_Purity_CrudeBiodiesel")
+---@param value number      The quality value to stamp (0-100)
+---@param count number      Max containers to stamp (e.g. 3 for 3× jar outputs)
+---@return number           Number of containers actually stamped
+function PhobosLib.stampFluidContainerQuality(player, fluidName, modDataKey, value, count)
+    if not player or not fluidName or not modDataKey then return 0 end
+    count = count or 1
+    local stamped = 0
+    pcall(function()
+        local inv = player:getInventory()
+        if not inv then return end
+        local items = inv:getItems()
+        for i = 0, items:size() - 1 do
+            if stamped >= count then break end
+            local it = items:get(i)
+            if it then
+                local fc = PhobosLib.tryGetFluidContainer(it)
+                if fc then
+                    local fname = PhobosLib.tryGetFluidName(fc)
+                    if fname and fname == fluidName then
+                        -- Only stamp if not already stamped (avoid double-counting)
+                        local existing = PhobosLib.getModDataValue(it, modDataKey, nil)
+                        if existing == nil then
+                            PhobosLib.setModDataValue(it, modDataKey, value)
+                            stamped = stamped + 1
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    return stamped
+end
+
+
 --- Recover a quality value from a recently-drained FluidContainer's modData.
 --- B42's `-fluid` recipe syntax drains fluid from containers without consuming
 --- them, so OnCreate's `items` list does not include the drained container.
