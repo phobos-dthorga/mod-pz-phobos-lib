@@ -142,6 +142,42 @@ function PhobosLib.tryGetFluidName(fc)
 end
 
 
+--- Find the first empty FluidContainer in the player's inventory
+--- whose fullType matches an entry in the accepted-types whitelist.
+--- Searches main inventory only (not nested bags).
+---@param player any           IsoGameCharacter
+---@param acceptedTypes table  Array of fullType strings, e.g. {"Base.EmptyJar", "Base.BucketForged"}
+---@return any|nil             The inventory item, or nil if none found
+function PhobosLib.findEmptyFluidContainer(player, acceptedTypes)
+    if not player or not acceptedTypes then return nil end
+
+    -- Build a set for O(1) lookup
+    local allowed = {}
+    for _, ft in ipairs(acceptedTypes) do allowed[ft] = true end
+
+    local result = nil
+    pcall(function()
+        local inv = player:getInventory()
+        if not inv then return end
+        local items = inv:getItems()
+        for i = 0, items:size() - 1 do
+            local item = items:get(i)
+            if item and allowed[item:getFullType()] then
+                local fc = PhobosLib.tryGetFluidContainer(item)
+                if fc then
+                    local amt = PhobosLib.tryGetAmount(fc)
+                    if not amt or amt <= 0 then
+                        result = item
+                        return
+                    end
+                end
+            end
+        end
+    end)
+    return result
+end
+
+
 --- Attempt to drain/remove fluid from a container.
 ---@param fc any
 ---@param liters number
