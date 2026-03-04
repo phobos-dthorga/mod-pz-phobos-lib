@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.13.0 provides 20 modules (12 shared + 8 client) loaded via `require "PhobosLib"` plus PZ's automatic client/ loading.
+PhobosLib v1.14.0 provides 22 modules (12 shared + 10 client/server) loaded via `require "PhobosLib"` plus PZ's automatic client/ and server/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.13.0"]
+    subgraph LIB["PhobosLib v1.14.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -48,6 +48,8 @@ graph LR
         PW["PhobosLib_Power<br/>Powered workstation support<br/>(grid/generator/custom)"]
         PP["PhobosLib_Popup<br/>Guide & changelog popups<br/>(queue system, per-character)"]
         WL["PhobosLib_WorkstationLabel<br/>Untranslated tag filter<br/>(auto-install)"]
+        WA["PhobosLib_WorldAction<br/>World object context menus<br/>(requirement checks, red feedback)"]
+        ER["PhobosLib_EntityRebind<br/>Entity rebinding for<br/>pre-existing world objects"]
     end
 
     INIT --> UTIL
@@ -63,7 +65,7 @@ graph LR
     INIT --> MIGRATE
 ```
 
-> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 8 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel) are loaded separately by PZ from `client/` and also attach to the `PhobosLib` table.
+> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 10 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded separately by PZ from `client/` and `server/` and also attach to the `PhobosLib` table.
 
 ---
 
@@ -92,6 +94,8 @@ General-purpose utilities: safe method calling, API probing, keyword-based item 
 | `getModData(item)` | `item` | Safe modData table getter; returns table or nil |
 | `getModDataValue(item, key, default)` | `item, key: string, default` | Read single modData value with fallback |
 | `setModDataValue(item, key, value)` | `item, key: string, value` | Write single modData value; returns true on success |
+| `getConditionPercent(item)` | `item` | Get item condition as normalised 0-100 percentage regardless of ConditionMax |
+| `setConditionPercent(item, pct)` | `item, pct: number` | Set item condition from a 0-100 percentage, scaled to the item's ConditionMax |
 
 ---
 
@@ -104,8 +108,12 @@ Build 42 fluid container helpers with multi-strategy API fallbacks.
 | `tryGetFluidContainer(item)` | `item` | Get fluid container from an item; tries multiple method names |
 | `tryGetCapacity(fc)` | `fc: FluidContainer` | Probe container capacity in litres |
 | `tryGetAmount(fc)` | `fc: FluidContainer` | Probe current fluid amount in litres |
-| `tryAddFluid(fc, fluidType, liters)` | `fc, fluidType, liters: number` | Add fluid using multiple strategies |
+| `tryAddFluid(fc, fluidType, liters)` | `fc, fluidType/string, liters: number` | Add fluid using multiple strategies; resolves FluidType strings to objects |
 | `tryDrainFluid(fc, liters)` | `fc, liters: number` | Drain/remove fluid from container |
+| `findEmptyFluidContainer(player, validTypes)` | `player, validTypes: table` | Find an empty FluidContainer item in the player's inventory matching a list of valid item fullTypes |
+| `tryGetFluidName(fc)` | `fc: FluidContainer` | Safely retrieve the fluid type name string from a FluidContainer |
+| `stampFluidContainerQuality(item, qualityPercent)` | `item, qualityPercent: number` | Stamp condition-based purity on a filled FluidContainer after `+fluid` output |
+| `recoverDrainedFluidQuality(item)` | `item` | Recover purity value from a FluidContainer after `-fluid` drain for downstream recipe chaining |
 
 ---
 
@@ -571,3 +579,64 @@ Auto-installs on file load (vanilla path) and runtime-detects Neat Crafting at O
 > **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
 
 *No public API -- auto-installs on load.*
+
+---
+
+## PhobosLib_WorldAction
+
+Client-side generic world object context menu system. Register custom right-click actions on world objects with requirement checks. Actions that fail requirements are shown in red with reason tooltips, giving players clear feedback about what they need.
+
+Hooks `ISWorldObjectContextMenu.createMenu` once on first registration. Deduplicates menu entries to prevent duplicate actions.
+
+> **Note**: This module lives in `client/` (not `shared/`) and is loaded automatically by PZ's client-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerWorldAction(objectKeywords, actionName, options)` | `objectKeywords: table, actionName: string, options: table` | Register a context menu action for world objects matching the given keywords. Options: `{checkRequirements, onPerform, tooltip, iconTexture}`. `checkRequirements(player, object)` returns `{met: boolean, reason: string?}`. `onPerform(player, object)` executes the action. Unavailable actions appear in red with the reason as tooltip. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's client/ init file:
+require "PhobosLib"
+
+PhobosLib.registerWorldAction(
+    {"WaterWell", "well"},
+    "Collect Brine",
+    {
+        checkRequirements = function(player, obj)
+            local jar = PhobosLib.findItemByKeywords(player:getInventory(), {"EmptyJar"})
+            if not jar then return {met = false, reason = "Need an empty jar"} end
+            return {met = true}
+        end,
+        onPerform = function(player, obj)
+            -- perform brine collection
+        end,
+    }
+)
+```
+
+---
+
+## PhobosLib_EntityRebind
+
+Server-side entity rebinding for pre-existing world objects. When a mod updates an entity script (e.g. adding new components, changing properties), workstations that were placed before the update retain the old entity definition. This module scans loaded cells on game start and rebinds matching entities to their current script definitions.
+
+> **Note**: This module lives in `server/` (not `shared/`) and is loaded automatically by PZ's server-side module loader, not by the PhobosLib aggregator.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerEntityRebind(entityScriptName, options)` | `entityScriptName: string, options: table` | Register an entity script name for rebinding on game start. Options: `{guardFunc}`. Optional `guardFunc()` returns `true` to enable rebinding (e.g. sandbox option check). Entities matching the script name in loaded cells are rebound to the current script definition. |
+
+### Usage Pattern
+
+```lua
+-- In your mod's server/ init file:
+require "PhobosLib"
+
+PhobosLib.registerEntityRebind("MyMod_MyStation", {
+    guardFunc = function()
+        return SandboxVars.MyMod.EnableMyStation == true
+    end,
+})
+```

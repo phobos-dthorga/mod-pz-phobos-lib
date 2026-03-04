@@ -1,14 +1,14 @@
 [h1]PhobosLib — Shared Utility Library[/h1]
 
-[b]Version:[/b] 1.13.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
+[b]Version:[/b] 1.14.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
 
 A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib provides stable, reusable helpers so mod authors can focus on gameplay features instead of reimplementing safe wrappers, API probing, and boilerplate Lua glue.
 
-[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Chemistry Pathways[/url] — 198-recipe chemistry suite
+[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Chemistry Pathways[/url] — 204-recipe chemistry suite
 
 [hr][/hr]
 
-[h2]Modules (20 total)[/h2]
+[h2]Modules (22 total)[/h2]
 
 [h3]Shared Modules (12)[/h3]
 [list]
@@ -25,7 +25,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]Migrate[/b] — Versioned save migration framework with incompatible version handling
 [/list]
 
-[h3]Client Modules (8)[/h3]
+[h3]Client/Server Modules (10)[/h3]
 [list]
 [*] [b]RecipeFilter[/b] — Crafting menu recipe visibility filter (vanilla + Neat Crafting compatible)
 [*] [b]Tooltip[/b] — Custom item tooltip lines via full ISToolTipInv.render() replacement
@@ -35,6 +35,8 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]Power[/b] — Powered workstation support: grid/generator detection, CraftBench UI gating, time-based fuel drain
 [*] [b]Popup[/b] — Welcome guide and changelog popup system: first-time tutorials, version-based "What's New" popups
 [*] [b]WorkstationLabel[/b] — Workstation label filter: removes untranslated tags from crafting "Requires: ..." text
+[*] [b]WorldAction[/b] — Generic world object context menu system with requirement checks and red unavailable-action feedback
+[*] [b]EntityRebind[/b] — Server-side entity rebinding for pre-existing world objects after mod updates
 [/list]
 
 [hr][/hr]

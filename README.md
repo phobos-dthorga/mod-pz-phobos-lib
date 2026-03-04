@@ -17,7 +17,7 @@
 
 # PhobosLib
 
-**Version:** 1.13.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.14.0 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Chemistry Pathways](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -25,7 +25,7 @@
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
-**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 198-recipe chemistry suite
+**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 204-recipe chemistry suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)
@@ -55,8 +55,10 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Power** | *(client)* Powered workstation support: grid/generator/custom power detection, CraftBench UI gating (greyed craft button with tooltip), time-based generator fuel drain. Extensible via registerPowerSource() for alternative power mods |
 | **PhobosLib_Popup** | *(client)* Generic popup system: first-time welcome guide with "Don't show again" checkbox, version-based "What's New" popup on major.minor bumps. Queue-based display, per-character persistence with MP sync |
 | **PhobosLib_WorkstationLabel** | *(client)* Workstation label filter: removes untranslated tags (like CannotBeResearched) from crafting window "Requires: ..." text. Vanilla + Neat Crafting compatible |
+| **PhobosLib_WorldAction** | *(client)* Generic world object context menu system: register custom right-click actions on world objects with requirement checks. Unavailable actions shown in red with reason tooltips |
+| **PhobosLib_EntityRebind** | *(server)* Server-side entity rebinding for pre-existing world objects. Ensures workstations placed before a mod update get their new entity scripts applied on game load |
 
-Usage: `require "PhobosLib"` loads all 12 shared modules into the global `PhobosLib` table. The 8 client-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel) are loaded automatically by PZ from `client/`.
+Usage: `require "PhobosLib"` loads all 12 shared modules into the global `PhobosLib` table. The 10 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded automatically by PZ from `client/` and `server/`.
 
 ## Intended usage
 - As a dependency: your mod can require PhobosLib and call its helpers.
@@ -70,7 +72,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 20 modules (12 shared + 8 client) with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 22 modules (12 shared + 10 client/server) with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 

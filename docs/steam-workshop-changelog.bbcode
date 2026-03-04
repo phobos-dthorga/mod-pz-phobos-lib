@@ -1,5 +1,31 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.14.0 — World Actions, Entity Rebinding & Fluid Utilities (2026-03-05)[/h2]
+
+[h3]New Modules[/h3]
+[list]
+[*] [b]PhobosLib_WorldAction[/b] (client) — Generic world object context menu system. Register custom right-click actions on world objects with requirement checks. Unavailable actions shown in red with reason tooltips.
+[*] [b]PhobosLib_EntityRebind[/b] (server) — Server-side entity rebinding for pre-existing world objects. Ensures workstations placed before a mod update get their new entity scripts applied on game load.
+[/list]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]findEmptyFluidContainer()[/b] — Find empty FluidContainer in player inventory matching valid types
+[*] [b]tryGetFluidName()[/b] — Safely retrieve fluid type name from a FluidContainer
+[*] [b]stampFluidContainerQuality()[/b] — Stamp condition-based purity on filled FluidContainers after +fluid output
+[*] [b]recoverDrainedFluidQuality()[/b] — Recover purity from FluidContainers after -fluid drain
+[*] [b]getConditionPercent() / setConditionPercent()[/b] — Normalised 0-100% condition helpers regardless of ConditionMax
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] FluidType resolution in tryAddFluid() — resolves string names to FluidType objects for B42 recipe compatibility
+[*] Player-vs-inventory parameter handling fixed in find* functions; world action menu deduplication
+[*] onContextKey wrapper signature corrected to (player, timePressedContext)
+[/list]
+
+[hr][/hr]
+
 [h2]v1.13.0 — Popup System & Workstation Labels (2026-02-23)[/h2]
 
 [h3]New Modules[/h3]
@@ -51,7 +77,7 @@
 
 [h2]Summary[/h2]
 [list]
-[*] [b]20 modules[/b] total (12 shared + 8 client) — up from 17
-[*] [b]~110 public functions[/b]
-[*] 3 new client modules: Power, Popup, WorkstationLabel
+[*] [b]22 modules[/b] total (12 shared + 10 client/server) — up from 20
+[*] [b]~120 public functions[/b]
+[*] 2 new modules since v1.13.0: WorldAction, EntityRebind
 [/list]

@@ -23,6 +23,26 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-03-05
+
+### Added
+- **PhobosLib_WorldAction** (client/) — Generic world object context menu system. Register custom right-click actions on world objects with requirement checks. Unavailable actions shown in red with reason tooltips.
+- **PhobosLib_EntityRebind** (server/) — Server-side entity rebinding for pre-existing world objects. Ensures workstations placed before a mod update get their new entity scripts applied on game load.
+- **`findEmptyFluidContainer(player, validTypes)`** in PhobosLib_Fluid — Find an empty FluidContainer item in the player's inventory matching a list of valid item types.
+- **`tryGetFluidName(fc)`** in PhobosLib_Fluid — Safely retrieve the fluid type name from a FluidContainer.
+- **`stampFluidContainerQuality(item, qualityPercent)`** in PhobosLib_Fluid — Stamp condition-based purity on a filled FluidContainer after `+fluid` output.
+- **`recoverDrainedFluidQuality(item)`** in PhobosLib_Fluid — Recover purity from a FluidContainer after `-fluid` drain for downstream recipe chaining.
+- **`getConditionPercent(item)` / `setConditionPercent(item, pct)`** in PhobosLib_Util — Get/set item condition as a normalised 0-100 percentage regardless of ConditionMax.
+
+### Fixed
+- **FluidType resolution in `tryAddFluid()`** — Now resolves FluidType string names to FluidType objects before calling `addFluid()`, fixing compatibility with B42's recipe system which passes string fluid names.
+- **Player-vs-inventory dedup in find* functions** — Corrected parameter handling when player object is passed instead of inventory container; deduplicated world action menu entries.
+- **`onContextKey` wrapper signature** — Fixed wrapper to accept correct `(player, timePressedContext)` parameters.
+
+### Changed
+- `PhobosLib.VERSION` synced to `"1.14.0"`
+- Module count: 20 → **22** (12 shared + 10 client)
+
 ## [1.13.0] - 2026-02-23
 
 ### Added
