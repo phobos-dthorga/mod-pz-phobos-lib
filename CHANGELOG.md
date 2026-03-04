@@ -23,6 +23,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-03-05
+
+### Added
+- **`registerEmptyConditionReset(modulePrefix, guardFunc)`** in PhobosLib_VesselReplace — Register a condition reset for empty FluidContainer items. When the player opens or views a container, any FluidContainer matching the prefix whose fluid amount is zero will have its condition restored to ConditionMax. This removes the "(Worn)" suffix from items that repurpose condition as a metadata channel (e.g. purity) and were subsequently drained. Optional guard function controls when resets are active (e.g. sandbox option checks).
+
+### Changed
+- **PhobosLib_VesselReplace refactored to two-phase system** — Condition reset (phase 1) runs before vessel replacement (phase 2) in the same `OnRefreshInventoryWindowContainers` hook, guaranteeing correct execution order.
+- `PhobosLib.VERSION` synced to `"1.15.0"`
+
 ## [1.14.0] - 2026-03-05
 
 ### Added
