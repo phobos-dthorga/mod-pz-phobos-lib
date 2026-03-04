@@ -15,20 +15,29 @@
 
 ---------------------------------------------------------------
 -- PhobosLib_VesselReplace.lua
--- Client-side empty vessel replacement for FluidContainers.
+-- Client-side empty FluidContainer lifecycle management.
 --
--- Provides a registry for mods that define custom FluidContainer
--- items which should revert to their base vanilla vessel when
--- emptied.  When a container is opened in the inventory UI, all
--- empty FluidContainer items matching a registered mapping are
--- removed and replaced with the corresponding vanilla vessel.
+-- Two complementary systems for handling emptied FluidContainers:
 --
--- Mappings can be either:
---   string  -> simple replacement  ("Base.BottleCrafted")
---   table   -> vessel + bonus items
---              { vessel = "Base.EmptyJar", bonus = {"Base.JarLid"} }
---              Bonus items have their condition set to match the
---              vessel's condition value (clamped to their ConditionMax).
+-- 1. CONDITION RESET (Part of PhobosLib >= 1.15.0)
+--    Mods that repurpose item condition as a metadata channel
+--    (e.g. purity) can register a condition reset so that empty
+--    FluidContainers revert to ConditionMax.  This removes the
+--    "(Worn)" suffix from items whose condition was modified as
+--    a metadata channel and were then drained.
+--
+-- 2. VESSEL REPLACEMENT (Part of PhobosLib >= 1.10.0)
+--    Mods that define custom FluidContainer items can register
+--    mappings so empty containers revert to their base vanilla
+--    vessel.  Mappings can be either:
+--      string  -> simple replacement  ("Base.BottleCrafted")
+--      table   -> vessel + bonus items
+--                 { vessel = "Base.EmptyJar", bonus = {"Base.JarLid"} }
+--                 Bonus items have their condition set to match the
+--                 vessel's condition value (clamped to their ConditionMax).
+--
+-- Condition reset runs BEFORE vessel replacement in the same event
+-- handler, guaranteeing correct execution order.
 --
 -- B42 FluidContainers have no built-in ReplaceOnEmpty property
 -- and no event fires when fluid amount reaches zero, so this
@@ -41,8 +50,6 @@
 -- Hook: Events.OnRefreshInventoryWindowContainers
 --   Fires when the inventory panel refreshes its container list
 --   (opening loot panel, approaching containers, etc.)
---
--- Part of PhobosLib >= 1.10.0
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
@@ -60,8 +67,58 @@ local _EMPTY_THRESHOLD = 0.001
 --- Internal registry: { {prefix=string, mappings=table, guard=function|nil}, ... }
 PhobosLib._vesselReplaceEntries = PhobosLib._vesselReplaceEntries or {}
 
+--- Internal registry: { {prefix=string, guard=function|nil}, ... }
+PhobosLib._conditionResetEntries = PhobosLib._conditionResetEntries or {}
+
 --- Whether the event hook has been installed.
 local _hookInstalled = false
+
+---------------------------------------------------------------
+-- Condition reset logic
+---------------------------------------------------------------
+
+--- Reset condition to ConditionMax on all empty FluidContainer items
+--- in a single container that match a registered prefix.
+---@param container any   ItemContainer
+---@param entry table     {prefix, guard}
+---@return number         Count of items reset
+local function resetEmptyInContainer(container, entry)
+    local items = container:getItems()
+    if not items then return 0 end
+
+    local count = 0
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if item then
+            local fullType = item:getFullType()
+            if fullType and string.find(fullType, entry.prefix, 1, true) then
+                local ok, didReset = pcall(function()
+                    -- Only FluidContainer items
+                    local fc = PhobosLib.tryGetFluidContainer(item)
+                    if not fc then return false end
+
+                    -- Only empty containers
+                    local amount = PhobosLib.tryGetAmount(fc)
+                    if not amount or amount >= _EMPTY_THRESHOLD then return false end
+
+                    -- Only items whose condition is below max
+                    local maxCond = item:getConditionMax()
+                    if not maxCond or maxCond <= 0 then return false end
+                    if item:getCondition() >= maxCond then return false end
+
+                    -- Reset condition to ConditionMax
+                    item:setCondition(maxCond)
+                    pcall(sendItemStats, item)
+                    return true
+                end)
+                if ok and didReset then
+                    count = count + 1
+                end
+            end
+        end
+    end
+    return count
+end
 
 ---------------------------------------------------------------
 -- Replacement logic
@@ -180,6 +237,7 @@ local function replaceEmptyInContainer(container, entry)
 end
 
 --- Event handler for OnRefreshInventoryWindowContainers.
+--- Two-phase processing: condition reset runs BEFORE vessel replacement.
 ---@param inventoryPage any  ISInventoryPage
 ---@param stage string       Refresh stage
 local function onRefreshContainers(inventoryPage, stage)
@@ -188,10 +246,11 @@ local function onRefreshContainers(inventoryPage, stage)
     pcall(function()
         if not inventoryPage or not inventoryPage.backpacks then return end
 
+        local totalReset = 0
         local totalReplaced = 0
 
-        for _, entry in ipairs(PhobosLib._vesselReplaceEntries) do
-            -- Check guard function
+        -- Phase 1: Condition reset (runs BEFORE vessel replacement)
+        for _, entry in ipairs(PhobosLib._conditionResetEntries) do
             local shouldRun = true
             if entry.guard then
                 local guardOk, guardResult = pcall(entry.guard)
@@ -201,7 +260,29 @@ local function onRefreshContainers(inventoryPage, stage)
             end
 
             if shouldRun then
-                -- Iterate all visible containers
+                for _, backpack in ipairs(inventoryPage.backpacks) do
+                    if backpack and backpack.inventory then
+                        local count = resetEmptyInContainer(backpack.inventory, entry)
+                        if count > 0 then
+                            totalReset = totalReset + count
+                            print(_TAG .. " reset condition on " .. count .. " empty container(s) for prefix '" .. entry.prefix .. "'")
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Phase 2: Vessel replacement (runs AFTER condition reset)
+        for _, entry in ipairs(PhobosLib._vesselReplaceEntries) do
+            local shouldRun = true
+            if entry.guard then
+                local guardOk, guardResult = pcall(entry.guard)
+                if not guardOk or guardResult ~= true then
+                    shouldRun = false
+                end
+            end
+
+            if shouldRun then
                 for _, backpack in ipairs(inventoryPage.backpacks) do
                     if backpack and backpack.inventory then
                         local count = replaceEmptyInContainer(backpack.inventory, entry)
@@ -215,11 +296,11 @@ local function onRefreshContainers(inventoryPage, stage)
         end
 
         -- Force inventory UI to refresh on the next frame so the
-        -- player sees the vanilla vessel immediately, not the stale
-        -- PCP item.  Our hook fires AFTER refreshContainer() has
-        -- already rebuilt the item list (ISInventoryPage line 1875
-        -- vs 1890), so we set the dirty flag for the render loop.
-        if totalReplaced > 0 then
+        -- player sees changes immediately.  Our hook fires AFTER
+        -- refreshContainer() has already rebuilt the item list
+        -- (ISInventoryPage line 1875 vs 1890), so we set the dirty
+        -- flag for the render loop.
+        if totalReset > 0 or totalReplaced > 0 then
             pcall(function()
                 if inventoryPage.inventoryPane and inventoryPage.inventoryPane.inventory then
                     inventoryPage.inventoryPane.inventory:setDrawDirty(true)
@@ -295,4 +376,43 @@ function PhobosLib.registerEmptyVesselReplacement(modulePrefix, mappings, guardF
     local mapCount = 0
     for _ in pairs(mappings) do mapCount = mapCount + 1 end
     print(_TAG .. " registered " .. mapCount .. " vessel mapping(s) for prefix '" .. modulePrefix .. "'")
+end
+
+--- Register condition reset for empty FluidContainer items.
+---
+--- When the player opens or views a container, any FluidContainer item
+--- whose fullType matches the modulePrefix AND whose fluid amount is
+--- below the empty threshold will have its condition restored to
+--- ConditionMax.  This removes the "(Worn)" suffix from items that
+--- used condition as a metadata channel (e.g. purity) and were then
+--- drained.
+---
+--- Condition reset runs BEFORE vessel replacement in the same event
+--- handler, so items that are subsequently replaced by vessel mappings
+--- will have had their condition harmlessly reset first.
+---
+---@param modulePrefix string       Item fullType prefix for fast filtering
+---                                  (e.g. "PhobosChemistryPathways.")
+---@param guardFunc    function|nil Optional guard: function() -> boolean.
+---                                  Reset only occurs when guard returns true.
+---                                  Use for sandbox option checks (e.g. impurity enabled).
+function PhobosLib.registerEmptyConditionReset(modulePrefix, guardFunc)
+    if type(modulePrefix) ~= "string" or modulePrefix == "" then
+        print(_TAG .. " registerEmptyConditionReset: invalid modulePrefix")
+        return
+    end
+    if guardFunc ~= nil and type(guardFunc) ~= "function" then
+        print(_TAG .. " registerEmptyConditionReset: guardFunc must be a function or nil")
+        return
+    end
+
+    table.insert(PhobosLib._conditionResetEntries, {
+        prefix = modulePrefix,
+        guard  = guardFunc,
+    })
+
+    -- Install hook on first registration (shared with vessel replacement)
+    installHook()
+
+    print(_TAG .. " registered condition reset for prefix '" .. modulePrefix .. "'")
 end
