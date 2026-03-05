@@ -295,7 +295,7 @@ function PhobosLib.setConditionPercent(item, percent)
         local maxCond = item:getConditionMax()
         if maxCond and maxCond > 0 then
             local scaled = math.floor(percent / 100 * maxCond + 0.5)
-            scaled = math.max(0, math.min(maxCond, scaled))
+            scaled = math.max(0, math.min(maxCond - 1, scaled))
             item:setCondition(scaled)
             pcall(sendItemStats, item)
         end
