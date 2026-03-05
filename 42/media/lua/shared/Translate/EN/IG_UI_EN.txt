@@ -21,4 +21,10 @@ IGUI_EN = {
 	IGUI_PhobosLib_DontShowAgain = "Don't show this again",
 	IGUI_PhobosLib_GotIt = "Got it!",
 	IGUI_PhobosLib_OpenGuide = "Open Guide",
+	IGUI_PhobosLib_GuideDefaultTitle = "Quick Guide",
+	IGUI_PhobosLib_ChangelogDefaultTitle = "What's New",
+	IGUI_PhobosLib_NoticeDefaultTitle = "Notice",
+	IGUI_PhobosLib_ErrorBuildGuide = "Error building guide content: ",
+	IGUI_PhobosLib_ErrorBuildChangelog = "Error building changelog content: ",
+	IGUI_PhobosLib_ErrorBuildNotice = "Error building notice content: ",
 }

@@ -344,3 +344,25 @@ function PhobosLib.setModDataValue(item, key, value)
     md[key] = value
     return true
 end
+
+
+---------------------------------------------------------------
+-- Player Utilities
+---------------------------------------------------------------
+
+--- Check if a player has admin-level access.
+--- Returns true for singleplayer, co-op host, or dedicated server admins.
+--- Generic utility — any Phobos mod can use this for privilege gating.
+---@param player any  IsoPlayer
+---@return boolean
+function PhobosLib.isPlayerAdmin(player)
+    if not player then return false end
+    -- Singleplayer or co-op host: not a network client
+    if not isClient() then return true end
+    -- Dedicated server client: check access level
+    local ok, level = pcall(function() return player:getAccessLevel() end)
+    if ok and type(level) == "string" then
+        return string.lower(level) == "admin"
+    end
+    return false
+end

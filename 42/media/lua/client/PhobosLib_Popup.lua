@@ -18,14 +18,17 @@
 -- PhobosLib_Popup.lua
 -- Generic popup system for PZ B42 mods.
 --
--- Provides two popup types:
+-- Provides three popup types:
 --   1. Guide  — first-time tutorial/introduction with
 --               "Don't show again" checkbox
---   2. Changelog — version-based "What's New" popup
+--   2. Notice — one-time migration/announcement popup
+--               with optional shouldShow() condition gate
+--   3. Changelog — version-based "What's New" popup
 --               that fires on major/minor version bumps
 --
 -- Mods register popups at file load time via:
 --   PhobosLib.registerGuidePopup(modId, options)
+--   PhobosLib.registerNoticePopup(modId, noticeId, options)
 --   PhobosLib.registerChangelogPopup(modId, options)
 --
 -- An OnGameStart hook evaluates all registrations, builds
@@ -61,6 +64,7 @@ local BTN_HGT  = math.max(24, FONT_HGT + 8)
 ---------------------------------------------------------------
 
 PhobosLib._guideRegistry     = PhobosLib._guideRegistry     or {}
+PhobosLib._noticeRegistry    = PhobosLib._noticeRegistry    or {}
 PhobosLib._changelogRegistry = PhobosLib._changelogRegistry or {}
 PhobosLib._popupQueue        = PhobosLib._popupQueue        or {}
 
@@ -95,6 +99,10 @@ local function guideKey(modId)
     return "PhobosLib_guide_" .. modId
 end
 
+local function noticeKey(modId, noticeId)
+    return "PhobosLib_notice_" .. modId .. "_" .. noticeId
+end
+
 local function changelogKey(modId)
     return "PhobosLib_changelog_" .. modId
 end
@@ -109,7 +117,7 @@ function _GuideWindow:new(x, y, w, h, registration)
     local o = ISCollapsableWindow:new(x, y, w, h)
     setmetatable(o, self)
     self.__index = self
-    o.title           = registration.title or "Quick Guide"
+    o.title           = registration.title or safeGetText("IGUI_PhobosLib_GuideDefaultTitle")
     o.resizable       = false
     o.pin             = true
     o._registration   = registration
@@ -143,7 +151,7 @@ function _GuideWindow:createChildren()
     -- Build content via callback (safe for getText at display time)
     local contentOk, content = pcall(self._registration.buildContent)
     if not contentOk then
-        content = "<TEXT> <RGB:1,0.3,0.3> Error building guide content: "
+        content = "<TEXT> <RGB:1,0.3,0.3> " .. safeGetText("IGUI_PhobosLib_ErrorBuildGuide")
                   .. tostring(content) .. " <LINE> "
     end
     self.richText.text = content or ""
@@ -185,7 +193,7 @@ function _ChangelogWindow:new(x, y, w, h, registration)
     local o = ISCollapsableWindow:new(x, y, w, h)
     setmetatable(o, self)
     self.__index = self
-    o.title           = registration.title or "What's New"
+    o.title           = registration.title or safeGetText("IGUI_PhobosLib_ChangelogDefaultTitle")
     o.resizable       = false
     o.pin             = false
     o._registration   = registration
@@ -224,7 +232,7 @@ function _ChangelogWindow:createChildren()
         self._registration._lastSeenVersion
     )
     if not contentOk then
-        content = "<TEXT> <RGB:1,0.3,0.3> Error building changelog content: "
+        content = "<TEXT> <RGB:1,0.3,0.3> " .. safeGetText("IGUI_PhobosLib_ErrorBuildChangelog")
                   .. tostring(content) .. " <LINE> "
     end
     self.richText.text = content or ""
@@ -308,6 +316,135 @@ function _ChangelogWindow:close()
 end
 
 ---------------------------------------------------------------
+-- _NoticeWindow — ISCollapsableWindow subclass
+-- One-time notice popup with "Got it!" button.
+-- Guards via player modData key (shown once per character).
+---------------------------------------------------------------
+
+local _NoticeWindow = ISCollapsableWindow:derive("PhobosLib_NoticeWindow")
+
+function _NoticeWindow:new(x, y, w, h, registration)
+    local o = ISCollapsableWindow:new(x, y, w, h)
+    setmetatable(o, self)
+    self.__index = self
+    o.title           = registration.title or safeGetText("IGUI_PhobosLib_NoticeDefaultTitle")
+    o.resizable       = false
+    o.pin             = false
+    o._registration   = registration
+    o.backgroundColor = registration.backgroundColor
+                        or { r = 0.04, g = 0.04, b = 0.06, a = 0.95 }
+    o.borderColor     = registration.borderColor
+                        or { r = 0.70, g = 0.55, b = 0.20, a = 1.00 }
+    return o
+end
+
+function _NoticeWindow:createChildren()
+    ISCollapsableWindow.createChildren(self)
+
+    local barH    = self:titleBarHeight()
+    local x       = BORDER
+    local y       = barH + BORDER
+    local btnRowH = BTN_HGT + BORDER * 2
+    local innerW  = self.width  - x * 2
+    local innerH  = self.height - y - btnRowH
+
+    -- Scrollable rich-text body
+    self.richText = ISRichTextPanel:new(x, y, innerW, innerH)
+    self.richText:initialise()
+    self.richText:instantiate()
+    self.richText:noBackground()
+    self.richText.autosetheight = false
+    self.richText.clip          = true
+    self.richText:addScrollBars()
+    self.richText.backgroundColor = { r = 0, g = 0, b = 0, a = 0.30 }
+    self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.07 }
+    self:addChild(self.richText)
+
+    -- Build content via callback
+    local contentOk, content = pcall(self._registration.buildContent)
+    if not contentOk then
+        content = "<TEXT> <RGB:1,0.3,0.3> " .. safeGetText("IGUI_PhobosLib_ErrorBuildNotice")
+                  .. tostring(content) .. " <LINE> "
+    end
+    self.richText.text = content or ""
+    self.richText:paginate()
+
+    -- "Got it!" button (centered)
+    local btnW = 120
+    local btnY = self.height - BTN_HGT - BORDER
+    local btnX = math.floor((self.width - btnW) / 2)
+
+    self.btnClose = ISButton:new(btnX, btnY, btnW, BTN_HGT,
+        safeGetText("IGUI_PhobosLib_GotIt"), self, _NoticeWindow.onGotIt)
+    self.btnClose:initialise()
+    self.btnClose:instantiate()
+    self.btnClose.borderColor     = { r = 0.70, g = 0.55, b = 0.20, a = 1.0 }
+    self.btnClose.backgroundColor = { r = 0.20, g = 0.15, b = 0.05, a = 0.85 }
+    self.btnClose:setAnchorBottom(true)
+    self.btnClose:setAnchorLeft(false)
+    self.btnClose:setAnchorRight(false)
+    self:addChild(self.btnClose)
+
+    -- "Open Guide" button (only if a guide is registered for same modId)
+    local modId = self._registration.modId
+    if PhobosLib._guideRegistry[modId] then
+        local tutW = 140
+        local tutX = self.width - tutW - BORDER
+        self.btnGuide = ISButton:new(tutX, btnY, tutW, BTN_HGT,
+            safeGetText("IGUI_PhobosLib_OpenGuide"),
+            self, _NoticeWindow.onOpenGuide)
+        self.btnGuide:initialise()
+        self.btnGuide:instantiate()
+        self.btnGuide.borderColor     = { r = 0.40, g = 0.40, b = 0.40, a = 0.7 }
+        self.btnGuide.backgroundColor = { r = 0.08, g = 0.08, b = 0.10, a = 0.80 }
+        self.btnGuide:setAnchorBottom(true)
+        self.btnGuide:setAnchorLeft(false)
+        self.btnGuide:setAnchorRight(false)
+        self:addChild(self.btnGuide)
+    end
+end
+
+function _NoticeWindow:onGotIt()
+    self:close()
+end
+
+function _NoticeWindow:onOpenGuide()
+    local modId = self._registration.modId
+    local guideReg = PhobosLib._guideRegistry[modId]
+    if not guideReg then return end
+
+    -- Clear guide dismissed flag
+    local player = getPlayer()
+    if player then
+        player:getModData()[guideKey(modId)] = nil
+        pcall(function() player:transmitModData() end)
+    end
+
+    -- Close notice (stamps guard)
+    self:close()
+
+    -- Show guide on next tick (one-frame delay for clean transition)
+    local function showGuide()
+        PhobosLib._showGuidePopup(guideReg)
+        Events.OnTick.Remove(showGuide)
+    end
+    Events.OnTick.Add(showGuide)
+end
+
+function _NoticeWindow:close()
+    -- Stamp notice guard in player modData
+    local player = getPlayer()
+    if player then
+        local key = noticeKey(self._registration.modId, self._registration._noticeId)
+        player:getModData()[key] = true
+        pcall(function() player:transmitModData() end)
+    end
+    self:setVisible(false)
+    self:removeFromUIManager()
+    PhobosLib._showNextPopup()
+end
+
+---------------------------------------------------------------
 -- Queue System
 ---------------------------------------------------------------
 
@@ -319,6 +456,8 @@ function PhobosLib._showNextPopup()
     local entry = table.remove(queue, 1)
     if entry.type == "guide" then
         PhobosLib._showGuidePopup(entry.registration)
+    elseif entry.type == "notice" then
+        PhobosLib._showNoticePopup(entry.registration)
     elseif entry.type == "changelog" then
         PhobosLib._showChangelogPopup(entry.registration)
     end
@@ -364,6 +503,26 @@ function PhobosLib._showChangelogPopup(reg)
     popup:setY(math.floor((sh - h) / 2))
 end
 
+--- Create and display a notice popup.
+---@param reg table  Notice registration
+function PhobosLib._showNoticePopup(reg)
+    local w = reg.width  or 560
+    local h = reg.height or 500
+    local sw = getCore():getScreenWidth()
+    local sh = getCore():getScreenHeight()
+
+    -- Responsive sizing (clamp to screen)
+    w = math.min(w, math.floor(sw * 0.46))
+    h = math.min(h, math.floor(sh * 0.75))
+
+    local popup = _NoticeWindow:new(0, 0, w, h, reg)
+    popup:initialise()
+    popup:addToUIManager()
+    popup:setVisible(true)
+    popup:setX(math.floor((sw - w) / 2))
+    popup:setY(math.floor((sh - h) / 2))
+end
+
 ---------------------------------------------------------------
 -- OnGameStart — Evaluate registrations and build queue
 ---------------------------------------------------------------
@@ -381,6 +540,24 @@ local function onGameStart()
         if not dismissed then
             table.insert(queue, { type = "guide", registration = reg })
             print(_TAG .. " guide queued for " .. modId)
+        end
+    end
+
+    -- ── Evaluate notice registrations ──
+    for modId, notices in pairs(PhobosLib._noticeRegistry) do
+        for nId, reg in pairs(notices) do
+            local nKey = noticeKey(modId, nId)
+            if not md[nKey] then
+                local show = true
+                if type(reg.shouldShow) == "function" then
+                    local ok, result = pcall(reg.shouldShow, player)
+                    show = ok and (result == true)
+                end
+                if show then
+                    table.insert(queue, { type = "notice", registration = reg })
+                    print(_TAG .. " notice queued: " .. modId .. "/" .. nId)
+                end
+            end
         end
     end
 
@@ -487,6 +664,52 @@ function PhobosLib.registerChangelogPopup(modId, options)
     PhobosLib._changelogRegistry[modId] = options
     print(_TAG .. " changelog registered for " .. modId
           .. " (v" .. options.currentVersion .. ")")
+end
+
+--- Register a one-time notice popup for a mod.
+---
+--- Notice popups show once per character. They are intended for
+--- migration announcements, setting changes, or important one-time
+--- messages. Dismissed with "Got it!" and never shown again.
+---
+--- An optional shouldShow(player) callback can gate display based
+--- on runtime conditions (e.g. world modData flags, admin checks).
+---
+--- Registration should happen at file load time (before
+--- OnGameStart). The buildContent callback is called at display
+--- time, so getText() is safe to use inside it.
+---
+---@param modId    string   Unique mod identifier (e.g. "PCP")
+---@param noticeId string   Unique notice identifier (e.g. "impurity_enabled")
+---@param options  table    Registration options
+--- options.title           string              Window title
+--- options.buildContent    function()           Returns rich text string
+--- options.shouldShow      function(player)     Optional condition (default: always show)
+--- options.width           number               Window width  (default 560)
+--- options.height          number               Window height (default 500)
+--- options.backgroundColor table                {r,g,b,a} (default dark)
+--- options.borderColor     table                {r,g,b,a} (default amber)
+function PhobosLib.registerNoticePopup(modId, noticeId, options)
+    if type(modId) ~= "string" or modId == "" then
+        print(_TAG .. " registerNoticePopup: invalid modId")
+        return
+    end
+    if type(noticeId) ~= "string" or noticeId == "" then
+        print(_TAG .. " registerNoticePopup: invalid noticeId")
+        return
+    end
+    if type(options) ~= "table" or type(options.buildContent) ~= "function" then
+        print(_TAG .. " registerNoticePopup: options.buildContent is required (function)")
+        return
+    end
+
+    options.modId = modId
+    options._noticeId = noticeId
+    if not PhobosLib._noticeRegistry[modId] then
+        PhobosLib._noticeRegistry[modId] = {}
+    end
+    PhobosLib._noticeRegistry[modId][noticeId] = options
+    print(_TAG .. " notice registered: " .. modId .. "/" .. noticeId)
 end
 
 ---------------------------------------------------------------
