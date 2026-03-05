@@ -132,11 +132,13 @@ end
 ---@param inputQuality number  Average input quality
 ---@param factor number        Equipment factor (e.g. 0.90 for mortar, 1.25 for chromatograph)
 ---@param variance number      Random variance range (e.g. 5 for ±5)
+---@param skillBonus number    Optional additive bonus from player skill (default 0)
 ---@return number              Output quality (clamped 0-100)
-function PhobosLib.calculateOutputQuality(inputQuality, factor, variance)
+function PhobosLib.calculateOutputQuality(inputQuality, factor, variance, skillBonus)
     variance = variance or 5
+    skillBonus = skillBonus or 0
     local randomOffset = ZombRand(variance * 2 + 1) - variance  -- e.g. -5 to +5
-    local result = inputQuality * factor + randomOffset
+    local result = inputQuality * factor + randomOffset + skillBonus
     return math.max(0, math.min(100, math.floor(result + 0.5)))
 end
 
@@ -148,6 +150,61 @@ end
 function PhobosLib.randomBaseQuality(min, max)
     if min >= max then return min end
     return min + ZombRand(max - min + 1)
+end
+
+
+--- Convert a perk level into a small quality bonus.
+---@param player any       IsoPlayer (or IsoGameCharacter)
+---@param perk any         Perks enum value (e.g. Perks.AppliedChemistry)
+---@param divisor number   Integer divisor (default 2 → level 10 = +5 bonus)
+---@return number          Integer bonus (0-based)
+function PhobosLib.getSkillBonus(player, perk, divisor)
+    if not player or not perk then return 0 end
+    divisor = divisor or 2
+    local level = player:getPerkLevel(perk)
+    return math.floor(level / divisor)
+end
+
+
+--- Skill-aware variant of randomBaseQuality for source recipes.
+--- Adds a small bonus based on the player's skill level.
+---@param min number       Minimum quality (e.g. 30)
+---@param max number       Maximum quality (e.g. 50)
+---@param player any       IsoPlayer
+---@param perk any         Perks enum value
+---@param divisor number   Skill divisor (default 2)
+---@return number          Random quality in [min, max+bonus], capped at 99
+function PhobosLib.randomBaseQualityWithSkill(min, max, player, perk, divisor)
+    local base = PhobosLib.randomBaseQuality(min, max)
+    local bonus = PhobosLib.getSkillBonus(player, perk, divisor)
+    return math.min(99, base + bonus)  -- cap at 99 to avoid condition sentinel
+end
+
+
+--- Average condition-percent of stamped items only (condition < conditionMax).
+--- Unstamped/vanilla items (condition == conditionMax) are excluded.
+--- Designed for condition-based purity tracking where conditionMax is the
+--- "unstamped" sentinel value.
+---@param items any        Java ArrayList of InventoryItem
+---@param default number   Fallback if no stamped items found (default 50)
+---@return number          Averaged quality (0-99)
+function PhobosLib.averageStampedQuality(items, default)
+    default = default or 50
+    if not items then return default end
+    local total, count = 0, 0
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        local maxCond = item:getConditionMax()
+        if maxCond and maxCond > 0 then
+            local cond = item:getCondition()
+            if cond < maxCond then  -- only stamped items
+                total = total + math.floor(cond / maxCond * 100 + 0.5)
+                count = count + 1
+            end
+        end
+    end
+    if count == 0 then return default end
+    return math.floor(total / count + 0.5)
 end
 
 
