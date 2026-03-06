@@ -27,4 +27,9 @@ IGUI_EN = {
 	IGUI_PhobosLib_ErrorBuildGuide = "Error building guide content: ",
 	IGUI_PhobosLib_ErrorBuildChangelog = "Error building changelog content: ",
 	IGUI_PhobosLib_ErrorBuildNotice = "Error building notice content: ",
+	IGUI_PhobosLib_SeriesGuideTitle = "Quick Guide",
+	IGUI_PhobosLib_SeriesChangelogTitle = "What's New",
+	IGUI_PhobosLib_SeriesNoticeTitle = "Notice",
+	IGUI_PhobosLib_ErrorBuildSeries = "Error building series content: ",
+	IGUI_PhobosLib_ExpandToView = "expand above to view",
 }
