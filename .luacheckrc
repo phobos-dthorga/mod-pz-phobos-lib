@@ -15,10 +15,26 @@ unused_args = false
 -- pcall returns ok,result; ok is often checked only implicitly
 unused_secondaries = false
 
+-- Suppress common PZ modding code patterns:
+--   211/ok          — unused pcall success flag (very common PZ pattern)
+--   211/_orig_.*    — saved original functions before monkey-patching
+--   221             — variable with _ prefix that IS used (underscore convention mismatch)
+--   411/ok          — shadowing ok in nested pcall blocks
+--   542             — empty if branch (guard clauses)
+ignore = {
+    "211/ok",
+    "211/_orig_.*",
+    "221",
+    "411/ok",
+    "542",
+}
+
 -- PhobosLib's own namespace + PZ classes that PhobosLib monkey-patches
 -- (overriding methods is standard PZ modding practice)
 globals = {
     "PhobosLib",
+    -- PZ engine core (PhobosLib writes to SandboxVars for sandbox management)
+    "SandboxVars",
     -- PZ UI classes PhobosLib overrides methods on
     "ISFarmingMenu",
     "ISRecipeScrollingListBox",
@@ -35,10 +51,11 @@ globals = {
 read_globals = {
     -- PZ engine core
     "Events",
-    "SandboxVars",
     "Perks",
     "ModData",
+    "Fluid",
     "FluidType",
+    "ScriptManager",
     "UIFont",
     "CharacterStat",
 
@@ -67,6 +84,8 @@ read_globals = {
     "sendItemStats",
     "sendAddItemToContainer",
     "sendRemoveItemFromContainer",
+    "sendServerCommand",
+    "ZombRand",
 
     -- PZ Java classes
     "ArrayList",
