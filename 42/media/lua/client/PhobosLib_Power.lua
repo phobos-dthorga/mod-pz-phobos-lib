@@ -189,7 +189,7 @@ function PhobosLib.startPowerDrain(square, drainPerMinute)
             lastTick = getTimestampMs(),
             active = true,
         }
-        print(_TAG .. " started drain session " .. sessionId .. " (grid power — no fuel drain)")
+        PhobosLib.debug("PhobosLib", _TAG, "started drain session " .. sessionId .. " (grid power — no fuel drain)")
         return sessionId
     end
 
@@ -216,7 +216,7 @@ function PhobosLib.startPowerDrain(square, drainPerMinute)
         print(_TAG .. " OnTick drain handler installed")
     end
 
-    print(_TAG .. " started drain session " .. sessionId
+    PhobosLib.debug("PhobosLib", _TAG, "started drain session " .. sessionId
         .. " (generator, " .. drainPerMinute .. "%/min)")
     return sessionId
 end
@@ -231,7 +231,7 @@ function PhobosLib.stopPowerDrain(sessionId)
     if session then
         session.active = false
         PhobosLib._drainSessions[sessionId] = nil
-        print(_TAG .. " stopped drain session " .. sessionId)
+        PhobosLib.debug("PhobosLib", _TAG, "stopped drain session " .. sessionId)
     end
 
     -- Uninstall tick handler if no active sessions remain
@@ -270,9 +270,9 @@ function PhobosLib._onDrainTick()
                         -- drainPerMinute was 0 for grid; we need the original rate
                         -- Since we don't store it, use a fallback default
                         -- The calling code should re-register if grid fails
-                        print(_TAG .. " session " .. sessionId .. ": grid failed, found generator")
+                        PhobosLib.debug("PhobosLib", _TAG, "session " .. sessionId .. ": grid failed, found generator")
                     else
-                        print(_TAG .. " session " .. sessionId .. ": grid failed, no generator — power lost")
+                        PhobosLib.debug("PhobosLib", _TAG, "session " .. sessionId .. ": grid failed, no generator — power lost")
                         shouldStop = true
                     end
                 end

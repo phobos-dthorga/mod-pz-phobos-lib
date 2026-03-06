@@ -265,7 +265,7 @@ local function onRefreshContainers(inventoryPage, stage)
                         local count = resetEmptyInContainer(backpack.inventory, entry)
                         if count > 0 then
                             totalReset = totalReset + count
-                            print(_TAG .. " reset condition on " .. count .. " empty container(s) for prefix '" .. entry.prefix .. "'")
+                            PhobosLib.debug("PhobosLib", _TAG, "reset condition on " .. count .. " empty container(s) for prefix '" .. entry.prefix .. "'")
                         end
                     end
                 end
@@ -288,7 +288,7 @@ local function onRefreshContainers(inventoryPage, stage)
                         local count = replaceEmptyInContainer(backpack.inventory, entry)
                         if count > 0 then
                             totalReplaced = totalReplaced + count
-                            print(_TAG .. " replaced " .. count .. " empty vessel(s) in container for prefix '" .. entry.prefix .. "'")
+                            PhobosLib.debug("PhobosLib", _TAG, "replaced " .. count .. " empty vessel(s) in container for prefix '" .. entry.prefix .. "'")
                         end
                     end
                 end
