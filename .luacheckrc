@@ -9,9 +9,27 @@ allow_defined_top = true
 -- PZ modding uses long lines freely
 max_line_length = false
 
--- PhobosLib's own global namespace
+-- PZ callback signatures have fixed args that aren't always used
+unused_args = false
+
+-- pcall returns ok,result; ok is often checked only implicitly
+unused_secondaries = false
+
+-- PhobosLib's own namespace + PZ classes that PhobosLib monkey-patches
+-- (overriding methods is standard PZ modding practice)
 globals = {
     "PhobosLib",
+    -- PZ UI classes PhobosLib overrides methods on
+    "ISFarmingMenu",
+    "ISRecipeScrollingListBox",
+    "ISTiledIconPanel",
+    "ISToolTipInv",
+    "ISWidgetHandCraftControl",
+    "ISWidgetTitleHeader",
+    -- Cross-mod (written to when patching)
+    "CFarming_Interact",
+    "NC_FilterBar",
+    "NC_RecipeInfoPanel",
 }
 
 read_globals = {
@@ -22,6 +40,7 @@ read_globals = {
     "ModData",
     "FluidType",
     "UIFont",
+    "CharacterStat",
 
     -- PZ engine functions
     "getActivatedMods",
@@ -29,7 +48,11 @@ read_globals = {
     "getDebug",
     "getGameTime",
     "getModInfoByID",
+    "getMouseX",
+    "getMouseY",
     "getPlayer",
+    "getPlayerScreenLeft",
+    "getPlayerScreenTop",
     "getSpecificPlayer",
     "getSandboxOptions",
     "getText",
@@ -39,29 +62,35 @@ read_globals = {
     "instanceof",
     "instanceItem",
     "isClient",
+    "isJoypadCharacter",
     "isServer",
     "sendItemStats",
     "sendAddItemToContainer",
     "sendRemoveItemFromContainer",
 
-    -- PZ UI classes (used via require)
+    -- PZ Java classes
+    "ArrayList",
+    "CFarmingSystem",
+    "CraftRecipeListNode",
+    "GameEntityFactory",
+    "MapObjects",
+    "callLuaBool",
+
+    -- PZ UI classes (read-only access)
     "ISBaseTimedAction",
     "ISButton",
     "ISCollapsableWindow",
+    "ISContextMenu",
     "ISCurePlantAction",
-    "ISFarmingMenu",
     "ISPanelJoypad",
-    "ISRecipeScrollingListBox",
     "ISRichTextPanel",
     "ISScrollingListBox",
     "ISTickBox",
-    "ISTiledIconPanel",
     "ISTimedActionQueue",
-    "ISToolTipInv",
-    "ISWidgetHandCraftControl",
-    "ISWidgetTitleHeader",
     "ISWorldObjectContextMenu",
 
     -- Cross-mod (optional, runtime-guarded)
     "DynamicTrading",
+    "EHR",
+    "NeatTool",
 }

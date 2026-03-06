@@ -23,8 +23,8 @@ jobs:
           echo "Checking Lua syntax with luac5.1 -p ..."
           FAIL=0
           while IFS= read -r -d '' f; do
-            if ! luac5.1 -p "$f" 2>/dev/null; then
-              echo "::error file=$f::Lua syntax error"
+            if ! OUTPUT=$(luac5.1 -p "$f" 2>&1); then
+              echo "::error file=$f::Lua syntax error: $OUTPUT"
               FAIL=1
             fi
           done < <(find 42/media/lua -name '*.lua' -print0)
