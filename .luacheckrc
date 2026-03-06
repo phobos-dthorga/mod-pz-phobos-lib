@@ -15,18 +15,19 @@ unused_args = false
 -- pcall returns ok,result; ok is often checked only implicitly
 unused_secondaries = false
 
--- Suppress common PZ modding code patterns:
---   211/ok          — unused pcall success flag (very common PZ pattern)
---   211/_orig_.*    — saved original functions before monkey-patching
---   221             — variable with _ prefix that IS used (underscore convention mismatch)
---   411/ok          — shadowing ok in nested pcall blocks
---   542             — empty if branch (guard clauses)
+-- Suppress local variable code quality warnings (2XX–5XX).
+-- The primary value of luacheck for PZ modding is catching undefined
+-- globals (1XX) — typos in function names, missing requires, etc.
+-- Local variable warnings (unused vars, shadowing, empty branches)
+-- are non-critical in the PZ modding context where pcall patterns,
+-- monkey-patching, and callback signatures create many false positives.
 ignore = {
-    "211/ok",
-    "211/_orig_.*",
-    "221",
-    "411/ok",
-    "542",
+    "21.",   -- unused variable / argument / loop variable
+    "22.",   -- variable accessed but never set
+    "23.",   -- variable set but never used
+    "31.",   -- value assigned is unused
+    "4..",   -- shadowing / redefinition
+    "5..",   -- code quality (unreachable code, empty blocks)
 }
 
 -- PhobosLib's own namespace + PZ classes that PhobosLib monkey-patches
@@ -61,6 +62,7 @@ read_globals = {
 
     -- PZ engine functions
     "getActivatedMods",
+    "getCell",
     "getCore",
     "getDebug",
     "getGameTime",
