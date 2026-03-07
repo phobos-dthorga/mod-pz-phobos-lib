@@ -113,5 +113,6 @@ read_globals = {
     -- Cross-mod (optional, runtime-guarded)
     "DynamicTrading",
     "EHR",
+    "MF",
     "NeatTool",
 }
