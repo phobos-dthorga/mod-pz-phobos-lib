@@ -15,6 +15,10 @@
  \________________________________________________________________________/
 -->
 
+<p align="center">
+  <img src="poster.png" alt="PhobosLib" width="400">
+</p>
+
 # PhobosLib
 
 ![CI](https://github.com/phobos-dthorga/mod-pz-phobos-lib/actions/workflows/ci.yml/badge.svg)
@@ -33,6 +37,10 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)
 - Reduce duplicated Lua glue code across mods
 - Improve resilience to minor B42 API changes through safe wrappers
+
+<p align="center">
+  <img src="docs/images/modules-banner.png" alt="PhobosLib Modules" width="200">
+</p>
 
 ## Modules
 
