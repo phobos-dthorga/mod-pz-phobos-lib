@@ -1,0 +1,40 @@
+#!/bin/bash
+# PhobosLib pre-commit hook
+# Checks version consistency and runs luacheck if available.
+# Install: git config core.hooksPath .githooks
+
+set -e
+FAIL=0
+
+echo "[pre-commit] PhobosLib validation..."
+
+# --- Version consistency (2 locations) ---
+V_MOD=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' mod.info 2>/dev/null || echo "")
+V_LUA=$(grep -oP 'VERSION\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' 42/media/lua/shared/PhobosLib.lua 2>/dev/null || echo "")
+
+if [ -n "$V_MOD" ] && [ -n "$V_LUA" ]; then
+    if [ "$V_MOD" != "$V_LUA" ]; then
+        echo "  FAIL: Version mismatch — mod.info=$V_MOD vs PhobosLib.lua=$V_LUA"
+        echo "  Fix: ./scripts/bump-version.sh $V_MOD"
+        FAIL=1
+    else
+        echo "  OK: Versions match ($V_MOD)"
+    fi
+fi
+
+# --- Luacheck (if available) ---
+if command -v luacheck &>/dev/null; then
+    echo "[pre-commit] Running luacheck..."
+    if ! luacheck 42/media/lua/ --quiet; then
+        FAIL=1
+    fi
+else
+    echo "[pre-commit] Skipping luacheck (not installed)"
+fi
+
+if [ "$FAIL" -ne 0 ]; then
+    echo "[pre-commit] FAILED — commit blocked. Fix the issues above."
+    exit 1
+fi
+
+echo "[pre-commit] All checks passed."
