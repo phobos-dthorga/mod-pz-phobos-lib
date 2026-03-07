@@ -33,4 +33,7 @@ IGUI_EN = {
 	IGUI_PhobosLib_ErrorBuildSeries = "Error building series content: ",
 	IGUI_PhobosLib_ExpandToView = "expand above to view",
 	IGUI_PhobosLib_DebugEnabled = "PhobosLib debug logging is active. Check the PZ console for output.",
+
+	/* ===== Fermentation System ===== */
+	IGUI_PhobosLib_FermentComplete = "Complete",
 }
