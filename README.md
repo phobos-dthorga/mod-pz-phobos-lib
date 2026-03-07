@@ -19,7 +19,7 @@
 
 ![CI](https://github.com/phobos-dthorga/mod-pz-phobos-lib/actions/workflows/ci.yml/badge.svg)
 
-**Version:** 1.14.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.18.0 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Industrial Pathways: Biomass](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -27,7 +27,7 @@
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
-**Used by:** [PhobosChemistryPathways](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 276-recipe industrial chemistry and biomass processing suite
+**Used by:** [Phobos' Industrial Pathways: Biomass](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 297-recipe industrial chemistry and biomass processing suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)
@@ -49,6 +49,8 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_Validate** | Startup dependency validation: register expected items/fluids/perks at load time, validate during OnGameStart, log missing entries with requesting mod ID |
 | **PhobosLib_Trading** | Generic wrapper for Dynamic Trading mod API: lazy runtime detection, custom tag/archetype/item registration, batch item registration — all functions are no-ops when DynamicTrading is not installed; all DT calls are pcall-wrapped for mid-save safety |
 | **PhobosLib_Migrate** | Versioned save migration framework: semver comparison, version tracking in world modData, migration registration with guard keys, incompatible version handler with skip/reset/abort policies, idempotent execution — mods register migration functions that run once per version upgrade |
+| **PhobosLib_Debug** | Centralised debug logging: `PhobosLib.debug(modId, ...)` prints tagged messages when a mod's `EnableDebugLogging` sandbox option is true. Lazy per-mod caching |
+| **PhobosLib_Fermentation** | Fermentation registry and progress tracking for items using ReplaceOnRotten as positive curing. Register items with label/totalHours, query progress (percent, remaining days, completion), stamp/read game dates, format short date strings |
 | **PhobosLib_RecipeFilter** | *(client)* Crafting menu recipe visibility filter: register filter functions to hide/show `craftRecipe` entries based on sandbox settings or runtime conditions. Supports vanilla list view, vanilla grid view, and Neat Crafting mod compatibility |
 | **PhobosLib_Tooltip** | *(client)* Generic tooltip line appender: register provider callbacks that append coloured text lines below the vanilla item tooltip for matching items. Uses full render replacement of `ISToolTipInv.render()` with expanded dimensions |
 | **PhobosLib_LazyStamp** | *(client)* Lazy container condition stamper: register stampers that set item condition on unstamped items when the player opens a container. Useful for mods that repurpose item condition as a metadata channel (purity, charge level) |
@@ -59,8 +61,9 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 | **PhobosLib_WorkstationLabel** | *(client)* Workstation label filter: removes untranslated tags (like CannotBeResearched) from crafting window "Requires: ..." text. Vanilla + Neat Crafting compatible |
 | **PhobosLib_WorldAction** | *(client)* Generic world object context menu system: register custom right-click actions on world objects with requirement checks. Unavailable actions shown in red with reason tooltips |
 | **PhobosLib_EntityRebind** | *(server)* Server-side entity rebinding for pre-existing world objects. Ensures workstations placed before a mod update get their new entity scripts applied on game load |
+| **PhobosLib_Moodle** | *(client)* Moodle Framework soft dependency wrapper: register custom moodles, set/get moodle levels, detect Moodle Framework at runtime. No-op when Moodle Framework is not installed |
 
-Usage: `require "PhobosLib"` loads all 12 shared modules into the global `PhobosLib` table. The 10 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded automatically by PZ from `client/` and `server/`.
+Usage: `require "PhobosLib"` loads all 13 shared modules into the global `PhobosLib` table. The 11 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind, Moodle) are loaded automatically by PZ from `client/` and `server/`.
 
 ## Intended usage
 - As a dependency: your mod can require PhobosLib and call its helpers.
@@ -74,7 +77,7 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 22 modules (12 shared + 10 client/server) with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 24 modules (13 shared + 11 client/server) with function signatures, parameters, and descriptions
 
 See [docs/README.md](docs/README.md) for the full index.
 

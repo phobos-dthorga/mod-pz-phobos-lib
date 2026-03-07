@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.14.0 provides 22 modules (12 shared + 10 client/server) loaded via `require "PhobosLib"` plus PZ's automatic client/ and server/ loading.
+PhobosLib v1.18.0 provides 22 modules (13 shared + 11 client/server) loaded via `require "PhobosLib"` plus PZ's automatic client/ and server/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.14.0"]
+    subgraph LIB["PhobosLib v1.18.0"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -65,7 +65,7 @@ graph LR
     INIT --> MIGRATE
 ```
 
-> The 12 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 10 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded separately by PZ from `client/` and `server/` and also attach to the `PhobosLib` table.
+> The 13 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 11 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded separately by PZ from `client/` and `server/` and also attach to the `PhobosLib` table.
 
 ---
 
@@ -347,6 +347,32 @@ for _, result in ipairs(results) do
     end
 end
 ```
+
+---
+
+## PhobosLib_Debug
+
+Centralised debug logging system. Mods call `PhobosLib.debug(modId, ...)` to print tagged log messages. Output is controlled per-mod via a `EnableDebugLogging` sandbox option — debug calls are no-ops when logging is disabled. Uses lazy per-mod caching to avoid repeated sandbox lookups.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `debug(modId, ...)` | `modId: string, ...: any` | Print `[modId] ...` to console if EnableDebugLogging is true for the calling mod |
+
+---
+
+## PhobosLib_Fermentation
+
+Fermentation registry and progress tracking for items that use B42's `ReplaceOnRotten` mechanic as a positive curing/fermentation trigger. Pure data module — no events, no hooks.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `registerFermentation(fullType, config)` | `fullType: string, config: table` | Register an item as a positive-rot fermentation. `config = { label: string, totalHours: number, translationKey: string? }` |
+| `isFermentationItem(fullType)` | `fullType: string` | Returns true if the item type is registered for fermentation |
+| `getFermentationConfig(fullType)` | `fullType: string` | Returns the raw config table or nil |
+| `getFermentationProgress(item)` | `item: InventoryItem` | Returns `{ percent: number, remainingHours: number, remainingDays: number, label: string, complete: boolean }` or nil if not a fermentation item. Uses `item:getAge()` vs `totalHours`. |
+| `stampFermentationDate(item)` | `item: InventoryItem` | Write current game date to `item:getModData().PhobosLib_FermentStart` as `{y, m, d}` |
+| `getFermentationDate(item)` | `item: InventoryItem` | Read the fermentation start date from modData; returns `{year, month, day}` (1-indexed month) or nil |
+| `formatGameDate(dateTable)` | `dateTable: table` | Format `{year, month, day}` as short string e.g. `"Jul 12"` |
 
 ---
 
@@ -640,3 +666,16 @@ PhobosLib.registerEntityRebind("MyMod_MyStation", {
     end,
 })
 ```
+
+---
+
+## PhobosLib_Moodle
+
+Moodle Framework soft dependency wrapper. Provides a clean API for registering and managing custom moodles without requiring Moodle Framework as a hard dependency. All functions are no-ops when Moodle Framework is not installed.
+
+| Function | Parameters | Description |
+|----------|-----------|-------------|
+| `isMoodleFrameworkActive()` | *(none)* | Returns true if Moodle Framework mod is installed and active |
+| `registerMoodle(moodleId, options)` | `moodleId: string, options: table` | Register a custom moodle with the Moodle Framework. No-op when MF not installed. |
+| `setMoodleLevel(player, moodleId, level)` | `player, moodleId: string, level: number` | Set a moodle's level for a player. No-op when MF not installed. |
+| `getMoodleLevel(player, moodleId)` | `player, moodleId: string` | Get current moodle level for a player. Returns 0 when MF not installed. |

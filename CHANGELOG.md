@@ -23,6 +23,37 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-03-08
+
+### Added
+- **PhobosLib_Debug** (shared/) — Centralised debug logging system. `PhobosLib.debug(modId, ...)` prints tagged messages when a mod's `EnableDebugLogging` sandbox option is true. Lazy per-mod caching avoids repeated sandbox lookups.
+- **PhobosLib_Moodle** (client/) — Moodle Framework soft dependency wrapper. `PhobosLib.registerMoodle(moodleId, options)` registers a custom moodle with the Moodle Framework when available, no-op when not installed. Provides `PhobosLib.setMoodleLevel()`, `PhobosLib.getMoodleLevel()`, and `PhobosLib.isMoodleFrameworkActive()`.
+- **PhobosLib_Fermentation** (shared/) — Fermentation registry and progress tracking for items that use ReplaceOnRotten as a positive curing mechanic. `registerFermentation(fullType, config)` registers an item with label, totalHours, and optional translationKey. `getFermentationProgress(item)` returns percent, remaining hours/days, label, and completion status from item age. `stampFermentationDate(item)` / `getFermentationDate(item)` store/retrieve the game date when fermentation began. `formatGameDate(dateTable)` renders short month+day strings.
+- **`unconsumeSandboxFlag(modId, varName)`** in PhobosLib_Sandbox — Re-enable a previously consumed one-shot sandbox flag by removing its world modData guard key and setting the sandbox variable back to true. Enables re-runnable one-shot operations (e.g. migration buttons that can be triggered again after a bug fix).
+
+### Changed
+- GitHub Actions CI with luacheck validation added
+- Module count: 22 → **24** (13 shared + 10 client + 1 server)
+- `PhobosLib.VERSION` synced to `"1.18.0"`
+
+## [1.16.0] - 2026-03-06
+
+### Added
+- **`getSkillBonus(player, perk, divisor)`** in PhobosLib_Quality — Convert a perk level into a small quality bonus (default divisor 2 → level 10 = +5 bonus).
+- **`randomBaseQualityWithSkill(min, max, player, perk, divisor)`** in PhobosLib_Quality — Skill-aware variant of `randomBaseQuality()` that adds a skill-based bonus to the random quality roll, capped at 99.
+- **`averageStampedQuality(items, default)`** in PhobosLib_Quality — Average condition-percent of stamped items only (condition < conditionMax). Unstamped/vanilla items are excluded. Designed for condition-based purity tracking.
+- **`skillBonus`** parameter on `calculateOutputQuality()` — Optional additive bonus from player skill, backward-compatible (defaults to 0).
+- **`isPlayerAdmin(player)`** in PhobosLib_Util — Check if a player is an admin (SP always true, MP checks getAccessLevel).
+- **`registerNoticePopup(modId, noticeId, options)`** in PhobosLib_Popup — Third popup type with optional `shouldShow(player)` condition gate and amber border accent. Notice popups show once per character when shouldShow returns true.
+- **Series-aware popup consolidation** — Mods can declare `options.series` to consolidate guide, changelog, and notice popups across a mod family into a single tabbed window. Collapsible per-mod toggle bar. Single-mod series degrades gracefully to standalone popup.
+- **i18n for popup strings** — All fallback window titles and error templates converted to `safeGetText()` with 11 new translation keys.
+
+### Fixed
+- **`setConditionPercent()` clamping** — Now clamps to `maxCond - 1` instead of `maxCond` to prevent setting condition to the "unstamped" sentinel value.
+
+### Changed
+- `PhobosLib.VERSION` synced to `"1.16.0"`
+
 ## [1.15.0] - 2026-03-05
 
 ### Added

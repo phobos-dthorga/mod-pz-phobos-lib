@@ -1,5 +1,48 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.18.0 — Debug, Moodle & Fermentation Modules (2026-03-08)[/h2]
+
+[h3]New Modules[/h3]
+[list]
+[*] [b]PhobosLib_Debug[/b] (shared) — Centralised debug logging system. `PhobosLib.debug(modId, ...)` prints tagged messages when a mod's EnableDebugLogging sandbox option is true.
+[*] [b]PhobosLib_Moodle[/b] (client) — Moodle Framework soft dependency wrapper. Register custom moodles, set/get moodle levels. No-op when Moodle Framework is not installed.
+[*] [b]PhobosLib_Fermentation[/b] (shared) — Fermentation registry and progress tracking for items using ReplaceOnRotten as positive curing. Register items, query progress (percent, remaining days), stamp/read game dates.
+[/list]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]unconsumeSandboxFlag(modId, varName)[/b] — Re-enable a previously consumed one-shot sandbox flag for re-runnable operations.
+[/list]
+
+[h3]Changed[/h3]
+[list]
+[*] GitHub Actions CI with luacheck validation
+[*] Module count: 22 to [b]24[/b] (13 shared + 11 client/server)
+[/list]
+
+[hr][/hr]
+
+[h2]v1.16.0 — Skill Quality Bonus & Popup Enhancements (2026-03-06)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]getSkillBonus(player, perk, divisor)[/b] — Convert perk level to a quality bonus
+[*] [b]randomBaseQualityWithSkill(min, max, player, perk, divisor)[/b] — Skill-aware source quality generation
+[*] [b]averageStampedQuality(items, default)[/b] — Average condition of stamped items only (excludes unstamped/vanilla items)
+[*] [b]skillBonus[/b] parameter on calculateOutputQuality() — Additive skill bonus (backward-compatible)
+[*] [b]isPlayerAdmin(player)[/b] — Admin check (SP always true, MP checks access level)
+[*] [b]registerNoticePopup(modId, noticeId, options)[/b] — Third popup type with shouldShow gate and amber accent
+[*] [b]Series-aware popup consolidation[/b] — Tabbed popup grouping across mod families via options.series
+[*] [b]i18n popup strings[/b] — All popup fallback text converted to safeGetText() with 11 translation keys
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] [b]setConditionPercent() clamping[/b] — Now clamps to maxCond-1 to prevent setting condition to the "unstamped" sentinel value
+[/list]
+
+[hr][/hr]
+
 [h2]v1.15.0 — Empty FluidContainer Condition Reset (2026-03-05)[/h2]
 
 [h3]New Function[/h3]
@@ -91,7 +134,7 @@
 
 [h2]Summary[/h2]
 [list]
-[*] [b]22 modules[/b] total (12 shared + 10 client/server)
-[*] [b]~120 public functions[/b]
-[*] New since v1.14.0: registerEmptyConditionReset() API, two-phase VesselReplace system
+[*] [b]24 modules[/b] total (13 shared + 11 client/server)
+[*] [b]~130 public functions[/b]
+[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups
 [/list]

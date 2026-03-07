@@ -1,16 +1,16 @@
 [h1]PhobosLib — Shared Utility Library[/h1]
 
-[b]Version:[/b] 1.15.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
+[b]Version:[/b] 1.18.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
 
 A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib provides stable, reusable helpers so mod authors can focus on gameplay features instead of reimplementing safe wrappers, API probing, and boilerplate Lua glue.
 
-[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Industrial Pathways: Biomass[/url] — 276-recipe industrial chemistry and biomass processing suite
+[b]Used by:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831]Phobos' Industrial Pathways: Biomass[/url] — 297-recipe industrial chemistry and biomass processing suite
 
 [hr][/hr]
 
-[h2]Modules (22 total)[/h2]
+[h2]Modules (24 total)[/h2]
 
-[h3]Shared Modules (12)[/h3]
+[h3]Shared Modules (13)[/h3]
 [list]
 [*] [b]Util[/b] — Safe method calling, API probing, keyword-based item search, modData helpers, player speech bubbles
 [*] [b]Fluid[/b] — Build 42 FluidContainer helpers with multi-strategy API fallbacks
@@ -23,9 +23,11 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]Validate[/b] — Startup dependency validation for items, fluids, and perks
 [*] [b]Trading[/b] — Dynamic Trading mod wrapper for custom tags, archetypes, and item registration
 [*] [b]Migrate[/b] — Versioned save migration framework with incompatible version handling
+[*] [b]Debug[/b] — Centralised debug logging controlled per-mod via sandbox option
+[*] [b]Fermentation[/b] — Fermentation registry, progress tracking, date stamping for items using ReplaceOnRotten as positive curing
 [/list]
 
-[h3]Client/Server Modules (10)[/h3]
+[h3]Client/Server Modules (11)[/h3]
 [list]
 [*] [b]RecipeFilter[/b] — Crafting menu recipe visibility filter (vanilla + Neat Crafting compatible)
 [*] [b]Tooltip[/b] — Custom item tooltip lines via full ISToolTipInv.render() replacement
@@ -37,6 +39,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]WorkstationLabel[/b] — Workstation label filter: removes untranslated tags from crafting "Requires: ..." text
 [*] [b]WorldAction[/b] — Generic world object context menu system with requirement checks and red unavailable-action feedback
 [*] [b]EntityRebind[/b] — Server-side entity rebinding for pre-existing world objects after mod updates
+[*] [b]Moodle[/b] — Moodle Framework soft dependency wrapper for custom moodle registration (no-op when Moodle Framework not installed)
 [/list]
 
 [hr][/hr]
@@ -64,6 +67,7 @@ Full API reference: [url=https://github.com/phobos-dthorga/mod-pz-phobos-lib/blo
 [*] [b]EHR[/b] (Extensive Health Rework) — Hazard module dispatches EHR diseases when available
 [*] [b]Dynamic Trading[/b] — Trading module wraps DT API for item/archetype registration
 [*] [b]Neat Crafting[/b] — RecipeFilter module hooks NC_FilterBar for recipe visibility
+[*] [b]Moodle Framework[/b] — Moodle module wraps MF API for custom moodle registration
 [/list]
 
 [h2]Links[/h2]
