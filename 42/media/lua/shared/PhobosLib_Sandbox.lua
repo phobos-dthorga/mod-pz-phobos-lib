@@ -113,6 +113,28 @@ function PhobosLib.consumeSandboxFlag(modId, varName)
     return ok
 end
 
+--- Remove a previously consumed flag, restoring the sandbox variable
+--- to its save-file value.  Used by mods with re-runnable one-shot
+--- operations that should remain active while the toggle is ON.
+--- @param modId   string  The mod namespace (e.g. "PCP")
+--- @param varName string  The boolean sandbox variable name
+function PhobosLib.unconsumeSandboxFlag(modId, varName)
+    pcall(function()
+        local md = getGameTime():getModData()
+        local key = "PhobosLib_consumed_" .. modId .. "_" .. varName
+        if md[key] then
+            md[key] = nil
+            -- Restore the sandbox var that reapplyConsumedFlags cleared.
+            -- The consumed flag existing means the user had enabled the
+            -- toggle, so restore it to true.
+            if SandboxVars and SandboxVars[modId] then
+                SandboxVars[modId][varName] = true
+            end
+            print("[PhobosLib:Sandbox] unconsumed flag " .. modId .. "." .. varName)
+        end
+    end)
+end
+
 --- Re-apply all previously consumed sandbox flags from world modData.
 --- Called automatically via Events.OnGameStart so that one-shot options
 --- remain cleared even after a game restart.
