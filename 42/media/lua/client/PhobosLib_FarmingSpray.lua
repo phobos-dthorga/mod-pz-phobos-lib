@@ -172,98 +172,41 @@ local function patchFarmingMenu()
 
             if not foundAny then return end
 
-            -- We need to find or create the "Treat Problem" submenu.
-            -- If vanilla already created it (because vanilla sprays were found),
-            -- we append to it. Otherwise, we create a new one.
-            --
-            -- ISFarmingMenu stores the spray state on the ISFarmingMenu table itself.
-            -- The cropsMenu is a submenu attached to the plant's context option.
-            -- We need to find it in the context menu structure.
-            --
-            -- Strategy: Since the vanilla code already ran, the submenu exists if
-            -- vanilla sprays were found. We try to find it by looking for the
-            -- "Treat Problem" text in the context options. If not found, we
-            -- build one ourselves.
-            --
-            -- NOTE: This approach scans the context menu for the crops submenu.
-            -- The vanilla code creates a "crops" top-level option, then adds
-            -- "Treat Problem" as a sub-option within it.
-
-            -- Find the crops submenu by scanning context children for the plant
+            -- Find the crops submenu created by vanilla doFarmingMenu2.
+            -- ISContextMenu stores options in self.options (1-indexed Lua table).
+            -- We identify it by checking for farming-specific options.
             local cropsMenu = nil
-            pcall(function()
-                -- The crop menu was added via context:addOption with plant name
-                -- We need to find it. Scan all options for one that has a submenu
-                -- containing "Treat Problem"
-                local numOptions = context:getOptionCount()
-                for i = 0, numOptions - 1 do
-                    local opt = context:getOptionFromIndex(i)
-                    if opt and opt.subOption then
-                        local sub = context:getSubMenu(opt.subOption)
-                        if sub then
-                            -- Check if this submenu has a "Treat Problem" option
-                            local subCount = sub:getOptionCount()
-                            for j = 0, subCount - 1 do
-                                local subOpt = sub:getOptionFromIndex(j)
-                                if subOpt and subOpt.name == getText("ContextMenu_Treat_Problem") then
-                                    -- Found the crops submenu!
-                                    cropsMenu = sub
-                                    local shouldBreak = true
-                                    if shouldBreak then return end
-                                end
-                            end
-                        end
+            for _, opt in ipairs(context.options) do
+                if opt.subOption then
+                    local sub = context:getSubMenu(opt.subOption)
+                    if sub and (
+                        sub:getOptionFromName(getText("ContextMenu_Treat_Problem"))
+                        or sub:getOptionFromName(getText("ContextMenu_Info"))
+                        or sub:getOptionFromName(getText("ContextMenu_Water"))
+                        or sub:getOptionFromName(getText("ContextMenu_Harvest"))
+                        or sub:getOptionFromName(getText("ContextMenu_Remove"))
+                    ) then
+                        cropsMenu = sub
+                        break
                     end
                 end
-            end)
-
-            if not cropsMenu then
-                -- Vanilla didn't create a "Treat Problem" option (no vanilla sprays found).
-                -- We need to find the crops submenu and add our own "Treat Problem" option.
-                -- However, at this point the crops submenu should exist because the plant
-                -- is seeded. Let's find it differently — look for the submenu that has
-                -- farming-related options.
-                --
-                -- Simpler approach: just find ANY submenu that corresponds to this crop.
-                -- Since context menu structure is complex, let's just create a new
-                -- top-level "Treat Problem" option if we can't find the existing one.
-                pcall(function()
-                    local numOptions = context:getOptionCount()
-                    for i = 0, numOptions - 1 do
-                        local opt = context:getOptionFromIndex(i)
-                        if opt and opt.subOption then
-                            local sub = context:getSubMenu(opt.subOption)
-                            if sub then
-                                cropsMenu = sub
-                                local shouldBreak = true
-                                if shouldBreak then return end
-                            end
-                        end
-                    end
-                end)
             end
 
             if not cropsMenu then return end
 
-            -- Now find or create the "Treat Problem" submenu within cropsMenu
+            -- Find or create the "Treat Problem" submenu within cropsMenu
+            local treatProblemText = getText("ContextMenu_Treat_Problem")
+            local treatOpt = cropsMenu:getOptionFromName(treatProblemText)
             local diseaseSubMenu = nil
-            pcall(function()
-                local numOptions = cropsMenu:getOptionCount()
-                for i = 0, numOptions - 1 do
-                    local opt = cropsMenu:getOptionFromIndex(i)
-                    if opt and opt.name == getText("ContextMenu_Treat_Problem") and opt.subOption then
-                        diseaseSubMenu = cropsMenu:getSubMenu(opt.subOption)
-                        local shouldBreak = true
-                        if shouldBreak then return end
-                    end
-                end
-            end)
+
+            if treatOpt and treatOpt.subOption then
+                diseaseSubMenu = cropsMenu:getSubMenu(treatOpt.subOption)
+            end
 
             if not diseaseSubMenu then
-                -- Create a new "Treat Problem" submenu
-                local diseaseOption = cropsMenu:addOption(getText("ContextMenu_Treat_Problem"), worldobjects, nil)
+                treatOpt = cropsMenu:addOption(treatProblemText, worldobjects, nil)
                 diseaseSubMenu = cropsMenu:getNew(cropsMenu)
-                cropsMenu:addSubMenu(diseaseOption, diseaseSubMenu)
+                cropsMenu:addSubMenu(treatOpt, diseaseSubMenu)
             end
 
             -- Add each custom spray as a cure option in the submenu
@@ -417,10 +360,12 @@ end
 --- Install all monkey-patches (once).
 local function installPatches()
     if _patchesInstalled then return end
-    _patchesInstalled = true
 
     local menuOk = pcall(patchFarmingMenu)
     local interactOk = pcall(patchFarmingInteract)
+
+    -- Only mark as installed if at least one patch succeeded
+    _patchesInstalled = menuOk or interactOk
 
     if not menuOk then
         print(_TAG .. " WARNING: ISFarmingMenu patch failed (pcall error)")
