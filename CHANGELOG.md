@@ -23,6 +23,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-03-09
+
+### Fixed
+- **Farming spray context menu** — ISContextMenu in B42 does not have `getOptionCount()` or `getOptionFromIndex()` methods. The context menu scanning code used these non-existent methods inside pcall blocks, silently failing every time. Custom spray options never appeared in the "Treat Problem" submenu. Replaced with `ipairs(context.options)`, `getOptionFromName()`, and `getSubMenu(opt.subOption)`.
+- **`_patchesInstalled` timing** — Flag is now only set after patches succeed, allowing retry on failure instead of permanently locking out the patch system.
+
+### Changed
+- `PhobosLib.VERSION` synced to `"1.18.1"`
+
 ## [1.18.0] - 2026-03-08
 
 ### Added
