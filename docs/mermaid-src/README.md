@@ -24,7 +24,7 @@ These are the same diagrams embedded in [`../diagrams/*.md`](../diagrams/), extr
 
 | File | Diagram |
 |------|---------|
-| `phoboslib-modules.mmd` | PhobosLib v1.11.0 module architecture (17 modules: 12 shared + 5 client) |
+| `phoboslib-modules.mmd` | PhobosLib v1.18.1 module architecture (24 modules: 13 shared + 11 client/server) |
 
 ## Re-render all to PNG
 

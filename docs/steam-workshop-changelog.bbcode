@@ -1,5 +1,13 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.18.1 — Farming Spray Bug Fix (2026-03-09)[/h2]
+
+[h3]Fixed[/h3]
+[list]
+[*] [b]Farming spray context menu[/b] — ISContextMenu in B42 does not have getOptionCount() or getOptionFromIndex() methods. The context menu scanning code silently failed inside pcall blocks. Custom spray options now correctly appear in the "Treat Problem" submenu. Replaced with ipairs(context.options), getOptionFromName(), and getSubMenu(opt.subOption).
+[*] [b]Patch retry[/b] — _patchesInstalled flag only set after patches succeed, allowing retry on failure.
+[/list]
+
 [h2]v1.18.0 — Debug, Moodle & Fermentation Modules (2026-03-08)[/h2]
 
 [h3]New Modules[/h3]

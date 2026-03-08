@@ -23,7 +23,7 @@
 
 ![CI](https://github.com/phobos-dthorga/mod-pz-phobos-lib/actions/workflows/ci.yml/badge.svg)
 
-**Version:** 1.18.0 | **Requires:** Project Zomboid Build 42.14.0+
+**Version:** 1.18.1 | **Requires:** Project Zomboid Build 42.14.0+
 
 > **Players:** Subscribe on [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668598865) — this mod is required by [Phobos' Industrial Pathways: Biomass](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831).
 >
@@ -31,7 +31,7 @@
 
 A shared utility library for Project Zomboid mods (Build 42 focused).
 
-**Used by:** [Phobos' Industrial Pathways: Biomass](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 297-recipe industrial chemistry and biomass processing suite
+**Used by:** [Phobos' Industrial Pathways: Biomass](https://github.com/phobos-dthorga/mod-pz-chemistry-pathways) ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3668197831)) — 301-recipe industrial chemistry and biomass processing suite
 
 ## Goals
 - Provide stable, reusable helpers (sandbox vars, API probing, world scan, fluid helpers, etc.)

@@ -17,13 +17,13 @@
 
 # PhobosLib Module Overview & API Reference
 
-PhobosLib v1.18.0 provides 22 modules (13 shared + 11 client/server) loaded via `require "PhobosLib"` plus PZ's automatic client/ and server/ loading.
+PhobosLib v1.18.1 provides 24 modules (13 shared + 11 client/server) loaded via `require "PhobosLib"` plus PZ's automatic client/ and server/ loading.
 
 ## Module Architecture
 
 ```mermaid
 graph LR
-    subgraph LIB["PhobosLib v1.18.0"]
+    subgraph LIB["PhobosLib v1.18.1"]
         INIT["PhobosLib.lua<br/>(aggregator)"]
 
         UTIL["PhobosLib_Util<br/>General-purpose utilities"]
@@ -37,6 +37,8 @@ graph LR
         VALIDATE["PhobosLib_Validate<br/>Startup dependency validation"]
         TRADING["PhobosLib_Trading<br/>Dynamic Trading wrapper"]
         MIGRATE["PhobosLib_Migrate<br/>Versioned save migration"]
+        DEBUG["PhobosLib_Debug<br/>Centralised debug logging"]
+        FERMENT["PhobosLib_Fermentation<br/>Fermentation registry + progress"]
     end
 
     subgraph CLIENT["Client-side (loaded by PZ)"]
@@ -50,6 +52,7 @@ graph LR
         WL["PhobosLib_WorkstationLabel<br/>Untranslated tag filter<br/>(auto-install)"]
         WA["PhobosLib_WorldAction<br/>World object context menus<br/>(requirement checks, red feedback)"]
         ER["PhobosLib_EntityRebind<br/>Entity rebinding for<br/>pre-existing world objects"]
+        ML["PhobosLib_Moodle<br/>Moodle Framework wrapper"]
     end
 
     INIT --> UTIL
@@ -63,9 +66,11 @@ graph LR
     INIT --> VALIDATE
     INIT --> TRADING
     INIT --> MIGRATE
+    INIT --> DEBUG
+    INIT --> FERMENT
 ```
 
-> The 13 shared modules load into the global `PhobosLib` table via `require "PhobosLib"`. The 11 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind) are loaded separately by PZ from `client/` and `server/` and also attach to the `PhobosLib` table.
+> The 13 shared modules (Util, Fluid, World, Sandbox, Quality, Hazard, Skill, Reset, Validate, Trading, Migrate, Debug, Fermentation) load into the global `PhobosLib` table via `require "PhobosLib"`. The 11 client/server-side modules (RecipeFilter, Tooltip, LazyStamp, VesselReplace, FarmingSpray, Power, Popup, WorkstationLabel, WorldAction, EntityRebind, Moodle) are loaded separately by PZ from `client/` and `server/` and also attach to the `PhobosLib` table.
 
 ---
 
