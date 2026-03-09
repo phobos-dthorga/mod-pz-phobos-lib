@@ -128,44 +128,51 @@ end
 
 --- Degrade the filter on a mask found in recipe input items.
 --- Searches the items ArrayList for a mask matching any of the given types,
---- then reduces its drainable delta. Clamps to 0 (never negative).
+--- then reduces its condition. Uses probabilistic degradation for masks with
+--- low ConditionMax (e.g. 2–3) so that ~40 crafts deplete the filter on average.
 ---@param items any           Java ArrayList from OnCreate
 ---@param maskTypes table     List of full type strings to match
----@param amount number       Degradation amount (e.g. 0.025)
----@return boolean            true if degradation was applied
+---@param amount number       Degradation fraction (e.g. 0.025 = 1/40th per craft)
+---@return boolean            true if mask was found (degradation may be probabilistic)
 function PhobosLib.degradeFilterFromInputs(items, maskTypes, amount)
     if not items or not maskTypes or not amount then return false end
     if amount <= 0 then return false end
 
-    print(_TAG .. " degradeFilter: amount=" .. tostring(amount))
+    -- Guard: items must be iterable Java ArrayList
+    local sz
+    local ok = pcall(function() sz = items:size() end)
+    if not ok or not sz or sz == 0 then return false end
 
-    local ok, applied = pcall(function()
-        for i = 0, items:size() - 1 do
-            local item = items:get(i)
-            if item then
-                local ft = item:getFullType()
-                for _, target in ipairs(maskTypes) do
-                    if ft == target then
-                        -- Found the mask — degrade its drainable delta
-                        local getDelta = item.getDelta or item.getUsedDelta
-                        local setDelta = item.setDelta or item.setUsedDelta
-                        if getDelta and setDelta then
-                            local current = getDelta(item)
-                            if type(current) == "number" then
-                                local newDelta = math.max(0, current - amount)
-                                setDelta(item, newDelta)
-                                return true
+    for i = 0, sz - 1 do
+        local item = items:get(i)
+        if item then
+            local ft = item:getFullType()
+            for _, target in ipairs(maskTypes) do
+                if ft == target then
+                    -- Found the mask — degrade condition
+                    -- B42 masks are Clothing items (not drainables), so use
+                    -- getCondition/setCondition instead of getDelta/setDelta.
+                    local cond = item:getCondition()
+                    local maxCond = item:getConditionMax()
+                    if cond and maxCond and maxCond > 0 and cond > 0 then
+                        local loss = amount * maxCond
+                        if loss >= 1 then
+                            -- Direct degradation (e.g., NBC mask: 0.025 * 100 = 2.5 → 2)
+                            item:setCondition(math.max(0, cond - math.max(1, math.floor(loss))))
+                        else
+                            -- Probabilistic for low-ConditionMax masks
+                            -- (gas mask: 0.025 * 3 = 0.075 → 7.5% chance per craft)
+                            if ZombRand(1000) < math.floor(loss * 1000 + 0.5) then
+                                item:setCondition(math.max(0, cond - 1))
                             end
                         end
-                        return false
+                        return true
                     end
+                    return false
                 end
             end
         end
-        return false
-    end)
-
-    if ok then return applied == true end
+    end
     return false
 end
 

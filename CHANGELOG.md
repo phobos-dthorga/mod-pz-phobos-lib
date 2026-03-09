@@ -23,6 +23,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.18.2] - 2026-03-09
+
+### Fixed
+- **Filter degradation crash** — `degradeFilterFromInputs` tried `getDelta`/`setDelta` (DrainableComboItem methods) on gas masks, but B42 masks are Clothing items. Accessing non-existent methods threw in Kahlua, producing stack traces on every safe-variant hazard recipe craft. Switched to condition-based degradation (`getCondition`/`setCondition`) with probabilistic loss for low-ConditionMax masks (2–3). ~40 crafts per filter across all mask types.
+- Removed noisy debug `print()` from `degradeFilterFromInputs`.
+
 ## [1.18.1] - 2026-03-09
 
 ### Fixed

@@ -21,7 +21,7 @@
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.18.1"
+PhobosLib.VERSION = "1.18.2"
 
 require "PhobosLib_Debug"    -- must be first: other modules use debug API
 require "PhobosLib_Util"
