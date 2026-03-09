@@ -1,5 +1,13 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.18.2 — Filter Degradation Fix (2026-03-09)[/h2]
+
+[h3]Fixed[/h3]
+[list]
+[*] [b]Filter degradation crash[/b] — degradeFilterFromInputs tried getDelta/setDelta (DrainableComboItem methods) on gas masks, but B42 masks are Clothing items. Accessing non-existent methods threw in Kahlua, producing stack traces on every safe-variant hazard recipe craft. Switched to condition-based degradation (getCondition/setCondition) with probabilistic loss for low-ConditionMax masks (2–3). ~40 crafts per filter across all mask types.
+[*] Removed noisy debug print() from degradeFilterFromInputs.
+[/list]
+
 [h2]v1.18.1 — Farming Spray Bug Fix (2026-03-09)[/h2]
 
 [h3]Fixed[/h3]
@@ -144,5 +152,5 @@
 [list]
 [*] [b]24 modules[/b] total (13 shared + 11 client/server)
 [*] [b]~130 public functions[/b]
-[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups
+[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups, condition-based filter degradation
 [/list]
