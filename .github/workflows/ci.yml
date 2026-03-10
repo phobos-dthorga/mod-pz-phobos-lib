@@ -54,7 +54,7 @@ jobs:
               opts_text = f.read()
 
           # Parse Sandbox_EN.txt
-          with open("42/media/lua/shared/Translate/EN/Sandbox_EN.txt") as f:
+          with open("42/media/lua/shared/Translate/EN/Sandbox.json") as f:
               trans_text = f.read()
 
           fail = False
@@ -91,7 +91,7 @@ jobs:
               echo "::error file=$f::Non-UTF-8 encoding detected"
               FAIL=1
             fi
-          done < <(find 42/media \( -name '*.lua' -o -name '*.txt' \) -print0)
+          done < <(find 42/media \( -name '*.lua' -o -name '*.txt' -o -name '*.json' \) -print0)
           if [ "$FAIL" = "0" ]; then
             echo "All files are valid UTF-8."
           fi

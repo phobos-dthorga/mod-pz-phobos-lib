@@ -23,6 +23,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-03-10
+
+### Changed
+- **PZ 42.15 translation migration** — Converted all translation files from Lua `.txt` table format to flat JSON (`.json`). Files renamed: `IG_UI_EN.txt` → `IG_UI.json`, `Sandbox_EN.txt` → `Sandbox.json`. 22 keys across 2 files.
+- **Minimum game version** bumped from 42.14.0 to **42.15.0**.
+- CI: sandbox completeness check and encoding validation updated for JSON translation files.
+
 ## [1.18.2] - 2026-03-09
 
 ### Fixed
