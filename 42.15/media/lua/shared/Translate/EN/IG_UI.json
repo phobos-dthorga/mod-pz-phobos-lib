@@ -1,4 +1,5 @@
 {
+    "__copyright": "Copyright (c) 2026 Phobos A. D'thorga. All rights reserved.",
     "IGUI_PhobosLib_NoPower": "Requires Electricity",
     "IGUI_PhobosLib_NoPowerTooltip": "Connect a generator or use grid power to operate this workstation.",
     "IGUI_PhobosLib_PowerLost": "Power lost! Crafting cancelled.",
