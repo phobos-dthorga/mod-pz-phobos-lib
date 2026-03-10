@@ -27,71 +27,125 @@ jobs:
               echo "::error file=$f::Lua syntax error: $OUTPUT"
               FAIL=1
             fi
-          done < <(find 42/media/lua -name '*.lua' -print0)
+          done < <(find common/media/lua -name '*.lua' -print0)
           exit $FAIL
 
       - name: Luacheck
-        run: luacheck 42/media/lua/
+        run: luacheck common/media/lua/
 
       - name: Version consistency
         run: |
-          V_MOD=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' mod.info)
-          V_LUA=$(grep -oP 'VERSION\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' 42/media/lua/shared/PhobosLib.lua)
-          echo "mod.info=$V_MOD  PhobosLib.lua=$V_LUA"
-          if [ "$V_MOD" != "$V_LUA" ]; then
-            echo "::error::Version mismatch: mod.info=$V_MOD vs PhobosLib.lua=$V_LUA"
-            exit 1
-          fi
-          echo "Versions match: $V_MOD"
+          V_ROOT=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' mod.info)
+          V_4214=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' 42.14/mod.info)
+          V_4215=$(grep -oP 'modversion=\K[0-9]+\.[0-9]+\.[0-9]+' 42.15/mod.info)
+          V_LUA=$(grep -oP 'VERSION\s*=\s*"\K[0-9]+\.[0-9]+\.[0-9]+' common/media/lua/shared/PhobosLib.lua)
 
-      - name: Sandbox translation completeness
+          echo "mod.info (root)   = $V_ROOT"
+          echo "42.14/mod.info    = $V_4214"
+          echo "42.15/mod.info    = $V_4215"
+          echo "PhobosLib.lua     = $V_LUA"
+
+          FAIL=0
+          if [ "$V_ROOT" != "$V_4214" ]; then
+            echo "::error::Version mismatch: mod.info=$V_ROOT vs 42.14/mod.info=$V_4214"
+            FAIL=1
+          fi
+          if [ "$V_ROOT" != "$V_4215" ]; then
+            echo "::error::Version mismatch: mod.info=$V_ROOT vs 42.15/mod.info=$V_4215"
+            FAIL=1
+          fi
+          if [ "$V_ROOT" != "$V_LUA" ]; then
+            echo "::error::Version mismatch: mod.info=$V_ROOT vs PhobosLib.lua=$V_LUA"
+            FAIL=1
+          fi
+          if [ "$FAIL" = "0" ]; then
+            echo "All 4 version locations match: $V_ROOT"
+          fi
+          exit $FAIL
+
+      - name: Sandbox translation completeness (JSON - 42.15)
         run: |
           python3 <<'PYEOF'
           import re, sys
 
-          # Parse sandbox-options.txt
-          with open("42/media/sandbox-options.txt") as f:
+          with open("common/media/sandbox-options.txt") as f:
               opts_text = f.read()
 
-          # Parse Sandbox_EN.txt
-          with open("42/media/lua/shared/Translate/EN/Sandbox.json") as f:
+          with open("42.15/media/lua/shared/Translate/EN/Sandbox.json") as f:
               trans_text = f.read()
 
           fail = False
 
-          # Check translation keys
           for m in re.finditer(r'translation\s*=\s*(\w+)', opts_text):
               key = m.group(1)
               label_key = f"Sandbox_{key}"
               tooltip_key = f"Sandbox_{key}_tooltip"
               if label_key not in trans_text:
-                  print(f"::error::Missing translation key: {label_key}")
+                  print(f"::error::Missing JSON translation key: {label_key}")
                   fail = True
               if tooltip_key not in trans_text:
-                  print(f"::error::Missing translation key: {tooltip_key}")
+                  print(f"::error::Missing JSON translation key: {tooltip_key}")
                   fail = True
 
-          # Check page title keys
           for m in re.finditer(r'page\s*=\s*(\w+)', opts_text):
               page_key = f"Sandbox_{m.group(1)}"
               if page_key not in trans_text:
-                  print(f"::error::Missing page title key: {page_key}")
+                  print(f"::error::Missing JSON page title key: {page_key}")
                   fail = True
 
           if fail:
               sys.exit(1)
-          print("All sandbox translation keys present.")
+          print("All sandbox translation keys present in JSON (42.15).")
+          PYEOF
+
+      - name: Sandbox translation completeness (Lua - 42.14)
+        run: |
+          python3 <<'PYEOF'
+          import re, sys
+
+          with open("common/media/sandbox-options.txt") as f:
+              opts_text = f.read()
+
+          with open("42.14/media/lua/shared/Translate/EN/Sandbox_EN.txt") as f:
+              trans_text = f.read()
+
+          fail = False
+
+          for m in re.finditer(r'translation\s*=\s*(\w+)', opts_text):
+              key = m.group(1)
+              label_key = f"Sandbox_{key}"
+              tooltip_key = f"Sandbox_{key}_tooltip"
+              if label_key not in trans_text:
+                  print(f"::error::Missing Lua translation key: {label_key}")
+                  fail = True
+              if tooltip_key not in trans_text:
+                  print(f"::error::Missing Lua translation key: {tooltip_key}")
+                  fail = True
+
+          for m in re.finditer(r'page\s*=\s*(\w+)', opts_text):
+              page_key = f"Sandbox_{m.group(1)}"
+              if page_key not in trans_text:
+                  print(f"::error::Missing Lua page title key: {page_key}")
+                  fail = True
+
+          if fail:
+              sys.exit(1)
+          print("All sandbox translation keys present in Lua (42.14).")
           PYEOF
 
       - name: Encoding check (UTF-8)
         run: |
           FAIL=0
-          while IFS= read -r -d '' f; do
-            if ! python3 -c "open('$f', encoding='utf-8').read()" 2>/dev/null; then
-              echo "::error file=$f::Non-UTF-8 encoding detected"
-              FAIL=1
+          for dir in common/media 42.14/media 42.15/media; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r -d '' f; do
+                if ! python3 -c "open('$f', encoding='utf-8').read()" 2>/dev/null; then
+                  echo "::error file=$f::Non-UTF-8 encoding detected"
+                  FAIL=1
+                fi
+              done < <(find "$dir" \( -name '*.lua' -o -name '*.txt' -o -name '*.json' \) -print0)
             fi
-          done < <(find 42/media \( -name '*.lua' -o -name '*.txt' -o -name '*.json' \) -print0)
+          done
           if [ "$FAIL" = "0" ]; then
             echo "All files are valid UTF-8."
           fi

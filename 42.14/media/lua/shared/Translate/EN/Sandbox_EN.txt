@@ -14,25 +14,8 @@
 -- \________________________________________________________________________/
 --
 
----------------------------------------------------------------
--- PhobosLib.lua
--- Namespace root and module aggregator for PhobosLib.
--- All Phobos PZ mods should: require "PhobosLib"
----------------------------------------------------------------
-
-PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.19.0"
-
-require "PhobosLib_Debug"    -- must be first: other modules use debug API
-require "PhobosLib_Util"
-require "PhobosLib_Fluid"
-require "PhobosLib_World"
-require "PhobosLib_Sandbox"
-require "PhobosLib_Quality"
-require "PhobosLib_Hazard"
-require "PhobosLib_Skill"
-require "PhobosLib_Reset"
-require "PhobosLib_Validate"
-require "PhobosLib_Trading"
-require "PhobosLib_Migrate"
-require "PhobosLib_Fermentation"
+Sandbox_EN = {
+	Sandbox_PhobosLib_Sandbox = "Phobos Shared Library",
+	Sandbox_PhobosLib_EnableDebugLogging = "ENABLE DEBUG LOGGING:",
+	Sandbox_PhobosLib_EnableDebugLogging_tooltip = "Enables verbose debug logging for the Phobos Shared Library to the game console (Lua debug output).<br><br> <RGB:1,0.2,0.2> WARNING: This is a DEVELOPER AND TROUBLESHOOTING tool. <RGB:1,1,1> <br><br> <INDENT:20>-Produces large amounts of console output;<br> <INDENT:20>-May cause minor performance degradation;<br> <INDENT:20>-Useful for diagnosing mod conflicts, recipe issues, or reporting bugs;<br> <INDENT:20>-Independent of PZ's -debug launch flag (works even without it).<br><br> <INDENT:20>-OFF (default): Normal operation. Only startup and error messages logged.<br> <INDENT:20>-ON: Verbose logging. All PhobosLib internal operations logged to console.<br><br> <RGB:1,0.6,0.2> Leave OFF unless actively troubleshooting. Requires a game restart to take effect. <RGB:1,1,1>",
+}

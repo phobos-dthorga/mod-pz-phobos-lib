@@ -1,0 +1,37 @@
+--  ________________________________________________________________________
+-- / Copyright (c) 2026 Phobos A. D'thorga                                \
+-- |                                                                        |
+-- |           /\_/\                                                         |
+-- |         =/ o o \=    Phobos' PZ Modding                                |
+-- |          (  V  )     All rights reserved.                              |
+-- |     /\  / \   / \                                                      |
+-- |    /  \/   '-'   \   This source code is part of the Phobos            |
+-- |   /  /  \  ^  /\  \  mod suite for Project Zomboid (Build 42).         |
+-- |  (__/    \_/ \/  \__)                                                  |
+-- |     |   | |  | |     Unauthorised copying, modification, or            |
+-- |     |___|_|  |_|     distribution of this file is prohibited.          |
+-- |                                                                        |
+-- \________________________________________________________________________/
+--
+
+IGUI_EN = {
+	IGUI_PhobosLib_NoPower = "Requires Electricity",
+	IGUI_PhobosLib_NoPowerTooltip = "Connect a generator or use grid power to operate this workstation.",
+	IGUI_PhobosLib_PowerLost = "Power lost! Crafting cancelled.",
+	IGUI_PhobosLib_DontShowAgain = "Don't show this again",
+	IGUI_PhobosLib_GotIt = "Got it!",
+	IGUI_PhobosLib_OpenGuide = "Open Guide",
+	IGUI_PhobosLib_GuideDefaultTitle = "Quick Guide",
+	IGUI_PhobosLib_ChangelogDefaultTitle = "What's New",
+	IGUI_PhobosLib_NoticeDefaultTitle = "Notice",
+	IGUI_PhobosLib_ErrorBuildGuide = "Error building guide content: ",
+	IGUI_PhobosLib_ErrorBuildChangelog = "Error building changelog content: ",
+	IGUI_PhobosLib_ErrorBuildNotice = "Error building notice content: ",
+	IGUI_PhobosLib_SeriesGuideTitle = "Quick Guide",
+	IGUI_PhobosLib_SeriesChangelogTitle = "What's New",
+	IGUI_PhobosLib_SeriesNoticeTitle = "Notice",
+	IGUI_PhobosLib_ErrorBuildSeries = "Error building series content: ",
+	IGUI_PhobosLib_ExpandToView = "expand above to view",
+	IGUI_PhobosLib_DebugEnabled = "PhobosLib debug logging is active. Check the PZ console for output.",
+	IGUI_PhobosLib_FermentComplete = "Complete",
+}

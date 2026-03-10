@@ -23,6 +23,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-03-11
+
+### Added
+- **Multi-version folder structure** — Mod content split into `common/` (shared Lua code, sandbox options), `42.14/` (Lua `.txt` translations for PZ 42.14.x), and `42.15/` (JSON translations for PZ 42.15+). PZ automatically selects the correct version folder based on the running game version.
+- **PZ 42.14 backward compatibility** restored — minimum game version lowered from 42.15.0 back to 42.14.0.
+
+### Changed
+- CI updated for multi-version folder paths (7 checks).
+- `bump-version.sh` updated for 4 version locations (root + 42.14 + 42.15 mod.info + PhobosLib.lua).
+
 ## [1.19.0] - 2026-03-10
 
 ### Changed
