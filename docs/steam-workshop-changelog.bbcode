@@ -1,5 +1,14 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.19.0 — PZ 42.15 Translation Migration (2026-03-10)[/h2]
+
+[h3]Changed[/h3]
+[list]
+[*] [b]PZ 42.15 translation migration[/b] — Converted all translation files from Lua .txt table format to flat JSON (.json). Files renamed: IG_UI_EN.txt → IG_UI.json, Sandbox_EN.txt → Sandbox.json. 22 keys across 2 files.
+[*] [b]Minimum game version[/b] bumped from 42.14.0 to 42.15.0.
+[*] CI: sandbox completeness check and encoding validation updated for JSON translation files.
+[/list]
+
 [h2]v1.18.2 — Filter Degradation Fix (2026-03-09)[/h2]
 
 [h3]Fixed[/h3]
@@ -152,5 +161,5 @@
 [list]
 [*] [b]24 modules[/b] total (13 shared + 11 client/server)
 [*] [b]~130 public functions[/b]
-[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups, condition-based filter degradation
+[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups, condition-based filter degradation, JSON translations (PZ 42.15)
 [/list]
