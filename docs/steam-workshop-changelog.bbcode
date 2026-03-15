@@ -1,5 +1,21 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.21.0 — Farming Spray Deprecation (2026-03-16)[/h2]
+
+[h3]Changed[/h3]
+[list]
+[*] [b]registerFarmingSpray() deprecated[/b] — The farming spray registration API still works but is now marked @deprecated with a one-time runtime warning. Mods should output vanilla gardening spray items directly from recipes instead (Base.GardeningSprayMilk, Base.GardeningSprayAphids, Base.GardeningSprayCigarettes, Base.SlugRepellent). The function will be removed in a future release.
+[*] [b]Farming spray system rewritten from scratch[/b] — Complete rewrite of PhobosLib_FarmingSpray.lua with clean monkey-patch architecture, pcall-wrapped injection, quantity submenus, drag-to-next-plant cursor, and CFarming_Interact.onContextKey support.
+[/list]
+
+[h3]CI[/h3]
+[list]
+[*] Expanded luacheck globals from PZJavaDocs lua_api.json.
+[*] Added copyright headers to JSON translation files.
+[/list]
+
+[hr][/hr]
+
 [h2]v1.20.0 — Multi-Version Support (2026-03-11)[/h2]
 
 [h3]Added[/h3]
