@@ -54,6 +54,7 @@ read_globals = {
     "ISCollapsableWindow",
     "ISContextMenu",
     "ISCurePlantAction",
+    "ISFarmingCursorMouse",
     "ISPanelJoypad",
     "ISRichTextPanel",
     "ISScrollingListBox",
@@ -67,6 +68,7 @@ read_globals = {
     "isJoypadCharacter",
     "ArrayList",
     "CFarmingSystem",
+    "farming_vegetableconf",
 
     -- Cross-mod (optional, runtime-guarded)
     "DynamicTrading",
