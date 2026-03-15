@@ -243,7 +243,20 @@ local function patchFarmingMenu()
                     end
                 end
 
-                diseaseSubMenu:addOption(label, worldobjects, cureCallback, 1, sq, playerObj)
+                local availableUses = sprayItem:getCurrentUses()
+                if availableUses > 1 then
+                    -- Create quantity submenu (1..min(uses, 10)), like vanilla Aphids
+                    local sprayOpt = diseaseSubMenu:addOption(label, worldobjects, cureCallback, 1, sq, playerObj, context)
+                    local quantityMenu = context:getNew(diseaseSubMenu)
+                    local maxUses = math.min(availableUses, 10)
+                    for i = 1, maxUses do
+                        quantityMenu:addOption(i .. "", worldobjects, cureCallback, i, sq, playerObj)
+                    end
+                    context:addSubMenu(sprayOpt, quantityMenu)
+                else
+                    -- Only 1 use left, no submenu needed
+                    diseaseSubMenu:addOption(label, worldobjects, cureCallback, 1, sq, playerObj)
+                end
             end
         end)
 
