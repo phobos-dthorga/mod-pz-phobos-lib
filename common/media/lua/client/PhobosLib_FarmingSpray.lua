@@ -567,6 +567,14 @@ Events.OnGameStart.Add(onGameStart)
 --- Register a custom farming spray that cures a vanilla plant
 --- disease.
 ---
+--- @deprecated v1.21.0 — Output vanilla spray items directly from
+--- recipes instead.  Vanilla B42 gardening sprays are:
+---   Base.GardeningSprayMilk       (Mildew)
+---   Base.GardeningSprayAphids     (Aphids)
+---   Base.GardeningSprayCigarettes (Flies)
+---   Base.SlugRepellent            (Slugs)
+--- This function still works but will be removed in a future release.
+---
 --- When the player right-clicks a seeded crop or uses the
 --- Interact key, the registered spray will appear in the
 --- "Treat Problem" submenu and trigger the corresponding plant
@@ -589,7 +597,13 @@ Events.OnGameStart.Add(onGameStart)
 ---@param cureType  string        "Mildew", "Flies", "Aphids", or "Slugs"
 ---@param guardFunc function|nil  Optional guard: function() -> boolean.
 ---                                 Spray only active when guard returns true.
+local _deprecationWarned = false
 function PhobosLib.registerFarmingSpray(fullType, cureType, guardFunc)
+    if not _deprecationWarned then
+        _deprecationWarned = true
+        print(_TAG .. " WARNING: registerFarmingSpray() is deprecated (v1.21.0). "
+            .. "Output vanilla spray items directly from recipes instead.")
+    end
     if type(fullType) ~= "string" or fullType == "" then
         print(_TAG .. " registerFarmingSpray: invalid fullType")
         return
