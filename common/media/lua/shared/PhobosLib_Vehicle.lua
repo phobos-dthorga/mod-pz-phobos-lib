@@ -22,6 +22,66 @@
 PhobosLib = PhobosLib or {}
 
 
+--- Safe wrapper for vehicle battery charge.
+---@param vehicle any  BaseVehicle
+---@return number  charge 0.0-1.0, or 0 on error
+function PhobosLib.getVehicleBatteryCharge(vehicle)
+    if not vehicle then return 0 end
+    local ok, charge = pcall(function() return vehicle:getBatteryCharge() end)
+    if ok and type(charge) == "number" then return charge end
+    return 0
+end
+
+
+--- Drain vehicle battery safely (positive amount = drain).
+---@param vehicle any  BaseVehicle
+---@param amount number  positive value to drain
+function PhobosLib.drainVehicleBattery(vehicle, amount)
+    if not vehicle or not amount or amount <= 0 then return end
+    pcall(function() VehicleUtils.chargeBattery(vehicle, -amount) end)
+end
+
+
+--- Runtime check that a vehicle template part exists on loaded vehicle scripts.
+--- Call at OnGameBoot to detect template override conflicts.
+---@param partId string  e.g. "PIPLabFridge"
+---@param modPrefix string  e.g. "PIP" (for log messages)
+---@return boolean  true if part found on at least one vehicle script
+function PhobosLib.verifyVehicleTemplatePart(partId, modPrefix)
+    local prefix = modPrefix or "PhobosLib"
+    local scriptManager = getScriptManager()
+    if not scriptManager then
+        print("[" .. prefix .. "] WARNING: getScriptManager() returned nil, cannot verify part '" .. partId .. "'")
+        return false
+    end
+
+    local allScripts = scriptManager:getAllVehicleScripts()
+    if not allScripts or allScripts:size() == 0 then
+        print("[" .. prefix .. "] WARNING: No vehicle scripts loaded, cannot verify part '" .. partId .. "'")
+        return false
+    end
+
+    -- Check a few non-trailer vehicles for the part
+    for i = 0, math.min(allScripts:size() - 1, 9) do
+        local script = allScripts:get(i)
+        if script then
+            local name = script:getName() or ""
+            if not string.match(string.lower(name), "trailer") then
+                local part = script:getPartById(partId)
+                if part then
+                    print("[" .. prefix .. "] Vehicle part '" .. partId .. "' detected. OK.")
+                    return true
+                end
+            end
+        end
+    end
+
+    print("[" .. prefix .. "] WARNING: Part '" .. partId .. "' not found on any vehicle script. "
+        .. "Another mod may override 'template vehicle Battery'. Check mod load order.")
+    return false
+end
+
+
 --- Find all vehicles within radius tiles of a player.
 --- Uses the getCell():getVehicles() approach.
 ---@param player any
