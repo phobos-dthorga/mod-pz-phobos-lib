@@ -184,6 +184,85 @@ function PhobosLib.findAllItemsByFullType(inventory, fullType)
 end
 
 
+--- Find the first item whose fullType matches any entry in the given list.
+--- Searches main inventory only (not nested bags).
+---@param inventory any    A PZ ItemContainer or IsoGameCharacter
+---@param typeList table   Array of fullType strings, e.g. {"Base.Garbagebag", "Base.Bag_TrashBag"}
+---@return any|nil         The inventory item, or nil if none found
+function PhobosLib.findItemFromTypeList(inventory, typeList)
+    inventory = resolveInventory(inventory)
+    if not inventory or not typeList then return nil end
+    local allowed = {}
+    for _, ft in ipairs(typeList) do allowed[ft] = true end
+    local items = inventory:getItems()
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getFullType and allowed[it:getFullType()] then
+            return it
+        end
+    end
+    return nil
+end
+
+
+--- Count all items whose fullType matches any entry in the given list.
+--- Searches main inventory only (not nested bags).
+---@param inventory any    A PZ ItemContainer or IsoGameCharacter
+---@param typeList table   Array of fullType strings
+---@return number          Total count of matching items
+function PhobosLib.countItemsFromTypeList(inventory, typeList)
+    inventory = resolveInventory(inventory)
+    if not inventory or not typeList then return 0 end
+    local allowed = {}
+    for _, ft in ipairs(typeList) do allowed[ft] = true end
+    local count = 0
+    local items = inventory:getItems()
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getFullType and allowed[it:getFullType()] then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
+--- Find the first FluidContainer in the player's inventory that holds
+--- at least minAmount of any of the named fluids.
+--- Searches main inventory only (not nested bags).
+---@param inventory any        A PZ ItemContainer or IsoGameCharacter
+---@param fluidNames table     Array of fluid name strings, e.g. {"Bleach", "CleaningLiquid"}
+---@param minAmount number     Minimum fluid amount in litres
+---@return any|nil             The inventory item, or nil if none found
+function PhobosLib.findFluidContainerWithMin(inventory, fluidNames, minAmount)
+    inventory = resolveInventory(inventory)
+    if not inventory or not fluidNames or not minAmount then return nil end
+    local allowed = {}
+    for _, fn in ipairs(fluidNames) do allowed[fn] = true end
+    local result = nil
+    pcall(function()
+        local items = inventory:getItems()
+        for i = 0, items:size() - 1 do
+            local item = items:get(i)
+            if item then
+                local fc = PhobosLib.tryGetFluidContainer(item)
+                if fc then
+                    local name = PhobosLib.tryGetFluidName(fc)
+                    if name and allowed[name] then
+                        local amt = PhobosLib.tryGetAmount(fc)
+                        if amt and amt >= minAmount then
+                            result = item
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    return result
+end
+
+
 --- Safe player:Say() wrapper. Does nothing if player is nil or Say is unavailable.
 ---@param player any
 ---@param msg string
