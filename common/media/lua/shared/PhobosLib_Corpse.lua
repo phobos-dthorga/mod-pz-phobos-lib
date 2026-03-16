@@ -15,26 +15,48 @@
 --
 
 ---------------------------------------------------------------
--- PhobosLib.lua
--- Namespace root and module aggregator for PhobosLib.
--- All Phobos PZ mods should: require "PhobosLib"
+-- PhobosLib_Corpse.lua
+-- Corpse/dead-body utilities for Project Zomboid Build 42.
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.22.0"
 
-require "PhobosLib_Debug"    -- must be first: other modules use debug API
-require "PhobosLib_Util"
-require "PhobosLib_Fluid"
-require "PhobosLib_World"
-require "PhobosLib_Vehicle"
-require "PhobosLib_Corpse"
-require "PhobosLib_Sandbox"
-require "PhobosLib_Quality"
-require "PhobosLib_Hazard"
-require "PhobosLib_Skill"
-require "PhobosLib_Reset"
-require "PhobosLib_Validate"
-require "PhobosLib_Trading"
-require "PhobosLib_Migrate"
-require "PhobosLib_Fermentation"
+
+--- Get hours since a corpse died.
+---@param corpse any  IsoDeadBody
+---@return number  hours since death, or math.huge if unknown
+function PhobosLib.getCorpseAge(corpse)
+    if not corpse then return math.huge end
+
+    local deathTime = nil
+    pcall(function() deathTime = corpse:getDeathTime() end)
+    if not deathTime then return math.huge end
+
+    local worldAge = nil
+    pcall(function() worldAge = GameTime:getInstance():getWorldAgeHours() end)
+    if not worldAge then return math.huge end
+
+    return worldAge - deathTime
+end
+
+
+--- Get all corpses (IsoDeadBody) on a given tile.
+---@param square any  IsoGridSquare
+---@return table  array of IsoDeadBody (empty if none)
+function PhobosLib.getCorpsesOnSquare(square)
+    local results = {}
+    if not square then return results end
+
+    local bodies = nil
+    pcall(function() bodies = square:getDeadBodys() end)
+    if not bodies then return results end
+
+    for i = 0, bodies:size() - 1 do
+        local body = bodies:get(i)
+        if body then
+            table.insert(results, body)
+        end
+    end
+
+    return results
+end
