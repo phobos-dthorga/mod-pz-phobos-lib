@@ -1716,6 +1716,7 @@ read_globals = {
     "updateServerToAccountList",
     "useStaticErosionRand",
     "useTextureFiltering",
+    "VehicleUtils",
     "viewedTicket",
     "wasKeyDown",
     "wasMouseActiveMoreRecentlyThanJoypad",

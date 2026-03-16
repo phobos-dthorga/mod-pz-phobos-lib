@@ -366,3 +366,17 @@ function PhobosLib.isPlayerAdmin(player)
     end
     return false
 end
+
+
+--- Ensure a named sub-table exists in a player's modData and return it.
+--- Creates the sub-table if it doesn't exist. Safe wrapper that avoids
+--- the repetitive `md[key] = md[key] or {}` pattern.
+---@param player any     IsoPlayer (or any object with getModData())
+---@param key string     The modData sub-table key
+---@return table|nil     The sub-table, or nil if modData is inaccessible
+function PhobosLib.getPlayerModDataTable(player, key)
+    local md = PhobosLib.getModData(player)
+    if not md or not key then return nil end
+    if not md[key] then md[key] = {} end
+    return md[key]
+end

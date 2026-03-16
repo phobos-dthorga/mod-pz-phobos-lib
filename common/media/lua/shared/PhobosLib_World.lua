@@ -261,6 +261,68 @@ function PhobosLib.findNearbyVehicle(player, radius)
 end
 
 
+--- Safely retrieve the IsoGridSquare at absolute world coordinates.
+--- Handles nil cell gracefully.
+---@param x number  World X coordinate
+---@param y number  World Y coordinate
+---@param z number  World Z coordinate (floor level)
+---@return any|nil  IsoGridSquare or nil if cell or chunk is not loaded
+function PhobosLib.getGridSquareAt(x, y, z)
+    if not x or not y or not z then return nil end
+    local cell = getCell()
+    if not cell then return nil end
+    local ok, sq = pcall(function() return cell:getGridSquare(x, y, z) end)
+    if ok then return sq end
+    return nil
+end
+
+
+--- Find ALL vehicles within radius tiles of a player.
+--- Returns a list of {vehicle, distSq} sorted by distance (nearest first).
+--- Unlike findNearbyVehicle(), returns all matches for filtering.
+---@param player any
+---@param radius number
+---@return table  Array of {vehicle=BaseVehicle, distSq=number}, may be empty
+function PhobosLib.findNearbyVehicles(player, radius)
+    local results = {}
+    if not player then return results end
+    local sq = PhobosLib.getSquareFromPlayer(player)
+    if not sq then return results end
+
+    local ok, px = pcall(function() return sq:getX() end)
+    local ok2, py = pcall(function() return sq:getY() end)
+    if not (ok and ok2) then return results end
+
+    local cell = getCell()
+    if not cell then return results end
+
+    local vehicles = nil
+    pcall(function() vehicles = cell:getVehicles() end)
+    if not vehicles then return results end
+
+    local maxDistSq = radius * radius
+
+    for i = 0, vehicles:size() - 1 do
+        local v = vehicles:get(i)
+        if v then
+            local vok, vx = pcall(function() return v:getX() end)
+            local vok2, vy = pcall(function() return v:getY() end)
+            if vok and vok2 then
+                local dx = vx - px
+                local dy = vy - py
+                local distSq = dx * dx + dy * dy
+                if distSq <= maxDistSq then
+                    table.insert(results, { vehicle = v, distSq = distSq })
+                end
+            end
+        end
+    end
+
+    table.sort(results, function(a, b) return a.distSq < b.distSq end)
+    return results
+end
+
+
 --- Safe check whether a vehicle's engine is currently running.
 --- Probes multiple possible method names.
 ---@param vehicle any

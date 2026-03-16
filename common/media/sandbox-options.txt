@@ -16,6 +16,12 @@
 
 VERSION = 1,
 
+option PhobosLib.EnableExperimentalFeatures
+{
+	type = boolean, default = false,
+	page = PhobosLib_Sandbox, translation = PhobosLib_EnableExperimentalFeatures,
+}
+
 option PhobosLib.EnableDebugLogging
 {
 	type = boolean, default = false,

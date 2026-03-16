@@ -22,6 +22,13 @@
 
 PhobosLib = PhobosLib or {}
 
+--- Check if experimental/developer features are enabled.
+-- Shared toggle across all Phobos mods — gates work-in-progress content.
+-- @return boolean  true if enabled (default false)
+function PhobosLib.isExperimentalEnabled()
+    return PhobosLib.getSandboxVar("PhobosLib", "EnableExperimentalFeatures", false) == true
+end
+
 --- Safely retrieve a sandbox variable with a fallback default.
 -- @param modId   string  The mod namespace (e.g. "PCP")
 -- @param varName string  The variable name (e.g. "YieldMultiplier")
