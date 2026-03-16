@@ -60,3 +60,24 @@ function PhobosLib.getCorpsesOnSquare(square)
 
     return results
 end
+
+
+--- Get all corpses (IsoDeadBody) within a radius of a square.
+--- Uses scanNearbySquares to iterate tiles, collecting corpses from each.
+---@param square any      IsoGridSquare origin
+---@param radius number   Search radius in tiles
+---@return table  array of {corpse=IsoDeadBody, square=IsoGridSquare}
+function PhobosLib.getCorpsesInRadius(square, radius)
+    local results = {}
+    if not square or not radius then return results end
+
+    PhobosLib.scanNearbySquares(square, radius, function(sq)
+        local corpses = PhobosLib.getCorpsesOnSquare(sq)
+        for _, corpse in ipairs(corpses) do
+            table.insert(results, { corpse = corpse, square = sq })
+        end
+        return false
+    end)
+
+    return results
+end
