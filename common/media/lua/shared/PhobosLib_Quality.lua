@@ -129,6 +129,7 @@ end
 ---------------------------------------------------------------
 
 --- Calculate output quality from input quality, equipment factor, and variance.
+--- @deprecated Use calculateOutputQualityV2 for multiplicative skill + variance.
 ---@param inputQuality number  Average input quality
 ---@param factor number        Equipment factor (e.g. 0.90 for mortar, 1.25 for chromatograph)
 ---@param variance number      Random variance range (e.g. 5 for ±5)
@@ -143,6 +144,24 @@ function PhobosLib.calculateOutputQuality(inputQuality, factor, variance, skillB
 end
 
 
+--- Calculate output quality using multiplicative skill and variance.
+--- Formula: clamp(floor(inputQuality * factor * skillMultiplier * varianceMult), 0, 99)
+--- where varianceMult = 1.0 + random(-variancePct, +variancePct) / 100.
+---@param inputQuality number     Average input quality (0-100)
+---@param factor number           Equipment factor (e.g. 0.90 mortar, 1.25 chromatograph)
+---@param skillMultiplier number  Multiplicative skill bonus (default 1.0; e.g. 1.44 at L10/Standard)
+---@param variancePct number      ±percentage variance (default 15 for ±15%)
+---@return number                 Output quality (clamped 0-99)
+function PhobosLib.calculateOutputQualityV2(inputQuality, factor, skillMultiplier, variancePct)
+    skillMultiplier = skillMultiplier or 1.0
+    variancePct     = variancePct or 15
+    local varianceRoll = ZombRand(variancePct * 2 + 1) - variancePct  -- e.g. -15 to +15
+    local varianceMult = 1.0 + varianceRoll / 100.0                   -- e.g. 0.85 to 1.15
+    local result = inputQuality * factor * skillMultiplier * varianceMult
+    return math.max(0, math.min(99, math.floor(result + 0.5)))
+end
+
+
 --- Generate a random base quality for source recipes (no tracked inputs).
 ---@param min number  Minimum quality (e.g. 30)
 ---@param max number  Maximum quality (e.g. 50)
@@ -154,6 +173,7 @@ end
 
 
 --- Convert a perk level into a small quality bonus.
+--- @deprecated Use getSkillMultiplier for multiplicative skill scaling.
 ---@param player any       IsoPlayer (or IsoGameCharacter)
 ---@param perk any         Perks enum value (e.g. Perks.AppliedChemistry)
 ---@param divisor number   Integer divisor (default 2 → level 10 = +5 bonus)
@@ -168,6 +188,7 @@ end
 
 --- Skill-aware variant of randomBaseQuality for source recipes.
 --- Adds a small bonus based on the player's skill level.
+--- @deprecated Use randomBaseQualityV2 for multiplicative skill + variance.
 ---@param min number       Minimum quality (e.g. 30)
 ---@param max number       Maximum quality (e.g. 50)
 ---@param player any       IsoPlayer
@@ -178,6 +199,40 @@ function PhobosLib.randomBaseQualityWithSkill(min, max, player, perk, divisor)
     local base = PhobosLib.randomBaseQuality(min, max)
     local bonus = PhobosLib.getSkillBonus(player, perk, divisor)
     return math.min(99, base + bonus)  -- cap at 99 to avoid condition sentinel
+end
+
+
+--- Convert a perk level into a multiplicative quality bonus.
+--- Returns a multiplier: 1.0 at level 0, (1.0 + maxEffect) at level 10.
+--- Sliding scale: multiplier = 1.0 + (level / 10.0) * maxEffect.
+---@param player any       IsoPlayer (or IsoGameCharacter)
+---@param perk any         Perks enum value (e.g. Perks.AppliedChemistry)
+---@param maxEffect number Maximum effect at level 10 (default 0.66 → ×1.66)
+---@return number          Multiplier (≥1.0)
+function PhobosLib.getSkillMultiplier(player, perk, maxEffect)
+    maxEffect = maxEffect or 0.66
+    if not player or not perk or maxEffect <= 0 then return 1.0 end
+    local ok, level = pcall(function() return player:getPerkLevel(perk) end)
+    if not ok or not level then return 1.0 end
+    return 1.0 + (level / 10.0) * maxEffect
+end
+
+
+--- Skill-aware source quality with multiplicative skill and variance.
+--- Generates random base in [min, max], applies skill multiplier, then ±variance%.
+---@param min number             Minimum quality (e.g. 30)
+---@param max number             Maximum quality (e.g. 50)
+---@param skillMultiplier number Multiplicative skill bonus (default 1.0)
+---@param variancePct number     ±percentage variance (default 15)
+---@return number                Random quality, capped at 99
+function PhobosLib.randomBaseQualityV2(min, max, skillMultiplier, variancePct)
+    skillMultiplier = skillMultiplier or 1.0
+    variancePct     = variancePct or 15
+    local base = PhobosLib.randomBaseQuality(min, max)
+    local varianceRoll = ZombRand(variancePct * 2 + 1) - variancePct
+    local varianceMult = 1.0 + varianceRoll / 100.0
+    local result = base * skillMultiplier * varianceMult
+    return math.max(0, math.min(99, math.floor(result + 0.5)))
 end
 
 
@@ -270,6 +325,19 @@ function PhobosLib.getQualityYield(value, yieldTable)
     local last = yieldTable[#yieldTable]
     if last then return last.mult end
     return 1.0
+end
+
+
+--- Look up yield multiplier and apply a global sandbox multiplier.
+--- Combines tier lookup with server-configurable yield scaling.
+---@param value number          Quality value (0-100)
+---@param yieldTable table      Yield definition table (sorted highest-min-first)
+---@param globalMult number     Global sandbox multiplier (default 1.0)
+---@return number               Effective multiplier (clamped ≥0.0)
+function PhobosLib.getEffectiveYield(value, yieldTable, globalMult)
+    globalMult = globalMult or 1.0
+    local baseMult = PhobosLib.getQualityYield(value, yieldTable)
+    return math.max(0, baseMult * globalMult)
 end
 
 
