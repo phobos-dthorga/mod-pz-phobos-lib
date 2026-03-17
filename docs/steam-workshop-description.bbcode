@@ -1,6 +1,6 @@
 [h1]PhobosLib — Shared Utility Library[/h1]
 
-[b]Version:[/b] 1.18.1 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
+[b]Version:[/b] 1.30.0 | [b]Requires:[/b] Project Zomboid Build 42.14.0+
 
 A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib provides stable, reusable helpers so mod authors can focus on gameplay features instead of reimplementing safe wrappers, API probing, and boilerplate Lua glue.
 
@@ -8,15 +8,15 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 
 [hr][/hr]
 
-[h2]Modules (24 total)[/h2]
+[h2]Modules (27 total)[/h2]
 
-[h3]Shared Modules (13)[/h3]
+[h3]Shared Modules (16)[/h3]
 [list]
 [*] [b]Util[/b] — Safe method calling, API probing, keyword-based item search, modData helpers, player speech bubbles
 [*] [b]Fluid[/b] — Build 42 FluidContainer helpers with multi-strategy API fallbacks
-[*] [b]World[/b] — Tile iteration, object keyword search, generator and vehicle detection
+[*] [b]World[/b] — Tile iteration, object keyword search, generator/vehicle detection, area safety check, grid square access
 [*] [b]Sandbox[/b] — Safe sandbox variable access, runtime mod detection, yield multiplier scaling, persistent one-shot flag consumption
-[*] [b]Quality[/b] — Generic quality/purity tracking (0-100), tier lookup, equipment factors, severity scaling, yield penalties
+[*] [b]Quality[/b] — Generic quality/purity tracking (0-100), multiplicative V2 formula, tier lookup, equipment factors, skill multiplier, variance, yield calculation
 [*] [b]Hazard[/b] — PPE detection, respiratory protection assessment, EHR disease dispatch with vanilla stat fallback
 [*] [b]Skill[/b] — Perk queries, safe XP awards, persistent cross-skill XP mirroring
 [*] [b]Reset[/b] — Deep inventory traversal, modData stripping, recipe removal, XP reset, world modData utilities
@@ -25,6 +25,9 @@ A shared utility library for Project Zomboid mods (Build 42 focused). PhobosLib 
 [*] [b]Migrate[/b] — Versioned save migration framework with incompatible version handling
 [*] [b]Debug[/b] — Centralised debug logging controlled per-mod via sandbox option
 [*] [b]Fermentation[/b] — Fermentation registry, progress tracking, date stamping for items using ReplaceOnRotten as positive curing
+[*] [b]Vehicle[/b] — Multi-vehicle scanning, battery charge/drain, template part verification
+[*] [b]Corpse[/b] — Dead body utilities: corpse age, per-square and radius scanning
+[*] [b]WorldContainer[/b] — World container iteration for save migration systems (fridges, crates, vehicle storage)
 [/list]
 
 [h3]Client/Server Modules (11)[/h3]

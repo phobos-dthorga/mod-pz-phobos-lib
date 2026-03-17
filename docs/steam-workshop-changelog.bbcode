@@ -1,5 +1,127 @@
 [h1]PhobosLib — Changelog[/h1]
 
+[h2]v1.30.0 — PZ 42.15 OnCreate Compatibility (2026-03-18)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]iterateItems(items, callback)[/b] — Universal items iteration helper that handles both ArrayList (PZ 42.14, size/get) and table/KahluaTable (PZ 42.15) items parameter types from OnCreate callbacks. Prevents hard crashes on PZ 42.15.3.
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] [b]averageStampedQuality crash[/b] — Fixed hard crash when items parameter lacks size() method (PZ 42.15.3). Now uses iterateItems().
+[*] [b]averageInputQuality spam[/b] — Fixed ExceptionLogger stack traces from pcall-closure pattern. Converted to pre-flight type guards.
+[*] [b]degradeFilterFromInputs consistency[/b] — Converted to use iterateItems() for uniform iteration.
+[*] [b]Tooltip collectLines() spam[/b] — Added type guard + method-ref pcall for getFullType() to prevent ExceptionLogger stack traces when hovering items.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.29.0 — Quality V2 API (2026-03-17)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]calculateOutputQualityV2(input, factor, skillMult, variancePct)[/b] — Fully multiplicative quality formula replacing the additive V1 system.
+[*] [b]getSkillMultiplier(player, perk, maxEffect)[/b] — Multiplicative skill bonus (1.0 at Level 0, 1.0+maxEffect at Level 10).
+[*] [b]randomBaseQualityV2(min, max, skillMult, variancePct)[/b] — Source recipe quality with multiplicative skill + variance.
+[*] [b]getEffectiveYield(value, yieldTable, globalMult)[/b] — Yield tier lookup with sandbox multiplier support.
+[/list]
+
+[h3]Changed[/h3]
+[list]
+[*] V1 functions (calculateOutputQuality, getSkillBonus, randomBaseQualityWithSkill) marked @deprecated but remain functional.
+[/list]
+
+[h3]Bug Fixes[/h3]
+[list]
+[*] [b]degradeFilterFromInputs spam[/b] — Replaced pcall-with-closure guard with pre-flight type checks to avoid PZ ExceptionLogger console spam on safe-variant hazard recipe crafts.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.28.0 — World Container Iteration (2026-03-17)[/h2]
+
+[h3]New Module[/h3]
+[list]
+[*] [b]PhobosLib_WorldContainer[/b] (server) — iterateWorldContainers(callback) scans all items in world containers (grid square objects + vehicle parts) across loaded cells. Designed for save migration systems converting items in fridges, crates, shelves, and vehicle storage. All iteration pcall-wrapped.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.27.0 — Recursive Inventory Search & Safety Check (2026-03-17)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]findItemByFullTypeRecurse(inventory, fullType)[/b] — Search main inventory + all equipped bags
+[*] [b]findItemFromTypeListRecurse(inventory, typeList)[/b] — Recursive type-list search
+[*] [b]countItemsFromTypeListRecurse(inventory, typeList)[/b] — Recursive type-list count
+[*] [b]findFluidContainerWithMinRecurse(inventory, fluidNames, minAmount)[/b] — Recursive fluid container search
+[*] [b]isAreaSafe(player)[/b] — Mirrors vanilla sleep safety check (no visible/chasing/nearby zombies)
+[/list]
+
+[hr][/hr]
+
+[h2]v1.26.0 — Inventory Search by Type List (2026-03-17)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]findItemFromTypeList(inventory, typeList)[/b] — Find first item matching any fullType in a list
+[*] [b]countItemsFromTypeList(inventory, typeList)[/b] — Count items matching any fullType in a list
+[*] [b]findFluidContainerWithMin(inventory, fluidNames, minAmount)[/b] — Find fluid container with minimum fill level
+[/list]
+
+[hr][/hr]
+
+[h2]v1.25.0 — Player ModData Table Utility (2026-03-17)[/h2]
+
+[h3]New Function[/h3]
+[list]
+[*] [b]getPlayerModDataTable(player, key)[/b] — Safe getter ensuring a named sub-table exists in player modData. Eliminates repetitive md[key] = md[key] or {} boilerplate.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.24.0 — World Utilities (2026-03-17)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]getGridSquareAt(x, y, z)[/b] — Safe wrapper for getCell():getGridSquare() with nil cell handling.
+[*] [b]findNearbyVehicles(player, radius)[/b] — Returns all vehicles within radius sorted by distance (unlike findNearbyVehicle which returns only the nearest).
+[/list]
+
+[hr][/hr]
+
+[h2]v1.23.0 — Vehicle Battery & Template Utilities (2026-03-17)[/h2]
+
+[h3]New Functions[/h3]
+[list]
+[*] [b]getVehicleBatteryCharge(vehicle)[/b] — Safe pcall wrapper returning 0–1 battery charge.
+[*] [b]drainVehicleBattery(vehicle, amount)[/b] — Safe VehicleUtils.chargeBattery wrapper.
+[*] [b]verifyVehicleTemplatePart(partId, modPrefix)[/b] — Runtime check for template override conflicts with console warning.
+[/list]
+
+[hr][/hr]
+
+[h2]v1.22.0 — Vehicle, Corpse & Experimental Features (2026-03-16)[/h2]
+
+[h3]New Modules[/h3]
+[list]
+[*] [b]PhobosLib_Vehicle[/b] (shared) — findAllNearbyVehicles() for multi-vehicle scanning.
+[*] [b]PhobosLib_Corpse[/b] (shared) — getCorpseAge(), getCorpsesOnSquare(), getCorpsesInRadius() for dead body utilities.
+[/list]
+
+[h3]New Feature[/h3]
+[list]
+[*] [b]EnableExperimentalFeatures sandbox toggle[/b] — Shared option allowing all Phobos mods to gate WIP content behind one toggle. PhobosLib.isExperimentalEnabled() getter for consumer mods.
+[/list]
+
+[h3]Changed[/h3]
+[list]
+[*] Module count: 24 to [b]26[/b] (15 shared + 11 client/server)
+[/list]
+
+[hr][/hr]
+
 [h2]v1.21.0 — Farming Spray Deprecation (2026-03-16)[/h2]
 
 [h3]Changed[/h3]
@@ -183,7 +305,11 @@
 
 [h2]Summary[/h2]
 [list]
-[*] [b]24 modules[/b] total (13 shared + 11 client/server)
-[*] [b]~130 public functions[/b]
-[*] New since v1.15.0: Debug logging, Moodle Framework wrapper, Fermentation registry, skill quality bonus, series popups, notice popups, condition-based filter degradation, JSON translations (PZ 42.15)
+[*] [b]26 modules[/b] total (15 shared + 11 client/server)
+[*] [b]~150 public functions[/b]
+[*] [b]v1.30.0[/b]: iterateItems() for PZ 42.15 OnCreate compatibility, tooltip guard fixes
+[*] [b]v1.29.0[/b]: Quality V2 API (multiplicative skill/variance/yield), degradeFilterFromInputs spam fix
+[*] [b]v1.28.0[/b]: World container iteration for save migrations
+[*] [b]v1.22.0–v1.27.0[/b]: Vehicle, Corpse, WorldContainer modules; recursive inventory search; experimental features toggle; player modData table utility
+[*] Requires Project Zomboid Build 42.14.0+
 [/list]
