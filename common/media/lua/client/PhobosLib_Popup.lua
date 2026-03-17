@@ -195,6 +195,7 @@ function _GuideWindow:new(x, y, w, h, registration)
 end
 
 function _GuideWindow:createChildren()
+    PhobosLib.makeWindowResizable(self, 400, 300)
     ISCollapsableWindow.createChildren(self)
 
     local y = self:titleBarHeight() + BORDER
@@ -212,6 +213,8 @@ function _GuideWindow:createChildren()
     self.richText:addScrollBars()
     self.richText.backgroundColor = { r = 0, g = 0, b = 0, a = 0.25 }
     self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.08 }
+    self.richText:setAnchorRight(true)
+    self.richText:setAnchorBottom(true)
     self:addChild(self.richText)
 
     -- Build content via callback (safe for getText at display time)
@@ -271,6 +274,7 @@ function _ChangelogWindow:new(x, y, w, h, registration)
 end
 
 function _ChangelogWindow:createChildren()
+    PhobosLib.makeWindowResizable(self, 400, 300)
     ISCollapsableWindow.createChildren(self)
 
     local barH    = self:titleBarHeight()
@@ -290,6 +294,8 @@ function _ChangelogWindow:createChildren()
     self.richText:addScrollBars()
     self.richText.backgroundColor = { r = 0, g = 0, b = 0, a = 0.30 }
     self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.07 }
+    self.richText:setAnchorRight(true)
+    self.richText:setAnchorBottom(true)
     self:addChild(self.richText)
 
     -- Build content via callback (pass lastSeenVersion so mod can filter)
@@ -405,6 +411,7 @@ function _NoticeWindow:new(x, y, w, h, registration)
 end
 
 function _NoticeWindow:createChildren()
+    PhobosLib.makeWindowResizable(self, 400, 300)
     ISCollapsableWindow.createChildren(self)
 
     local barH    = self:titleBarHeight()
@@ -424,6 +431,8 @@ function _NoticeWindow:createChildren()
     self.richText:addScrollBars()
     self.richText.backgroundColor = { r = 0, g = 0, b = 0, a = 0.30 }
     self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.07 }
+    self.richText:setAnchorRight(true)
+    self.richText:setAnchorBottom(true)
     self:addChild(self.richText)
 
     -- Build content via callback
@@ -563,6 +572,7 @@ function _SeriesWindow:new(x, y, w, h, mode, seriesId, modRegs)
 end
 
 function _SeriesWindow:createChildren()
+    PhobosLib.makeWindowResizable(self, 480, 350)
     ISCollapsableWindow.createChildren(self)
 
     local barH       = self:titleBarHeight()
@@ -620,6 +630,8 @@ function _SeriesWindow:createChildren()
     self.richText:addScrollBars()
     self.richText.backgroundColor = { r = 0, g = 0, b = 0, a = 0.25 }
     self.richText.borderColor     = { r = 1, g = 1, b = 1, a = 0.07 }
+    self.richText:setAnchorRight(true)
+    self.richText:setAnchorBottom(true)
     self:addChild(self.richText)
 
     -- Build initial content
@@ -1250,6 +1262,24 @@ function PhobosLib.registerNoticePopup(modId, noticeId, options)
     PhobosLib._noticeRegistry[modId][noticeId] = options
     print(_TAG .. " notice registered: " .. modId .. "/" .. noticeId
           .. (options.series and (" [series:" .. options.series .. "]") or ""))
+end
+
+---------------------------------------------------------------
+-- Window utility
+---------------------------------------------------------------
+
+--- Enable native ISCollapsableWindow resizing on a Phobos window.
+--- Skips setup if "Resize Any Window" mod is active (it handles all windows globally).
+--- Must be called BEFORE ISCollapsableWindow.createChildren(self) so the
+--- resize widgets are created during the parent call.
+---@param window table  The ISCollapsableWindow instance
+---@param minWidth number  Minimum width in pixels (default 300)
+---@param minHeight number  Minimum height in pixels (default 200)
+function PhobosLib.makeWindowResizable(window, minWidth, minHeight)
+    if getActivatedMods():contains("ZResizeAnyWindow") then return end
+    window.resizable = true
+    window.minimumWidth = minWidth or 300
+    window.minimumHeight = minHeight or 200
 end
 
 ---------------------------------------------------------------
