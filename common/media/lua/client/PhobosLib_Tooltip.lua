@@ -69,7 +69,10 @@ local _originalRender = nil
 ---@return table|nil  Array of {text=string, r=number, g=number, b=number} or nil
 local function collectLines(item)
     if not item then return nil end
-    local ok, fullType = pcall(function() return item:getFullType() end)
+    if type(item) ~= "userdata" then return nil end
+    local getFullTypeFn = item.getFullType
+    if not getFullTypeFn then return nil end
+    local ok, fullType = pcall(getFullTypeFn, item)
     if not ok or not fullType then return nil end
 
     local allLines = nil

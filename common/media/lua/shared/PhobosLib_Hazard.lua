@@ -138,17 +138,7 @@ function PhobosLib.degradeFilterFromInputs(items, maskTypes, amount)
     if not items or not maskTypes or not amount then return false end
     if amount <= 0 then return false end
 
-    -- Guard: items must be an iterable Java ArrayList.
-    -- Avoid pcall with closure — PZ's ExceptionLogger dumps a full stack
-    -- trace at the Java level even when pcall catches the error.
-    if type(items) ~= "userdata" then return false end
-    local szFn = items.size
-    if not szFn then return false end
-    local ok, sz = pcall(szFn, items)
-    if not ok or not sz or sz == 0 then return false end
-
-    for i = 0, sz - 1 do
-        local item = items:get(i)
+    for i, item in PhobosLib.iterateItems(items) do
         if item then
             local ft = item:getFullType()
             for _, target in ipairs(maskTypes) do

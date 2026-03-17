@@ -34,6 +34,49 @@ PhobosLib = PhobosLib or {}
 
 
 ---------------------------------------------------------------
+-- OnCreate Items Iteration
+---------------------------------------------------------------
+
+--- Safely iterate items from OnCreate callbacks.
+--- Handles both Java ArrayList (size/get, pre-42.15) and Lua table/KahluaTable
+--- (ipairs, 42.15+) formats. Returns iterator yielding (index, item) pairs.
+---@param items any  Items parameter from OnCreate callback
+---@return function  Iterator returning (index, item) pairs
+function PhobosLib.iterateItems(items)
+    if not items then return function() return nil end end
+    -- Try Java ArrayList (pre-42.15): has size() and get() methods
+    if type(items) == "userdata" then
+        local szFn = items.size
+        if szFn then
+            local ok, sz = pcall(szFn, items)
+            if ok and sz and sz > 0 then
+                local i = -1
+                return function()
+                    i = i + 1
+                    if i >= sz then return nil end
+                    local iok, item = pcall(items.get, items, i)
+                    if iok then return i, item end
+                    return nil
+                end
+            end
+        end
+    end
+    -- Try Lua table / KahluaTable (42.15+): use # and numeric indexing
+    if type(items) == "table" then
+        local i = 0
+        local len = #items
+        return function()
+            i = i + 1
+            if i > len then return nil end
+            return i - 1, items[i]
+        end
+    end
+    -- Not iterable
+    return function() return nil end
+end
+
+
+---------------------------------------------------------------
 -- Core Quality Get/Set
 ---------------------------------------------------------------
 
@@ -99,26 +142,23 @@ function PhobosLib.averageInputQuality(items, key, default)
     if not items then return default end
     local total = 0
     local count = 0
-    local ok, _ = pcall(function()
-        for i = 0, items:size() - 1 do
-            local item = items:get(i)
-            if item then
-                local val = PhobosLib.getModDataValue(item, key, nil)
-                if val ~= nil and type(val) == "number" then
-                    total = total + val
+    for i, item in PhobosLib.iterateItems(items) do
+        if item then
+            local val = PhobosLib.getModDataValue(item, key, nil)
+            if val ~= nil and type(val) == "number" then
+                total = total + val
+                count = count + 1
+            else
+                -- Check if this is a PZ mod item (has modData capability)
+                -- Only count items that could plausibly carry quality
+                local md = PhobosLib.getModData(item)
+                if md then
+                    total = total + default
                     count = count + 1
-                else
-                    -- Check if this is a PZ mod item (has modData capability)
-                    -- Only count items that could plausibly carry quality
-                    local md = PhobosLib.getModData(item)
-                    if md then
-                        total = total + default
-                        count = count + 1
-                    end
                 end
             end
         end
-    end)
+    end
     if count == 0 then return default end
     return total / count
 end
@@ -247,14 +287,15 @@ function PhobosLib.averageStampedQuality(items, default)
     default = default or 50
     if not items then return default end
     local total, count = 0, 0
-    for i = 0, items:size() - 1 do
-        local item = items:get(i)
-        local maxCond = item:getConditionMax()
-        if maxCond and maxCond > 0 then
-            local cond = item:getCondition()
-            if cond < maxCond then  -- only stamped items
-                total = total + math.floor(cond / maxCond * 100 + 0.5)
-                count = count + 1
+    for i, item in PhobosLib.iterateItems(items) do
+        if item then
+            local maxCond = item:getConditionMax()
+            if maxCond and maxCond > 0 then
+                local cond = item:getCondition()
+                if cond < maxCond then  -- only stamped items
+                    total = total + math.floor(cond / maxCond * 100 + 0.5)
+                    count = count + 1
+                end
             end
         end
     end
