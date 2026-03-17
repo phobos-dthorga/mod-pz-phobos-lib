@@ -263,6 +263,133 @@ function PhobosLib.findFluidContainerWithMin(inventory, fluidNames, minAmount)
 end
 
 
+---------------------------------------------------------------
+-- Recursive inventory search (main + equipped bags/backpacks)
+---------------------------------------------------------------
+
+--- Extract the short type name from a fullType string.
+--- e.g. "Base.Garbagebag" → "Garbagebag"
+---@param fullType string
+---@return string
+local function toShortType(fullType)
+    return fullType:match("%.(.+)$") or fullType
+end
+
+
+--- Find an item by exact fullType, searching main inventory + equipped bags.
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
+---@param fullType string
+---@return any|nil
+function PhobosLib.findItemByFullTypeRecurse(inventory, fullType)
+    inventory = resolveInventory(inventory)
+    if not inventory or not fullType then return nil end
+    local ok, result = pcall(function()
+        local item = inventory:getFirstTypeRecurse(toShortType(fullType))
+        if item and item.getFullType and item:getFullType() == fullType then
+            return item
+        end
+        return nil
+    end)
+    if ok then return result end
+    return nil
+end
+
+
+--- Find the first item whose fullType matches any entry in the given list.
+--- Searches main inventory + equipped bags/backpacks (recursive).
+---@param inventory any    A PZ ItemContainer or IsoGameCharacter
+---@param typeList table   Array of fullType strings, e.g. {"Base.Garbagebag", "Base.Bag_TrashBag"}
+---@return any|nil         The inventory item, or nil if none found
+function PhobosLib.findItemFromTypeListRecurse(inventory, typeList)
+    inventory = resolveInventory(inventory)
+    if not inventory or not typeList then return nil end
+    for _, ft in ipairs(typeList) do
+        local ok, item = pcall(function()
+            return inventory:getFirstTypeRecurse(toShortType(ft))
+        end)
+        if ok and item and item.getFullType and item:getFullType() == ft then
+            return item
+        end
+    end
+    return nil
+end
+
+
+--- Count all items whose fullType matches any entry in the given list.
+--- Searches main inventory + equipped bags/backpacks (recursive).
+---@param inventory any    A PZ ItemContainer or IsoGameCharacter
+---@param typeList table   Array of fullType strings
+---@return number          Total count of matching items
+function PhobosLib.countItemsFromTypeListRecurse(inventory, typeList)
+    inventory = resolveInventory(inventory)
+    if not inventory or not typeList then return 0 end
+    local count = 0
+    for _, ft in ipairs(typeList) do
+        local ok, n = pcall(function()
+            return inventory:getItemCountRecurse(toShortType(ft))
+        end)
+        if ok and n then count = count + n end
+    end
+    return count
+end
+
+
+--- Find the first FluidContainer in the player's inventory (including
+--- equipped bags) that holds at least minAmount of any of the named fluids.
+---@param inventory any        A PZ ItemContainer or IsoGameCharacter
+---@param fluidNames table     Array of fluid name strings, e.g. {"Bleach", "CleaningLiquid"}
+---@param minAmount number     Minimum fluid amount in litres
+---@return any|nil             The inventory item, or nil if none found
+function PhobosLib.findFluidContainerWithMinRecurse(inventory, fluidNames, minAmount)
+    inventory = resolveInventory(inventory)
+    if not inventory or not fluidNames or not minAmount then return nil end
+    local allowed = {}
+    for _, fn in ipairs(fluidNames) do allowed[fn] = true end
+
+    -- Scan a single container for a matching fluid item
+    local function scanContainer(container)
+        local items = container:getItems()
+        for i = 0, items:size() - 1 do
+            local item = items:get(i)
+            if item then
+                local fc = PhobosLib.tryGetFluidContainer(item)
+                if fc then
+                    local name = PhobosLib.tryGetFluidName(fc)
+                    if name and allowed[name] then
+                        local amt = PhobosLib.tryGetAmount(fc)
+                        if amt and amt >= minAmount then
+                            return item
+                        end
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local result = nil
+    pcall(function()
+        -- Search main inventory first
+        result = scanContainer(inventory)
+        if result then return end
+
+        -- Search equipped bags/backpacks (one level deep)
+        local items = inventory:getItems()
+        for i = 0, items:size() - 1 do
+            local item = items:get(i)
+            if item and item.getItemContainer then
+                local sub = item:getItemContainer()
+                if sub then
+                    result = scanContainer(sub)
+                    if result then return end
+                end
+            end
+        end
+    end)
+    return result
+end
+
+
 --- Safe player:Say() wrapper. Does nothing if player is nil or Say is unavailable.
 ---@param player any
 ---@param msg string

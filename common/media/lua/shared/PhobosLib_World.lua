@@ -343,3 +343,25 @@ function PhobosLib.isVehicleRunning(vehicle)
 
     return false
 end
+
+
+--- Check whether the area around the player is safe (no nearby zombies).
+--- Mirrors vanilla's sleep safety check: visible, chasing, and very-close
+--- zombie counts must all be zero.
+--- Lightweight — reads pre-computed player stats, no grid scanning.
+---@param player any  IsoPlayer or IsoGameCharacter
+---@return boolean    true if no zombies detected nearby
+function PhobosLib.isAreaSafe(player)
+    if not player then return false end
+    local ok, stats = pcall(function() return player:getStats() end)
+    if not ok or not stats then return false end
+    local visible = 0
+    local chasing = 0
+    local veryClose = 0
+    pcall(function()
+        visible   = stats:getNumVisibleZombies()  or 0
+        chasing   = stats:getNumChasingZombies()   or 0
+        veryClose = stats:getNumVeryCloseZombies() or 0
+    end)
+    return visible == 0 and chasing == 0 and veryClose == 0
+end
