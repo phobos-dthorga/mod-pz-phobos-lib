@@ -91,3 +91,25 @@ function PhobosLib.maxCharsForWidth(font, pixelWidth, padding)
     local available = (pixelWidth or 0) - (padding or 0)
     return math.max(1, math.floor(available / charW))
 end
+
+--- Format a numeric value as a price string with 2 decimal places.
+---
+--- @param value number The price value
+--- @param prefix string|nil Currency prefix (default "$")
+--- @return string Formatted price (e.g., "$0.60", "$12.50")
+function PhobosLib.formatPrice(value, prefix)
+    prefix = prefix or "$"
+    if type(value) ~= "number" then return prefix .. "0.00" end
+    return prefix .. string.format("%.2f", value)
+end
+
+--- Convert a string to title case (first letter of each word capitalised).
+---
+--- @param text string The text to convert
+--- @return string Title-cased text (e.g., "grocery store" → "Grocery Store")
+function PhobosLib.titleCase(text)
+    if type(text) ~= "string" or text == "" then return text or "" end
+    return text:gsub("(%a)([%w]*)", function(first, rest)
+        return first:upper() .. rest:lower()
+    end)
+end
