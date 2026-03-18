@@ -21,7 +21,7 @@
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.32.0"
+PhobosLib.VERSION = "1.33.0"
 
 require "PhobosLib_Debug"    -- must be first: other modules use debug API
 require "PhobosLib_Util"
@@ -42,3 +42,4 @@ require "PhobosLib_WorldContainer"
 require "PhobosLib_Money"
 require "PhobosLib_NPCNames"
 require "PhobosLib_Reputation"
+require "PhobosLib_Address"

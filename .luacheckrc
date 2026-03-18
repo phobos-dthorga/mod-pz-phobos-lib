@@ -33,6 +33,7 @@ ignore = {
 globals = {
     "PhobosLib",
     "PhobosLib_Pagination",
+    "PhobosLib_Address",
     -- PZ engine core (PhobosLib writes to SandboxVars for sandbox management)
     "SandboxVars",
     -- PZ UI classes PhobosLib overrides methods on
@@ -62,6 +63,7 @@ read_globals = {
     "ISScrollingListBox",
     "ISTickBox",
     "ISTimedActionQueue",
+    "ISWorldMap",
     "ISWorldObjectContextMenu",
 
     -- PZ globals not in JavaDocs (must stay manual)

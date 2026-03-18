@@ -590,6 +590,33 @@ function PhobosLib.removeWorldMapMarker(id)
 end
 
 
+--- Open the PZ world map centered on given coordinates.
+--- Nil-safe wrapper around ISWorldMap.ShowWorldMap().
+---@param playerNum number|nil Player index (default 0)
+---@param x number World X coordinate to center on
+---@param y number World Y coordinate to center on
+---@param zoom number|nil Zoom level (default 20.0)
+---@return boolean True if the map was opened
+function PhobosLib.showOnWorldMap(playerNum, x, y, zoom)
+    if not x or not y then return false end
+    playerNum = playerNum or 0
+    zoom = zoom or 20.0
+    local ok = false
+    pcall(function()
+        if ISWorldMap and ISWorldMap.ShowWorldMap and ISWorldMap.IsAllowed
+           and ISWorldMap.IsAllowed() then
+            ISWorldMap.ShowWorldMap(playerNum, x, y, zoom)
+            ok = true
+        end
+    end)
+    if ok then
+        PhobosLib.debug("PhobosLib", "[World] Opened map at "
+            .. math.floor(x) .. ", " .. math.floor(y)
+            .. " (zoom " .. zoom .. ")")
+    end
+    return ok
+end
+
 --- Roll random condition damage on an item.
 --- If the chance roll succeeds, lose ZombRand(minLoss, maxLoss+1) condition.
 --- If the item's condition reaches 0, it is destroyed (vanilla behaviour).
