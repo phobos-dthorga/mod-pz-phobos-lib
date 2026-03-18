@@ -435,3 +435,89 @@ function PhobosLib.findWorldObjectsBySprite(centerX, centerY, radius, spriteName
 
     return results
 end
+
+
+--- Find BuildingDef objects near a world position that contain rooms
+--- matching the given room name filter.
+---
+--- Uses IsoCell:getGridSquare() + getBuilding() to probe grid squares
+--- within the search area, deduplicating by building ID.
+---
+---@param centerX number World X coordinate
+---@param centerY number World Y coordinate
+---@param radius number Search radius in tiles
+---@param roomFilter table Array of room name strings to match (e.g. {"pharmacy", "medical"})
+---@return table Array of { buildingDef, x, y, matchingRooms = {name, ...} }
+function PhobosLib.findNearbyBuildings(centerX, centerY, radius, roomFilter)
+    local results = {}
+    if not roomFilter or #roomFilter == 0 then return results end
+
+    local cell = getCell()
+    if not cell then return results end
+
+    -- Build lookup set for room names
+    local filterSet = {}
+    for _, name in ipairs(roomFilter) do
+        filterSet[name] = true
+    end
+
+    -- Track seen building IDs to avoid duplicates
+    local seen = {}
+
+    -- Sample grid squares at intervals (buildings span multiple tiles,
+    -- so we don't need to check every single tile)
+    local step = 5  -- check every 5th tile
+    for dx = -radius, radius, step do
+        for dy = -radius, radius, step do
+            local sq = cell:getGridSquare(centerX + dx, centerY + dy, 0)
+            if sq then
+                local building = nil
+                pcall(function() building = sq:getBuilding() end)
+                if building then
+                    local bDef = nil
+                    pcall(function() bDef = building:getDef() end)
+                    if bDef then
+                        local bId = nil
+                        pcall(function() bId = bDef:getIDString() end)
+                        if bId and not seen[bId] then
+                            seen[bId] = true
+
+                            -- Check rooms against filter
+                            local matchingRooms = {}
+                            pcall(function()
+                                local rooms = bDef:getRooms()
+                                if rooms then
+                                    for i = 0, rooms:size() - 1 do
+                                        local room = rooms:get(i)
+                                        if room then
+                                            local rName = room:getName()
+                                            if rName and filterSet[rName] then
+                                                table.insert(matchingRooms, rName)
+                                            end
+                                        end
+                                    end
+                                end
+                            end)
+
+                            if #matchingRooms > 0 then
+                                local bx, by = centerX + dx, centerY + dy
+                                pcall(function()
+                                    bx = bDef:getX()
+                                    by = bDef:getY()
+                                end)
+                                table.insert(results, {
+                                    buildingDef = bDef,
+                                    x = bx,
+                                    y = by,
+                                    matchingRooms = matchingRooms,
+                                })
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return results
+end
