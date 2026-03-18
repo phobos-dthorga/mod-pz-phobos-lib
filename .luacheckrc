@@ -55,6 +55,7 @@ read_globals = {
     "ISCollapsableWindow",
     "ISContextMenu",
     "ISCurePlantAction",
+    "ISLabel",
     "ISFarmingCursorMouse",
     "ISPanelJoypad",
     "ISRichTextPanel",
