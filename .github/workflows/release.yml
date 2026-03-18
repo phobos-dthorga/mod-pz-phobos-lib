@@ -2,17 +2,156 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  MOD_NAME: PhobosLib
+  DIST_DIR: dist
+  BUILD_DIR: build/release
+  PACKAGE_ROOT: .
+  GAME_VERSION: B42
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Create GitHub Release
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Prepare release metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          # Detect prerelease channel from tag name
+          if [[ "$TAG" =~ -(alpha|beta|rc)(\.[0-9]+)?$ ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Validate tag format: v1.2.3 or v1.2.3-beta.1 etc.
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            VERSION="${TAG#v}"
+            CHANNEL="stable"
+            if [[ "$TAG" =~ -alpha\. ]]; then CHANNEL="alpha"; fi
+            if [[ "$TAG" =~ -beta\. ]]; then CHANNEL="beta"; fi
+            if [[ "$TAG" =~ -rc\. ]]; then CHANNEL="rc"; fi
+          else
+            echo "::error::Invalid tag format: $TAG (expected vX.Y.Z or vX.Y.Z-channel.N)"
+            exit 1
+          fi
+
+          SAFE_SLUG="$(echo "${MOD_NAME}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')"
+          ZIP_NAME="${SAFE_SLUG}-${TAG}.zip"
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "channel=${CHANNEL}" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Build release package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf "${DIST_DIR}" "${BUILD_DIR}"
+          mkdir -p "${DIST_DIR}" "${BUILD_DIR}"
+
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.gitignore' \
+            --exclude '.gitattributes' \
+            --exclude '.githooks' \
+            --exclude '.luacheckrc' \
+            --exclude 'node_modules' \
+            --exclude '.idea' \
+            --exclude '.vscode' \
+            --exclude 'build' \
+            --exclude 'dist' \
+            --exclude 'docs' \
+            --exclude 'scripts' \
+            --exclude '*.psd' \
+            --exclude '*.kra' \
+            --exclude '*.blend' \
+            --exclude 'CONTRIBUTING.md' \
+            --exclude 'SECURITY.md' \
+            --exclude 'VERSIONING.md' \
+            --exclude 'LICENSE-CC-BY-NC-SA.txt' \
+            --exclude 'ITERATION_HISTORY.md' \
+            "${PACKAGE_ROOT}/" "${BUILD_DIR}/"
+
+          if [[ ! -f "${BUILD_DIR}/mod.info" ]]; then
+            echo "::warning::mod.info not found at package root"
+          fi
+
+          (
+            cd "${BUILD_DIR}"
+            zip -r "../../${DIST_DIR}/${{ steps.meta.outputs.zip_name }}" .
+          )
+
+      - name: Generate manifest
+        shell: bash
+        run: |
+          python scripts/generate_manifest.py \
+            --name "${MOD_NAME}" \
+            --tag "${{ steps.meta.outputs.tag }}" \
+            --version "${{ steps.meta.outputs.version }}" \
+            --channel "${{ steps.meta.outputs.channel }}" \
+            --game-version "${GAME_VERSION}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --commit "${GITHUB_SHA}" \
+            --output "${DIST_DIR}/manifest.json"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.meta.outputs.tag }}
+          path: |
+            ${{ env.DIST_DIR }}/${{ steps.meta.outputs.zip_name }}
+            ${{ env.DIST_DIR }}/manifest.json
+
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" --generate-notes --title "${{ github.ref_name }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ steps.meta.outputs.tag }}"
+          ZIP="${{ env.DIST_DIR }}/${{ steps.meta.outputs.zip_name }}"
+          MANIFEST="${{ env.DIST_DIR }}/manifest.json"
+
+          EXTRA_ARGS=()
+          if [[ "${{ steps.meta.outputs.prerelease }}" == "true" ]]; then
+            EXTRA_ARGS+=(--prerelease)
+          else
+            EXTRA_ARGS+=(--latest)
+          fi
+
+          gh release create "$TAG" \
+            "$ZIP" \
+            "$MANIFEST" \
+            --title "${MOD_NAME} ${TAG}" \
+            --generate-notes \
+            "${EXTRA_ARGS[@]}"

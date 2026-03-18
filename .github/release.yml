@@ -1,0 +1,37 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - internal
+      - duplicate
+      - invalid
+      - wontfix
+    authors:
+      - github-actions[bot]
+
+  categories:
+    - title: "Features"
+      labels:
+        - feat
+        - feature
+        - enhancement
+
+    - title: "Fixes"
+      labels:
+        - fix
+        - bug
+        - bugfix
+        - regression
+
+    - title: "Documentation"
+      labels:
+        - docs
+        - documentation
+
+    - title: "Maintenance"
+      labels:
+        - chore
+        - refactor
+        - test
+        - ci
+        - build
