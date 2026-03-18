@@ -521,3 +521,93 @@ function PhobosLib.findNearbyBuildings(centerX, centerY, radius, roomFilter)
 
     return results
 end
+
+
+--- Get the RoomDef name of the room the player is currently standing in.
+--- Returns nil if the player is outdoors or not in a defined room.
+--- Full pcall safety chain for robust error handling.
+---@param player any IsoPlayer
+---@return string|nil Room name (e.g. "pharmacy", "kitchen") or nil
+function PhobosLib.getPlayerRoomName(player)
+    if not player then return nil end
+    local sq = nil
+    pcall(function() sq = player:getCurrentSquare() end)
+    if not sq then return nil end
+
+    local room = nil
+    pcall(function() room = sq:getRoom() end)
+    if not room then return nil end
+
+    local roomDef = nil
+    pcall(function() roomDef = room:getRoomDef() end)
+    if not roomDef then return nil end
+
+    local name = nil
+    pcall(function() name = roomDef:getName() end)
+    return name
+end
+
+
+--- Place a named marker on the PZ world map.
+--- Uses the WorldMarkers API to create a grid-square marker.
+---@param id string Unique marker identifier (for later removal)
+---@param x number World X coordinate
+---@param y number World Y coordinate
+---@param r number Red (0-1)
+---@param g number Green (0-1)
+---@param b number Blue (0-1)
+---@param a number|nil Alpha (0-1, default 1)
+---@return boolean True if marker was placed
+function PhobosLib.addWorldMapMarker(id, x, y, r, g, b, a)
+    if not id or not x or not y then return false end
+    local ok = false
+    pcall(function()
+        local markers = getWorldMarkers()
+        if markers then
+            markers:addGridSquareMarker(id, nil,
+                math.floor(x), math.floor(y),
+                10, r or 1, g or 1, b or 1, a or 1)
+            ok = true
+        end
+    end)
+    return ok
+end
+
+--- Remove a named marker from the PZ world map.
+---@param id string Marker identifier used when placing
+---@return boolean True if removal was attempted
+function PhobosLib.removeWorldMapMarker(id)
+    if not id then return false end
+    local ok = false
+    pcall(function()
+        local markers = getWorldMarkers()
+        if markers and markers.removeGridSquareMarker then
+            markers:removeGridSquareMarker(id)
+            ok = true
+        end
+    end)
+    return ok
+end
+
+
+--- Roll random condition damage on an item.
+--- If the chance roll succeeds, lose ZombRand(minLoss, maxLoss+1) condition.
+--- If the item's condition reaches 0, it is destroyed (vanilla behaviour).
+---@param item any InventoryItem
+---@param minLoss number Minimum condition to lose
+---@param maxLoss number Maximum condition to lose
+---@param chancePct number Percentage chance (0-100) of damage occurring
+---@return boolean True if damage was applied
+function PhobosLib.damageItemCondition(item, minLoss, maxLoss, chancePct)
+    if not item then return false end
+    chancePct = chancePct or 100
+    if ZombRand(100) >= chancePct then return false end
+
+    local loss = ZombRand(minLoss or 1, (maxLoss or minLoss or 1) + 1)
+    local cond = item:getCondition()
+    if cond then
+        item:setCondition(math.max(0, cond - loss))
+        return true
+    end
+    return false
+end
