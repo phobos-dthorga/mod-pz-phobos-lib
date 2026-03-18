@@ -51,6 +51,12 @@ local DEFAULT_COLOURS = {
 ---   renderItem  = function(parent, x, y, w, item, index) -> yAdvance
 ---                         Renders one item; returns the Y advance used.
 ---   onPageChange = function(newPage) Called when Prev/Next is clicked
+---   maxHeight   = number  Optional: available panel height — if provided,
+---                         pageSize is computed dynamically from the available
+---                         vertical space (overrides static pageSize).
+---                         Accounts for nav bar height.
+---   itemHeight  = number  Average item height in pixels (default 28, used
+---                         with maxHeight to calculate dynamic pageSize).
 ---   font        = any     UIFont for nav buttons (default UIFont.Code)
 ---   colours     = table   Optional colour override { text, dim, bgDark, bgHover, border }
 ---
@@ -62,6 +68,15 @@ function PhobosLib_Pagination.create(parent, config)
     local items = config.items or {}
     local pageSize = config.pageSize or 5
     local currentPage = config.currentPage or 1
+
+    -- Dynamic page size: if maxHeight is provided, calculate how many items fit
+    if config.maxHeight then
+        local itemH = config.itemHeight or 28
+        local navBarH = 32  -- prev/next buttons + padding
+        local availableH = config.maxHeight - (config.y or 0) - navBarH
+        local dynamicSize = math.floor(availableH / itemH)
+        pageSize = math.max(3, math.min(10, dynamicSize))
+    end
     local x = config.x or 0
     local y = config.y or 0
     local width = config.width or (parent:getWidth() - 10)
