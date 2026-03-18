@@ -365,3 +365,73 @@ function PhobosLib.isAreaSafe(player)
     end)
     return visible == 0 and chasing == 0 and veryClose == 0
 end
+
+
+--- Calculate Euclidean (straight-line) distance between two world points.
+---@param x1 number First point X
+---@param y1 number First point Y
+---@param x2 number Second point X
+---@param y2 number Second point Y
+---@return number Distance in tiles
+function PhobosLib.euclideanDistance(x1, y1, x2, y2)
+    local dx = (x2 or 0) - (x1 or 0)
+    local dy = (y2 or 0) - (y1 or 0)
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+
+--- Find ALL IsoObjects on nearby squares whose sprite name matches any
+--- of the given exact sprite names. More precise than keyword matching.
+--- Uses scanNearbySquares() internally.
+---@param centerX number     World X coordinate to search around
+---@param centerY number     World Y coordinate to search around
+---@param radius number      Search radius in tiles
+---@param spriteNames table  Array of exact sprite name strings to match
+---@return table             Array of { object, x, y, z } tables
+function PhobosLib.findWorldObjectsBySprite(centerX, centerY, radius, spriteNames)
+    local results = {}
+    if not spriteNames or #spriteNames == 0 then return results end
+
+    -- Build lookup set for O(1) matching
+    local spriteSet = {}
+    for _, name in ipairs(spriteNames) do
+        spriteSet[name] = true
+    end
+
+    local cell = getCell()
+    if not cell then return results end
+
+    local z = 0  -- ground level for outdoor objects
+    for dx = -radius, radius do
+        for dy = -radius, radius do
+            local sq = cell:getGridSquare(centerX + dx, centerY + dy, z)
+            if sq then
+                local objs = sq:getObjects()
+                if objs then
+                    for i = 0, objs:size() - 1 do
+                        local obj = objs:get(i)
+                        if obj then
+                            local spriteName = nil
+                            pcall(function()
+                                local sprite = obj:getSprite()
+                                if sprite and sprite.getName then
+                                    spriteName = sprite:getName()
+                                end
+                            end)
+                            if spriteName and spriteSet[spriteName] then
+                                table.insert(results, {
+                                    object = obj,
+                                    x = centerX + dx,
+                                    y = centerY + dy,
+                                    z = z,
+                                })
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return results
+end
