@@ -23,6 +23,17 @@
 PhobosLib = PhobosLib or {}
 
 
+--- Safe getText wrapper — returns the key itself on failure.
+--- Wraps PZ's getText() in pcall to prevent crashes on missing keys.
+---@param key string Translation key
+---@return string
+function PhobosLib.safeGetText(key, ...)
+    local ok, result = pcall(getText, key, ...)
+    if ok and result then return result end
+    return key
+end
+
+
 --- Safe lowercase conversion. Returns "" for nil/non-string input.
 ---@param s any
 ---@return string
