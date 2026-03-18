@@ -32,6 +32,7 @@ ignore = {
 -- (overriding methods is standard PZ modding practice)
 globals = {
     "PhobosLib",
+    "PhobosLib_Pagination",
     -- PZ engine core (PhobosLib writes to SandboxVars for sandbox management)
     "SandboxVars",
     -- PZ UI classes PhobosLib overrides methods on
