@@ -597,3 +597,21 @@ function PhobosLib.getPlayerModDataTable(player, key)
     if not md[key] then md[key] = {} end
     return md[key]
 end
+
+
+--- Resolve a full item type string to its localized display name.
+--- Uses ScriptManager to look up the item script and return its display name.
+--- Falls back to stripping the module prefix (e.g. "Base.Pen" → "Pen").
+---@param fullType string  Full item type (e.g. "Base.Pen")
+---@return string          Localized display name, or stripped type name as fallback
+function PhobosLib.getItemDisplayName(fullType)
+    if not fullType then return "" end
+    if ScriptManager and ScriptManager.instance then
+        local script = ScriptManager.instance:getItem(fullType)
+        if script then
+            local dn = script:getDisplayName()
+            if dn then return dn end
+        end
+    end
+    return fullType:match("[^.]+$") or fullType
+end

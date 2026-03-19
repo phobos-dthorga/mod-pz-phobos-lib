@@ -638,3 +638,12 @@ function PhobosLib.damageItemCondition(item, minLoss, maxLoss, chancePct)
     end
     return false
 end
+
+
+--- Roll a percentage chance and return whether it succeeded.
+--- Wrapper around ZombRand(100) for readable chance checks.
+---@param percent number  Success chance as a whole number (0-100)
+---@return boolean        True if the roll succeeded
+function PhobosLib.rollChance(percent)
+    return ZombRand(100) < (percent or 0)
+end
