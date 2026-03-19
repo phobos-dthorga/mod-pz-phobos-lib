@@ -60,11 +60,27 @@ local _TAG = "[PhobosLib:Popup]"
 -- Layout constants
 ---------------------------------------------------------------
 
-local FONT_HGT = getTextManager():getFontHeight(UIFont.Small)
-local BORDER   = 12
-local TICK_HGT = FONT_HGT + 6
-local BTN_HGT  = math.max(24, FONT_HGT + 8)
-local TOGGLE_HGT = BTN_HGT + 4
+local FONT_HGT   = getTextManager():getFontHeight(UIFont.Small)
+local BORDER      = 12
+local TICK_HGT    = FONT_HGT + 6
+local BTN_HGT     = math.max(24, FONT_HGT + 8)
+local TOGGLE_HGT  = BTN_HGT + 4
+local BTN_W_CLOSE = 120
+local BTN_W_GUIDE = 140
+
+-- Button colour palettes (border + background) by popup mode
+local CLR_CLOSE_CHANGELOG = {
+    border = { r = 0.40, g = 0.55, b = 0.80, a = 1.0  },
+    bg     = { r = 0.10, g = 0.15, b = 0.25, a = 0.85 },
+}
+local CLR_CLOSE_NOTICE = {
+    border = { r = 0.70, g = 0.55, b = 0.20, a = 1.0  },
+    bg     = { r = 0.20, g = 0.15, b = 0.05, a = 0.85 },
+}
+local CLR_GUIDE_BTN = {
+    border = { r = 0.40, g = 0.40, b = 0.40, a = 0.7  },
+    bg     = { r = 0.08, g = 0.08, b = 0.10, a = 0.80 },
+}
 
 ---------------------------------------------------------------
 -- Registries
@@ -90,14 +106,7 @@ local function getMajorMinor(version)
     return nil
 end
 
---- Get the translated text for a key, falling back to raw key.
----@param key string
----@return string
-local function safeGetText(key)
-    local ok, result = pcall(getText, key)
-    if ok and result then return result end
-    return key
-end
+local safeGetText = PhobosLib.safeGetText
 
 ---------------------------------------------------------------
 -- ModData Keys
@@ -311,16 +320,15 @@ function _ChangelogWindow:createChildren()
     self.richText:paginate()
 
     -- "Got it!" button (centered)
-    local btnW = 120
     local btnY = self.height - BTN_HGT - BORDER
-    local btnX = math.floor((self.width - btnW) / 2)
+    local btnX = math.floor((self.width - BTN_W_CLOSE) / 2)
 
-    self.btnClose = ISButton:new(btnX, btnY, btnW, BTN_HGT,
+    self.btnClose = ISButton:new(btnX, btnY, BTN_W_CLOSE, BTN_HGT,
         safeGetText("IGUI_PhobosLib_GotIt"), self, _ChangelogWindow.onGotIt)
     self.btnClose:initialise()
     self.btnClose:instantiate()
-    self.btnClose.borderColor     = { r = 0.40, g = 0.55, b = 0.80, a = 1.0 }
-    self.btnClose.backgroundColor = { r = 0.10, g = 0.15, b = 0.25, a = 0.85 }
+    self.btnClose.borderColor     = CLR_CLOSE_CHANGELOG.border
+    self.btnClose.backgroundColor = CLR_CLOSE_CHANGELOG.bg
     self.btnClose:setAnchorBottom(true)
     self.btnClose:setAnchorLeft(false)
     self.btnClose:setAnchorRight(false)
@@ -329,15 +337,14 @@ function _ChangelogWindow:createChildren()
     -- "Open Guide" button (only if a guide is registered for same modId)
     local modId = self._registration.modId
     if PhobosLib._guideRegistry[modId] then
-        local tutW = 140
-        local tutX = self.width - tutW - BORDER
-        self.btnGuide = ISButton:new(tutX, btnY, tutW, BTN_HGT,
+        local tutX = self.width - BTN_W_GUIDE - BORDER
+        self.btnGuide = ISButton:new(tutX, btnY, BTN_W_GUIDE, BTN_HGT,
             safeGetText("IGUI_PhobosLib_OpenGuide"),
             self, _ChangelogWindow.onOpenGuide)
         self.btnGuide:initialise()
         self.btnGuide:instantiate()
-        self.btnGuide.borderColor     = { r = 0.40, g = 0.40, b = 0.40, a = 0.7 }
-        self.btnGuide.backgroundColor = { r = 0.08, g = 0.08, b = 0.10, a = 0.80 }
+        self.btnGuide.borderColor     = CLR_GUIDE_BTN.border
+        self.btnGuide.backgroundColor = CLR_GUIDE_BTN.bg
         self.btnGuide:setAnchorBottom(true)
         self.btnGuide:setAnchorLeft(false)
         self.btnGuide:setAnchorRight(false)
@@ -445,16 +452,15 @@ function _NoticeWindow:createChildren()
     self.richText:paginate()
 
     -- "Got it!" button (centered)
-    local btnW = 120
     local btnY = self.height - BTN_HGT - BORDER
-    local btnX = math.floor((self.width - btnW) / 2)
+    local btnX = math.floor((self.width - BTN_W_CLOSE) / 2)
 
-    self.btnClose = ISButton:new(btnX, btnY, btnW, BTN_HGT,
+    self.btnClose = ISButton:new(btnX, btnY, BTN_W_CLOSE, BTN_HGT,
         safeGetText("IGUI_PhobosLib_GotIt"), self, _NoticeWindow.onGotIt)
     self.btnClose:initialise()
     self.btnClose:instantiate()
-    self.btnClose.borderColor     = { r = 0.70, g = 0.55, b = 0.20, a = 1.0 }
-    self.btnClose.backgroundColor = { r = 0.20, g = 0.15, b = 0.05, a = 0.85 }
+    self.btnClose.borderColor     = CLR_CLOSE_NOTICE.border
+    self.btnClose.backgroundColor = CLR_CLOSE_NOTICE.bg
     self.btnClose:setAnchorBottom(true)
     self.btnClose:setAnchorLeft(false)
     self.btnClose:setAnchorRight(false)
@@ -463,15 +469,14 @@ function _NoticeWindow:createChildren()
     -- "Open Guide" button (only if a guide is registered for same modId)
     local modId = self._registration.modId
     if PhobosLib._guideRegistry[modId] then
-        local tutW = 140
-        local tutX = self.width - tutW - BORDER
-        self.btnGuide = ISButton:new(tutX, btnY, tutW, BTN_HGT,
+        local tutX = self.width - BTN_W_GUIDE - BORDER
+        self.btnGuide = ISButton:new(tutX, btnY, BTN_W_GUIDE, BTN_HGT,
             safeGetText("IGUI_PhobosLib_OpenGuide"),
             self, _NoticeWindow.onOpenGuide)
         self.btnGuide:initialise()
         self.btnGuide:instantiate()
-        self.btnGuide.borderColor     = { r = 0.40, g = 0.40, b = 0.40, a = 0.7 }
-        self.btnGuide.backgroundColor = { r = 0.08, g = 0.08, b = 0.10, a = 0.80 }
+        self.btnGuide.borderColor     = CLR_GUIDE_BTN.border
+        self.btnGuide.backgroundColor = CLR_GUIDE_BTN.bg
         self.btnGuide:setAnchorBottom(true)
         self.btnGuide:setAnchorLeft(false)
         self.btnGuide:setAnchorRight(false)
@@ -652,19 +657,14 @@ function _SeriesWindow:createChildren()
         self:addChild(self.tickBox)
     else
         -- "Got it!" button (centered)
-        local closeBtnW = 120
-        local closeBtnX = math.floor((self.width - closeBtnW) / 2)
-        self.btnClose = ISButton:new(closeBtnX, btnY, closeBtnW, BTN_HGT,
+        local closeBtnX = math.floor((self.width - BTN_W_CLOSE) / 2)
+        self.btnClose = ISButton:new(closeBtnX, btnY, BTN_W_CLOSE, BTN_HGT,
             safeGetText("IGUI_PhobosLib_GotIt"), self, _SeriesWindow.onGotIt)
         self.btnClose:initialise()
         self.btnClose:instantiate()
-        if self._mode == "notice" then
-            self.btnClose.borderColor     = { r = 0.70, g = 0.55, b = 0.20, a = 1.0 }
-            self.btnClose.backgroundColor = { r = 0.20, g = 0.15, b = 0.05, a = 0.85 }
-        else
-            self.btnClose.borderColor     = { r = 0.40, g = 0.55, b = 0.80, a = 1.0 }
-            self.btnClose.backgroundColor = { r = 0.10, g = 0.15, b = 0.25, a = 0.85 }
-        end
+        local closeClr = (self._mode == "notice") and CLR_CLOSE_NOTICE or CLR_CLOSE_CHANGELOG
+        self.btnClose.borderColor     = closeClr.border
+        self.btnClose.backgroundColor = closeClr.bg
         self.btnClose:setAnchorBottom(true)
         self.btnClose:setAnchorLeft(false)
         self.btnClose:setAnchorRight(false)
@@ -672,15 +672,14 @@ function _SeriesWindow:createChildren()
 
         -- "Open Guide" button (if any guide registered in this series)
         if seriesHasGuide(self._seriesId) then
-            local tutW = 140
-            local tutX = self.width - tutW - BORDER
-            self.btnGuide = ISButton:new(tutX, btnY, tutW, BTN_HGT,
+            local tutX = self.width - BTN_W_GUIDE - BORDER
+            self.btnGuide = ISButton:new(tutX, btnY, BTN_W_GUIDE, BTN_HGT,
                 safeGetText("IGUI_PhobosLib_OpenGuide"),
                 self, _SeriesWindow.onOpenGuide)
             self.btnGuide:initialise()
             self.btnGuide:instantiate()
-            self.btnGuide.borderColor     = { r = 0.40, g = 0.40, b = 0.40, a = 0.7 }
-            self.btnGuide.backgroundColor = { r = 0.08, g = 0.08, b = 0.10, a = 0.80 }
+            self.btnGuide.borderColor     = CLR_GUIDE_BTN.border
+            self.btnGuide.backgroundColor = CLR_GUIDE_BTN.bg
             self.btnGuide:setAnchorBottom(true)
             self.btnGuide:setAnchorLeft(false)
             self.btnGuide:setAnchorRight(false)

@@ -64,6 +64,33 @@ function PhobosLib.scanNearbySquares(originSquare, radius, callback)
 end
 
 
+--- Test whether an IsoObject's sprite name or object name matches
+--- any of the given keywords (case-insensitive substring match).
+---@param obj any        IsoObject to test
+---@param keywords table List of keyword strings (already validated non-empty)
+---@return boolean       True if any keyword matches
+local function matchesObjectKeywords(obj, keywords)
+    local spriteName = ""
+    local objName = ""
+    pcall(function()
+        local sprite = obj:getSprite()
+        if sprite and sprite.getName then spriteName = sprite:getName() or "" end
+    end)
+    pcall(function()
+        if obj.getName then objName = obj:getName() or "" end
+    end)
+    local s = PhobosLib.lower(spriteName)
+    local n = PhobosLib.lower(objName)
+    for _, kw in ipairs(keywords) do
+        local k = PhobosLib.lower(kw)
+        if k ~= "" and (string.find(s, k, 1, true) or string.find(n, k, 1, true)) then
+            return true
+        end
+    end
+    return false
+end
+
+
 --- Find the first IsoObject on nearby squares whose name or sprite
 --- matches one of the given keywords (case-insensitive substring).
 ---@param originSquare any
@@ -79,25 +106,9 @@ function PhobosLib.findNearbyObjectByKeywords(originSquare, radius, keywords)
         if not objs then return false end
         for i = 0, objs:size() - 1 do
             local obj = objs:get(i)
-            if obj then
-                local spriteName = ""
-                local objName = ""
-                pcall(function()
-                    local sprite = obj:getSprite()
-                    if sprite and sprite.getName then spriteName = sprite:getName() or "" end
-                end)
-                pcall(function()
-                    if obj.getName then objName = obj:getName() or "" end
-                end)
-                local s = PhobosLib.lower(spriteName)
-                local n = PhobosLib.lower(objName)
-                for _, kw in ipairs(keywords) do
-                    local k = PhobosLib.lower(kw)
-                    if k ~= "" and (string.find(s, k, 1, true) or string.find(n, k, 1, true)) then
-                        found = obj
-                        return true  -- stop scanning
-                    end
-                end
+            if obj and matchesObjectKeywords(obj, keywords) then
+                found = obj
+                return true  -- stop scanning
             end
         end
         return false
@@ -121,25 +132,8 @@ function PhobosLib.findAllNearbyObjectsByKeywords(originSquare, radius, keywords
         if not objs then return false end
         for i = 0, objs:size() - 1 do
             local obj = objs:get(i)
-            if obj then
-                local spriteName = ""
-                local objName = ""
-                pcall(function()
-                    local sprite = obj:getSprite()
-                    if sprite and sprite.getName then spriteName = sprite:getName() or "" end
-                end)
-                pcall(function()
-                    if obj.getName then objName = obj:getName() or "" end
-                end)
-                local s = PhobosLib.lower(spriteName)
-                local n = PhobosLib.lower(objName)
-                for _, kw in ipairs(keywords) do
-                    local k = PhobosLib.lower(kw)
-                    if k ~= "" and (string.find(s, k, 1, true) or string.find(n, k, 1, true)) then
-                        table.insert(results, obj)
-                        break  -- don't add same object twice
-                    end
-                end
+            if obj and matchesObjectKeywords(obj, keywords) then
+                table.insert(results, obj)
             end
         end
         return false

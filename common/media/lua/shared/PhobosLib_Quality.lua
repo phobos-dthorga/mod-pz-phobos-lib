@@ -184,6 +184,18 @@ function PhobosLib.calculateOutputQuality(inputQuality, factor, variance, skillB
 end
 
 
+--- Calculate a random variance multiplier for quality formulas.
+--- Returns a value in the range [1 - variancePct/100, 1 + variancePct/100].
+--- Example: variancePct=15 → multiplier in [0.85, 1.15].
+---@param variancePct number  ±percentage variance (e.g. 15 for ±15%)
+---@return number             Variance multiplier (centred on 1.0)
+function PhobosLib.calculateVarianceMultiplier(variancePct)
+    variancePct = variancePct or 15
+    local varianceRoll = ZombRand(variancePct * 2 + 1) - variancePct
+    return 1.0 + varianceRoll / 100.0
+end
+
+
 --- Calculate output quality using multiplicative skill and variance.
 --- Formula: clamp(floor(inputQuality * factor * skillMultiplier * varianceMult), 0, 99)
 --- where varianceMult = 1.0 + random(-variancePct, +variancePct) / 100.
@@ -195,8 +207,7 @@ end
 function PhobosLib.calculateOutputQualityV2(inputQuality, factor, skillMultiplier, variancePct)
     skillMultiplier = skillMultiplier or 1.0
     variancePct     = variancePct or 15
-    local varianceRoll = ZombRand(variancePct * 2 + 1) - variancePct  -- e.g. -15 to +15
-    local varianceMult = 1.0 + varianceRoll / 100.0                   -- e.g. 0.85 to 1.15
+    local varianceMult = PhobosLib.calculateVarianceMultiplier(variancePct)
     local result = inputQuality * factor * skillMultiplier * varianceMult
     return math.max(0, math.min(99, math.floor(result + 0.5)))
 end
@@ -269,8 +280,7 @@ function PhobosLib.randomBaseQualityV2(min, max, skillMultiplier, variancePct)
     skillMultiplier = skillMultiplier or 1.0
     variancePct     = variancePct or 15
     local base = PhobosLib.randomBaseQuality(min, max)
-    local varianceRoll = ZombRand(variancePct * 2 + 1) - variancePct
-    local varianceMult = 1.0 + varianceRoll / 100.0
+    local varianceMult = PhobosLib.calculateVarianceMultiplier(variancePct)
     local result = base * skillMultiplier * varianceMult
     return math.max(0, math.min(99, math.floor(result + 0.5)))
 end
