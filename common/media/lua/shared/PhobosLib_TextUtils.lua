@@ -110,6 +110,6 @@ end
 function PhobosLib.titleCase(text)
     if type(text) ~= "string" or text == "" then return text or "" end
     return text:gsub("(%a)([%w]*)", function(first, rest)
-        return first:upper() .. rest:lower()
+        return first:upper() .. (rest and rest:lower() or "")
     end)
 end
