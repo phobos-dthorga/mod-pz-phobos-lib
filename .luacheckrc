@@ -79,6 +79,7 @@ read_globals = {
     "EHR",
     "MF",
     "NeatTool",
+    "PhobosNotifications",
 
     -- Auto-generated from PZJavaDocs lua_api.json (1646 entries)
     -- Regenerate: extract globals + exposed classes from lua_api.json
