@@ -599,6 +599,18 @@ function PhobosLib.getPlayerModDataTable(player, key)
 end
 
 
+--- Generate a unique identifier string.
+--- Combines the current game time (milliseconds) with a random suffix to produce
+--- a collision-resistant ID suitable for tagging items and event log entries.
+--- Format: "<timestamp>-<random5>" e.g. "1710934200000-47823"
+---@return string  Unique identifier
+function PhobosLib.generateId()
+    local ts = getTimestampMs and getTimestampMs() or (os.time() * 1000)
+    local suffix = ZombRand(10000, 99999)
+    return tostring(ts) .. "-" .. tostring(suffix)
+end
+
+
 --- Resolve a full item type string to its localized display name.
 --- Uses ScriptManager to look up the item script and return its display name.
 --- Falls back to stripping the module prefix (e.g. "Base.Pen" → "Pen").
