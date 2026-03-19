@@ -123,6 +123,18 @@ jobs:
             --commit "${GITHUB_SHA}" \
             --output "${DIST_DIR}/manifest.json"
 
+      - name: Generate release notes
+        shell: bash
+        run: |
+          python scripts/generate_changelog.py \
+            --tag "${{ steps.meta.outputs.tag }}" \
+            --mod-name "${MOD_NAME}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            --md-output "${DIST_DIR}/release-notes.md" \
+            --bbcode-output "${DIST_DIR}/changelog-bbcode.txt" \
+            --bbcode-prepend "docs/steam-workshop-changelog.bbcode" \
+            --title-output "${DIST_DIR}/release-title.txt"
+
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -130,6 +142,7 @@ jobs:
           path: |
             ${{ env.DIST_DIR }}/${{ steps.meta.outputs.zip_name }}
             ${{ env.DIST_DIR }}/manifest.json
+            ${{ env.DIST_DIR }}/changelog-bbcode.txt
 
       - name: Create GitHub release
         env:
@@ -141,6 +154,8 @@ jobs:
           TAG="${{ steps.meta.outputs.tag }}"
           ZIP="${{ env.DIST_DIR }}/${{ steps.meta.outputs.zip_name }}"
           MANIFEST="${{ env.DIST_DIR }}/manifest.json"
+          NOTES_FILE="${{ env.DIST_DIR }}/release-notes.md"
+          TITLE_FILE="${{ env.DIST_DIR }}/release-title.txt"
 
           EXTRA_ARGS=()
           if [[ "${{ steps.meta.outputs.prerelease }}" == "true" ]]; then
@@ -149,9 +164,41 @@ jobs:
             EXTRA_ARGS+=(--latest)
           fi
 
+          # Use generated notes if available, else fall back to auto-generated
+          if [[ -f "$NOTES_FILE" ]]; then
+            EXTRA_ARGS+=(--notes-file "$NOTES_FILE")
+          else
+            EXTRA_ARGS+=(--generate-notes)
+          fi
+
+          # Use generated title if available
+          TITLE="${MOD_NAME} ${TAG}"
+          if [[ -f "$TITLE_FILE" ]]; then
+            TITLE="$(cat "$TITLE_FILE")"
+          fi
+
           gh release create "$TAG" \
             "$ZIP" \
             "$MANIFEST" \
-            --title "${MOD_NAME} ${TAG}" \
-            --generate-notes \
+            --title "$TITLE" \
             "${EXTRA_ARGS[@]}"
+
+      - name: Update Steam Workshop changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BBCODE_FILE="docs/steam-workshop-changelog.bbcode"
+          if ! git diff --quiet "$BBCODE_FILE" 2>/dev/null; then
+            # Determine the branch this tag was created from
+            BRANCH="$(git branch -r --contains HEAD --format='%(refname:short)' \
+              | grep -E 'origin/(main|master)' | head -1 | sed 's|origin/||')"
+            BRANCH="${BRANCH:-main}"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git checkout "$BRANCH"
+            git add "$BBCODE_FILE"
+            git commit -m "chore: update Steam Workshop changelog for ${{ steps.meta.outputs.tag }}"
+            git push origin "$BRANCH"
+          fi
