@@ -611,6 +611,46 @@ function PhobosLib.generateId()
 end
 
 
+--- Find all items in an inventory that have a specific tag.
+--- Uses PZ B42 item:hasTag() for tag-based inventory queries.
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
+---@param tagName string    Tag name (e.g. "POS_RawIntel", "pcp:protectivegloves")
+---@return table            List of matching items (may be empty)
+function PhobosLib.findItemsByTag(inventory, tagName)
+    local results = {}
+    inventory = resolveInventory(inventory)
+    if not inventory or not tagName then return results end
+    local items = inventory:getItems()
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.hasTag and it:hasTag(tagName) then
+            table.insert(results, it)
+        end
+    end
+    return results
+end
+
+
+--- Count all items in an inventory that have a specific tag.
+--- Uses PZ B42 item:hasTag() for tag-based inventory queries.
+---@param inventory any     A PZ ItemContainer or IsoGameCharacter
+---@param tagName string    Tag name (e.g. "POS_RawIntel", "pcp:protectivegloves")
+---@return number           Total count of matching items
+function PhobosLib.countItemsByTag(inventory, tagName)
+    inventory = resolveInventory(inventory)
+    if not inventory or not tagName then return 0 end
+    local count = 0
+    local items = inventory:getItems()
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.hasTag and it:hasTag(tagName) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
 --- Resolve a full item type string to its localized display name.
 --- Uses ScriptManager to look up the item script and return its display name.
 --- Falls back to stripping the module prefix (e.g. "Base.Pen" → "Pen").
