@@ -42,6 +42,28 @@ function PhobosLib.lower(s)
 end
 
 
+--- Split a string by a literal single-character separator.
+--- Unlike PZ's global splitString(input, maxSize) which takes an int,
+--- this splits on an actual delimiter character.
+---@param str string  Input string
+---@param sep string  Single-character separator (e.g. "|")
+---@return string[]   List of parts (may be empty)
+function PhobosLib.split(str, sep)
+    if type(str) ~= "string" then return {} end
+    if type(sep) ~= "string" or sep == "" then return { str } end
+    local parts = {}
+    local pattern = "([^" .. sep .. "]*)"
+    for part in string.gmatch(str .. sep, pattern) do
+        parts[#parts + 1] = part
+    end
+    -- gmatch produces a trailing empty from the appended sep; trim it
+    if #parts > 0 and parts[#parts] == "" then
+        parts[#parts] = nil
+    end
+    return parts
+end
+
+
 --- Safe method call via pcall. Returns ok, result.
 ---@param obj any       The object to call the method on
 ---@param methodName string  The method name to call
@@ -567,6 +589,37 @@ end
 -- Player Utilities
 ---------------------------------------------------------------
 
+--- Check if a player has a specific trait by string ID.
+--- Handles PZ B42's CharacterTrait enum lookup correctly.
+--- player:getTraits() returns Map<CharacterTrait, Boolean> (no contains()),
+--- so we resolve the enum constant first and use SurvivorDesc:hasTrait().
+---@param player any     IsoPlayer
+---@param traitId string Trait ID (e.g. "pos:POS_AnalyticalMind")
+---@return boolean
+function PhobosLib.hasTrait(player, traitId)
+    if not player or type(traitId) ~= "string" then return false end
+    local ok, result = pcall(function()
+        -- Look up the CharacterTrait enum constant by name
+        local traitEnum = CharacterTrait[traitId]
+        if traitEnum then
+            -- SurvivorDesc:hasTrait(CharacterTrait) is the correct B42 API
+            return player:getDescriptor():hasTrait(traitEnum)
+        end
+        -- Fallback: iterate known traits list (handles edge cases where
+        -- enum lookup fails, e.g. traits registered by other mods)
+        local known = player:getCharacterTraits():getKnownTraits()
+        if known then
+            for i = 0, known:size() - 1 do
+                local t = known:get(i)
+                if t and tostring(t) == traitId then return true end
+            end
+        end
+        return false
+    end)
+    return ok and result == true
+end
+
+
 --- Check if a player has admin-level access.
 --- Returns true for singleplayer, co-op host, or dedicated server admins.
 --- Generic utility — any Phobos mod can use this for privilege gating.
@@ -623,8 +676,11 @@ function PhobosLib.findItemsByTag(inventory, tagName)
     local items = inventory:getItems()
     for i = 0, items:size() - 1 do
         local it = items:get(i)
-        if it and it.hasTag and it:hasTag(tagName) then
-            table.insert(results, it)
+        if it and it.hasTag then
+            local ok, has = pcall(it.hasTag, it, tagName)
+            if ok and has then
+                table.insert(results, it)
+            end
         end
     end
     return results
@@ -643,8 +699,11 @@ function PhobosLib.countItemsByTag(inventory, tagName)
     local items = inventory:getItems()
     for i = 0, items:size() - 1 do
         local it = items:get(i)
-        if it and it.hasTag and it:hasTag(tagName) then
-            count = count + 1
+        if it and it.hasTag then
+            local ok, has = pcall(it.hasTag, it, tagName)
+            if ok and has then
+                count = count + 1
+            end
         end
     end
     return count
