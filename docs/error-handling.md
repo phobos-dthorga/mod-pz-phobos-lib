@@ -435,3 +435,32 @@ local ok, errors = PhobosLib.loadDefinition(
 require "POS_MarketAgent"
 POS_MarketAgent.getRegistry():register(require "MyMod/my_custom_agent")
 ```
+
+---
+
+## Per-Player ModData Access
+
+### `PhobosLib.getPlayerModDataTable(player, key)` → table|nil
+
+Canonical way to read a per-player array or table stored in player modData.
+Returns the table at `player:getModData()[key]`, or `nil` if the player is
+nil, the key is nil, or the entry does not exist.
+
+Follows **Empty-Data Return Convention** (see POSnet design-guidelines §25.6):
+returns `nil` on bad input rather than an empty table, forcing callers to
+nil-check before use.
+
+**Why modData over file I/O:** `getFileReader` causes silent JVM crashes in
+multiple PZ lifecycle contexts (OnGameStart, render frames, event ticks).
+Player modData is engine-managed, auto-persisted on save, and safe to access
+at any time. Per-player data (watchlists, alerts, orders, holdings) must
+always use this function instead of custom file I/O.
+
+**Usage:**
+
+```lua
+local watchlist = PhobosLib.getPlayerModDataTable(player, "POS_Watchlist") or {}
+for _, entry in ipairs(watchlist) do
+    -- process entry
+end
+```
