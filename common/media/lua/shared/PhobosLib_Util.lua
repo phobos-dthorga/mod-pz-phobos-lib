@@ -64,6 +64,27 @@ function PhobosLib.split(str, sep)
 end
 
 
+--- Sanitise a player username for use as a filesystem path component
+--- or ModData key. PZ's Java getFileReader/getFileWriter crash at the
+--- JVM level (hard CTD, bypasses pcall) when the path contains certain
+--- characters — notably apostrophes. This function strips everything
+--- except alphanumeric characters, hyphens, and underscores.
+---
+--- All Phobos mods that use player:getUsername() in file paths, ModData
+--- keys, or stored identifiers MUST call this to prevent silent crashes
+--- on players with special characters in their names.
+---@param raw string|nil  Raw username from player:getUsername()
+---@param fallback string|nil  Fallback for nil/empty (default "singleplayer")
+---@return string  Sanitised, filesystem-safe username
+function PhobosLib.sanitiseUsername(raw, fallback)
+    fallback = fallback or "singleplayer"
+    if not raw or raw == "" then return fallback end
+    local safe = string.gsub(raw, "[^%w%-_]", "_")
+    if safe == "" then return fallback end
+    return safe
+end
+
+
 --- Safe method call via pcall. Returns ok, result.
 ---@param obj any       The object to call the method on
 ---@param methodName string  The method name to call

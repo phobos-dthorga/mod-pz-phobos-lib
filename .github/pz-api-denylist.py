@@ -112,6 +112,20 @@ deny(
     "Nil msg causes a Kahlua __concat RuntimeException.",
 )
 
+# ── Unsanitised getUsername() in file paths or ModData keys ────────────
+# player:getUsername() can contain apostrophes, spaces, and other chars
+# that crash PZ's Java getFileReader/getFileWriter at the JVM level
+# (hard CTD, bypasses pcall). Must use PhobosLib.sanitiseUsername()
+# or POS_PlayerFileStore.sanitiseUsername() before using in paths/keys.
+
+deny(
+    r':getUsername\(\)\s*\.\.',
+    "Raw getUsername() concatenated into a string — if this builds a file path "
+    "or ModData key, use PhobosLib.sanitiseUsername(player:getUsername()) instead. "
+    "Special characters (apostrophes, spaces) in usernames crash PZ's Java file I/O.",
+    severity="warning",
+)
+
 # ── Raw defensive pcall in Phobos mods (new code should use safecall) ──
 # This is a warning, not an error — existing code may still have raw pcall.
 # Only flag pcall sites that are clearly defensive (not API probing).
