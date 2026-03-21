@@ -99,7 +99,7 @@ function PhobosLib.debug(modId, tag, msg)
         return
     end
     if PhobosLib.isDebugEnabled(modId) then
-        print(tag .. " [DEBUG] " .. msg)
+        print(tostring(tag) .. " [DEBUG] " .. tostring(msg))
     end
 end
 
@@ -115,7 +115,7 @@ function PhobosLib.trace(modId, tag, msg)
         return
     end
     if PhobosLib.isTraceEnabled(modId) then
-        print(tag .. " [TRACE] " .. msg)
+        print(tostring(tag) .. " [TRACE] " .. tostring(msg))
     end
 end
 
