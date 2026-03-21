@@ -124,6 +124,45 @@ end
 Events.EveryOneMinute.Add(PhobosLib.throttle(doExpensiveScan, 5))
 ```
 
+## Player Location Formatting
+
+### `PhobosLib.formatPlayerLocation(player, opts)` → string
+
+Combines a street address (via `PhobosLib_Address`) and the current room name into a single human-readable location string. Useful for log messages, UI labels, mission descriptions, and any context where a player's position needs to be displayed as text.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `player` | IsoPlayer | The player whose location to format |
+| `opts` | table (optional) | Options table. Supported fields: `fallback` (string) — text returned when no location can be determined |
+
+**Format priority:**
+
+The function tries to build the most informative string possible, falling through in order:
+
+1. **Street + valid room** — `"423 Main Street (Kitchen)"`
+2. **Street only** — `"423 Main Street"`
+3. **Valid room only** — `"Kitchen"` (title-cased)
+4. **Fallback** — `opts.fallback` or `"Unknown Location"` if no fallback provided
+
+Room names shorter than 2 characters are filtered out. These typically appear as single-letter artefacts from modded buildings and are not meaningful to the player.
+
+**Internal dependencies:**
+
+- `PhobosLib.getPlayerRoomName()` — retrieves the current room name
+- `PhobosLib_Address.resolveAddress()` — resolves the player's street address
+
+**Example usage:**
+
+```lua
+local loc = PhobosLib.formatPlayerLocation(player, { fallback = "Unknown" })
+-- "423 Main Street (Kitchen)" | "423 Main Street" | "Kitchen" | "Unknown"
+
+-- Without options — defaults to "Unknown Location" when nothing resolves
+local loc = PhobosLib.formatPlayerLocation(player)
+```
+
 ## Chunked File Writing
 
 For large data stores that must be serialised to disk, writing everything in a
