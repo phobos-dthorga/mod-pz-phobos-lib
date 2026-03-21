@@ -87,6 +87,9 @@ Generate a random float in [min, max) using `ZombRand(10000)` for precision. Det
 ### `PhobosLib.round(value, decimals)` → number
 Round to `decimals` decimal places (default 0). Uses the `floor(x * mult + 0.5) / mult` pattern.
 
+### `PhobosLib.approach(current, target, rate)` → number
+Smoothly approach a target value. Formula: `current + (target - current) * rate`. Rate 0.0 = no change, 1.0 = instant snap. Used for natural drift (pressure decay, stock replenishment) in simulation loops.
+
 ### `PhobosLib.map(tbl, fn)` → table
 Transform each element of an array-style table. `fn(value, index)` returns the new value. Returns a new table.
 

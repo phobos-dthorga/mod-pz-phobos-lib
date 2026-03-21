@@ -799,6 +799,17 @@ function PhobosLib.round(value, decimals)
 end
 
 
+--- Smoothly approach a target value at a given rate per tick.
+--- Formula: current + (target - current) * rate
+---@param current number  Current value
+---@param target  number  Target value to approach
+---@param rate    number  Approach rate (0.0 = no change, 1.0 = instant snap)
+---@return number         New value closer to target
+function PhobosLib.approach(current, target, rate)
+    return current + (target - current) * rate
+end
+
+
 --- Transform each element of an array-style table using a function.
 --- Returns a new table; the original is not modified.
 ---@param tbl table              Array-style table
