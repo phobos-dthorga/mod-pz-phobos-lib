@@ -93,6 +93,25 @@ deny(
     "Use PhobosLib.hasTrait(player, traitId) or player:getDescriptor():hasTrait(CharacterTrait[id]).",
 )
 
+# ── PhobosLib.debug/trace with missing tag argument ──────────────────
+# PhobosLib.debug(modId, tag, msg) requires 3 args. Calling with just
+# (modId, msg) puts the message into `tag` and leaves `msg` nil, which
+# causes a Kahlua __concat RuntimeException that blows through pcall.
+
+deny(
+    r'PhobosLib\.debug\(\s*"[^"]+"\s*,\s*"[^"]*"\s*\)',
+    "PhobosLib.debug() called with 2 args (modId, msg) — missing tag. "
+    "Use PhobosLib.debug(modId, _TAG, msg) with 3 args. "
+    "Nil msg causes a Kahlua __concat RuntimeException.",
+)
+
+deny(
+    r'PhobosLib\.trace\(\s*"[^"]+"\s*,\s*"[^"]*"\s*\)',
+    "PhobosLib.trace() called with 2 args (modId, msg) — missing tag. "
+    "Use PhobosLib.trace(modId, _TAG, msg) with 3 args. "
+    "Nil msg causes a Kahlua __concat RuntimeException.",
+)
+
 # ── Raw defensive pcall in Phobos mods (new code should use safecall) ──
 # This is a warning, not an error — existing code may still have raw pcall.
 # Only flag pcall sites that are clearly defensive (not API probing).
