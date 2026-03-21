@@ -749,6 +749,23 @@ function PhobosLib.getItemDisplayName(fullType)
 end
 
 
+--- Resolve a display name from a registry-backed definition.
+--- Looks up the definition by ID, reads its displayNameKey field,
+--- and returns the translated text via safeGetText.
+--- Enforces convention: registry definitions should have a displayNameKey field.
+---@param registry table     PhobosLib registry instance (from createRegistry)
+---@param id string          Definition ID to look up
+---@param fallback string|nil Fallback if definition not found (default: the ID itself)
+---@return string            Localised display name, or fallback
+function PhobosLib.getRegistryDisplayName(registry, id, fallback)
+    fallback = fallback or id
+    if not registry or not id then return fallback end
+    local def = registry:get(id)
+    if not def or not def.displayNameKey then return fallback end
+    return PhobosLib.safeGetText(def.displayNameKey, id)
+end
+
+
 ---------------------------------------------------------------
 -- Math & Table Utilities
 ---------------------------------------------------------------

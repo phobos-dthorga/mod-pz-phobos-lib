@@ -464,3 +464,44 @@ for _, entry in ipairs(watchlist) do
     -- process entry
 end
 ```
+
+---
+
+## Registry Display Name Resolution
+
+### `PhobosLib.getRegistryDisplayName(registry, id, fallback)` → string
+
+Resolve a localised display name from a registry-backed definition. Looks up the
+definition by ID, reads its `displayNameKey` field, and returns the translated
+text via `PhobosLib.safeGetText()`.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `registry` | table | PhobosLib registry instance (from `createRegistry`) |
+| `id` | string | Definition ID to look up |
+| `fallback` | string\|nil | Text returned when definition or key is missing (default: the raw `id`) |
+
+**Convention:** Registry definitions that have user-visible names should include a
+`displayNameKey` field pointing to a translation key in the mod's translation
+files. This function enforces that convention — if the field is absent, it falls
+back gracefully rather than crashing.
+
+**Fallback chain:**
+
+1. Definition found **and** `displayNameKey` present → translated text from `safeGetText`
+2. Definition found but no `displayNameKey` → `fallback` (or raw `id`)
+3. Definition not found → `fallback` (or raw `id`)
+4. `registry` or `id` is nil → `fallback` (or `id`, which is also nil)
+
+**Usage — zone name resolution:**
+
+```lua
+local zoneRegistry = POS_MarketZone.getRegistry()
+local zoneName = PhobosLib.getRegistryDisplayName(zoneRegistry, "rural_outpost")
+-- Returns e.g. "Rural Outpost" if translation exists, or "rural_outpost" as fallback
+
+-- With explicit fallback
+local name = PhobosLib.getRegistryDisplayName(zoneRegistry, zoneId, "Unknown Zone")
+```
