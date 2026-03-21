@@ -39,6 +39,9 @@
       PhobosLib.isTraceEnabled(modId)    — true if debug ON + PZ -debug
       PhobosLib.debug(modId, tag, msg)   — conditional DEBUG print
       PhobosLib.trace(modId, tag, msg)   — conditional TRACE print
+      PhobosLib.isStrictMode()           — true if strict mode enabled
+      PhobosLib.safecall(fn, ...)        — pcall or direct call based on mode
+      PhobosLib.safeMethodCall(obj, m, ..)— method call variant
 
     Requires: PhobosLib (namespace must already exist)
     Part of PhobosLib >= 1.17.0
@@ -53,6 +56,7 @@ local _isReady     = false     -- true after OnGameStart
 local _bootBuffer  = {}        -- { { modId, level, tag, msg }, ... }
 local _enableCache = {}        -- { [modId] = bool }  (lazy, cleared on game start)
 local _pzDebug     = nil       -- cached getDebug() result
+local _strictMode  = false     -- cached; set on OnGameStart
 
 
 -- ─── Public API ──────────────────────────────────────────────────────────
@@ -116,6 +120,51 @@ function PhobosLib.trace(modId, tag, msg)
 end
 
 
+-- ─── Strict Mode ───────────────────────────────────────────────────────
+-- Strict mode bypasses DEFENSIVE pcalls so errors propagate with full
+-- stack traces. NECESSARY pcalls (API probing) are never affected.
+-- Controlled by sandbox option PhobosLib.EnableStrictMode.
+
+--- Check if strict mode is enabled (defensive pcalls bypassed).
+---@return boolean
+function PhobosLib.isStrictMode()
+    return _strictMode
+end
+
+--- Strict-mode-aware pcall replacement for DEFENSIVE wrapping.
+--- Normal mode: behaves exactly like pcall(fn, ...).
+--- Strict mode: calls fn(...) directly — errors propagate with full
+--- stack traces. Returns true + results to match pcall's return signature.
+---
+--- Use this for defensive pcalls. Keep raw pcall() for API probing.
+---@param fn function  Function to call
+---@return boolean ok, any ...
+function PhobosLib.safecall(fn, ...)
+    if _strictMode then
+        return true, fn(...)
+    end
+    return pcall(fn, ...)
+end
+
+--- Strict-mode-aware method call for DEFENSIVE wrapping.
+--- Like pcallMethod but bypassed in strict mode. Keep pcallMethod for
+--- API probing (probeMethod/probeMethodAny).
+---@param obj any           Object to call the method on
+---@param methodName string Method name
+---@return boolean ok, any result
+function PhobosLib.safeMethodCall(obj, methodName, ...)
+    if not obj or not obj[methodName] then return false, nil end
+    local method = obj[methodName]
+    if _strictMode then
+        return true, method(obj, ...)
+    end
+    local args = {...}
+    return pcall(function()
+        return method(obj, unpack(args))
+    end)
+end
+
+
 -- ─── Boot Buffer Flush ──────────────────────────────────────────────────
 
 --- OnGameStart handler: flush or discard the boot buffer, then log state.
@@ -123,6 +172,13 @@ local function _onGameStartDebug()
     _isReady     = true
     _enableCache = {}     -- force fresh read from sandbox
     _pzDebug     = nil
+
+    -- Strict mode: bypass defensive pcalls for better stack traces
+    _strictMode = PhobosLib.getSandboxVar("PhobosLib", "EnableStrictMode", false) == true
+    if _strictMode then
+        print(_TAG .. " *** STRICT MODE ENABLED — defensive pcalls BYPASSED ***")
+        print(_TAG .. " *** Errors will propagate with full stack traces ***")
+    end
 
     -- Flush buffered messages
     for _, entry in ipairs(_bootBuffer) do

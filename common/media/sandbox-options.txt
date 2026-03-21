@@ -27,3 +27,9 @@ option PhobosLib.EnableDebugLogging
 	type = boolean, default = false,
 	page = PhobosLib_Sandbox, translation = PhobosLib_EnableDebugLogging,
 }
+
+option PhobosLib.EnableStrictMode
+{
+	type = boolean, default = false,
+	page = PhobosLib_Sandbox, translation = PhobosLib_EnableStrictMode,
+}

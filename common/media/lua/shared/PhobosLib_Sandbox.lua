@@ -76,7 +76,7 @@ end
 --- @param value   any     The value to set
 --- @return boolean        true if set succeeded
 function PhobosLib.setSandboxVar(modId, varName, value)
-    local ok = pcall(function()
+    local ok = PhobosLib.safecall(function()
         if SandboxVars and SandboxVars[modId] then
             SandboxVars[modId][varName] = value
         end
@@ -107,7 +107,7 @@ end
 --- @param varName string  The boolean sandbox variable name
 --- @return boolean        true if both operations succeeded
 function PhobosLib.consumeSandboxFlag(modId, varName)
-    local ok = pcall(function()
+    local ok = PhobosLib.safecall(function()
         if SandboxVars and SandboxVars[modId] then
             SandboxVars[modId][varName] = false
         end
@@ -126,7 +126,7 @@ end
 --- @param modId   string  The mod namespace (e.g. "PCP")
 --- @param varName string  The boolean sandbox variable name
 function PhobosLib.unconsumeSandboxFlag(modId, varName)
-    pcall(function()
+    PhobosLib.safecall(function()
         local md = getGameTime():getModData()
         local key = "PhobosLib_consumed_" .. modId .. "_" .. varName
         if md[key] then
@@ -147,7 +147,7 @@ end
 --- remain cleared even after a game restart.
 function PhobosLib.reapplyConsumedFlags()
     local count = 0
-    pcall(function()
+    PhobosLib.safecall(function()
         local md = getGameTime():getModData()
         local prefix = "PhobosLib_consumed_"
         for key, val in pairs(md) do

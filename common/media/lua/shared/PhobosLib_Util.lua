@@ -28,7 +28,7 @@ PhobosLib = PhobosLib or {}
 ---@param key string Translation key
 ---@return string
 function PhobosLib.safeGetText(key, ...)
-    local ok, result = pcall(getText, key, ...)
+    local ok, result = PhobosLib.safecall(getText, key, ...)
     if ok and result then return result end
     return key
 end
@@ -135,7 +135,7 @@ end
 ---@return any  The resolved ItemContainer (or original arg on failure)
 local function resolveInventory(inventoryOrPlayer)
     if not inventoryOrPlayer then return nil end
-    local ok, inv = pcall(function()
+    local ok, inv = PhobosLib.safecall(function()
         if inventoryOrPlayer.getInventory then
             return inventoryOrPlayer:getInventory()
         end
@@ -190,7 +190,7 @@ end
 function PhobosLib.findItemByFullType(inventory, fullType)
     inventory = resolveInventory(inventory)
     if not inventory or not fullType then return nil end
-    local ok, result = pcall(function()
+    local ok, result = PhobosLib.safecall(function()
         return inventory:FindAndReturn(fullType)
     end)
     if ok then return result end
@@ -273,7 +273,7 @@ function PhobosLib.findFluidContainerWithMin(inventory, fluidNames, minAmount)
     local allowed = {}
     for _, fn in ipairs(fluidNames) do allowed[fn] = true end
     local result = nil
-    pcall(function()
+    PhobosLib.safecall(function()
         local items = inventory:getItems()
         for i = 0, items:size() - 1 do
             local item = items:get(i)
@@ -316,7 +316,7 @@ end
 function PhobosLib.findItemByFullTypeRecurse(inventory, fullType)
     inventory = resolveInventory(inventory)
     if not inventory or not fullType then return nil end
-    local ok, result = pcall(function()
+    local ok, result = PhobosLib.safecall(function()
         local item = inventory:getFirstTypeRecurse(toShortType(fullType))
         if item and item.getFullType and item:getFullType() == fullType then
             return item
@@ -337,7 +337,7 @@ function PhobosLib.findItemFromTypeListRecurse(inventory, typeList)
     inventory = resolveInventory(inventory)
     if not inventory or not typeList then return nil end
     for _, ft in ipairs(typeList) do
-        local ok, item = pcall(function()
+        local ok, item = PhobosLib.safecall(function()
             return inventory:getFirstTypeRecurse(toShortType(ft))
         end)
         if ok and item and item.getFullType and item:getFullType() == ft then
@@ -358,7 +358,7 @@ function PhobosLib.countItemsFromTypeListRecurse(inventory, typeList)
     if not inventory or not typeList then return 0 end
     local count = 0
     for _, ft in ipairs(typeList) do
-        local ok, n = pcall(function()
+        local ok, n = PhobosLib.safecall(function()
             return inventory:getItemCountRecurse(toShortType(ft))
         end)
         if ok and n then count = count + n end
@@ -401,7 +401,7 @@ function PhobosLib.findFluidContainerWithMinRecurse(inventory, fluidNames, minAm
     end
 
     local result = nil
-    pcall(function()
+    PhobosLib.safecall(function()
         -- Search main inventory first
         result = scanContainer(inventory)
         if result then return end
@@ -428,7 +428,7 @@ end
 ---@param msg string
 function PhobosLib.say(player, msg)
     if player and player.Say then
-        pcall(function() player:Say(msg) end)
+        PhobosLib.safecall(function() player:Say(msg) end)
     end
 end
 
@@ -459,10 +459,10 @@ function PhobosLib.setItemUseDelta(item, value)
     local ok = false
     -- Try setUsedDelta first (standard PZ method)
     if item.setUsedDelta then
-        ok = select(1, pcall(function() item:setUsedDelta(value) end))
+        ok = select(1, PhobosLib.safecall(function() item:setUsedDelta(value) end))
     end
     if not ok and item.setUseDelta then
-        ok = select(1, pcall(function() item:setUseDelta(value) end))
+        ok = select(1, PhobosLib.safecall(function() item:setUseDelta(value) end))
     end
     return ok
 end
@@ -479,7 +479,7 @@ function PhobosLib.refundItems(items, player)
     for i = 0, items:size() - 1 do
         local it = items:get(i)
         if it and it.getFullType then
-            pcall(function() inv:AddItem(it:getFullType()) end)
+            PhobosLib.safecall(function() inv:AddItem(it:getFullType()) end)
         end
     end
 end
@@ -499,7 +499,7 @@ end
 ---@return boolean
 function PhobosLib.setItemCondition(item, value)
     if not item or not item.setCondition then return false end
-    local ok = pcall(function() item:setCondition(math.floor(value)) end)
+    local ok = PhobosLib.safecall(function() item:setCondition(math.floor(value)) end)
     return ok
 end
 
@@ -511,7 +511,7 @@ end
 ---@return number|nil  Percentage 0-100, or nil
 function PhobosLib.getConditionPercent(item)
     if not item then return nil end
-    local ok, result = pcall(function()
+    local ok, result = PhobosLib.safecall(function()
         local maxCond = item:getConditionMax()
         if not maxCond or maxCond <= 0 then return nil end
         return math.floor(item:getCondition() / maxCond * 100 + 0.5)
@@ -530,13 +530,13 @@ end
 function PhobosLib.setConditionPercent(item, percent)
     if not item then return false end
     percent = math.max(0, math.min(100, math.floor(percent + 0.5)))
-    local ok = pcall(function()
+    local ok = PhobosLib.safecall(function()
         local maxCond = item:getConditionMax()
         if maxCond and maxCond > 0 then
             local scaled = math.floor(percent / 100 * maxCond + 0.5)
             scaled = math.max(0, math.min(maxCond - 1, scaled))
             item:setCondition(scaled)
-            pcall(sendItemStats, item)
+            PhobosLib.safecall(sendItemStats, item)
         end
     end)
     return ok
@@ -554,7 +554,7 @@ end
 ---@return table|nil
 function PhobosLib.getModData(item)
     if not item or not item.getModData then return nil end
-    local ok, md = pcall(function() return item:getModData() end)
+    local ok, md = PhobosLib.safecall(function() return item:getModData() end)
     if ok and md then return md end
     return nil
 end
@@ -598,7 +598,7 @@ end
 ---@return boolean
 function PhobosLib.hasTrait(player, traitId)
     if not player or type(traitId) ~= "string" then return false end
-    local ok, result = pcall(function()
+    local ok, result = PhobosLib.safecall(function()
         -- Look up the CharacterTrait enum constant by name
         local traitEnum = CharacterTrait[traitId]
         if traitEnum then
@@ -630,7 +630,7 @@ function PhobosLib.isPlayerAdmin(player)
     -- Singleplayer or co-op host: not a network client
     if not isClient() then return true end
     -- Dedicated server client: check access level
-    local ok, level = pcall(function() return player:getAccessLevel() end)
+    local ok, level = PhobosLib.safecall(function() return player:getAccessLevel() end)
     if ok and type(level) == "string" then
         return string.lower(level) == "admin"
     end
@@ -677,7 +677,7 @@ function PhobosLib.findItemsByTag(inventory, tagName)
     for i = 0, items:size() - 1 do
         local it = items:get(i)
         if it and it.hasTag then
-            local ok, has = pcall(it.hasTag, it, tagName)
+            local ok, has = PhobosLib.safecall(it.hasTag, it, tagName)
             if ok and has then
                 table.insert(results, it)
             end
@@ -700,7 +700,7 @@ function PhobosLib.countItemsByTag(inventory, tagName)
     for i = 0, items:size() - 1 do
         local it = items:get(i)
         if it and it.hasTag then
-            local ok, has = pcall(it.hasTag, it, tagName)
+            local ok, has = PhobosLib.safecall(it.hasTag, it, tagName)
             if ok and has then
                 count = count + 1
             end
