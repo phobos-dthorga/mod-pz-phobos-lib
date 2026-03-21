@@ -70,3 +70,58 @@ Consumer mods (POSnet, PCP, PIP, etc.) should replace their defensive pcalls wit
 - **Development**: Always ON — surfaces hidden errors with full stack traces.
 - **Bug reports**: Ask players to enable it and reproduce the crash for better diagnostics.
 - **Normal play**: OFF (default) — defensive pcalls protect against edge-case crashes.
+
+## Logging Levels
+
+PhobosLib provides three log levels, each with different gating requirements:
+
+| Level | Function | Gate | Use case |
+|-------|----------|------|----------|
+| **INFO** | `print()` | Always printed | Startup banners, one-time status messages |
+| **DEBUG** | `PhobosLib.debug(modId, tag, msg)` | Sandbox `EnableDebugLogging` only | Config values, feature gates, callback entry/exit, calculation parameters |
+| **TRACE** | `PhobosLib.trace(modId, tag, msg)` | Sandbox `EnableDebugLogging` **AND** PZ `-debug` flag | Per-tick iteration, per-item detail — very verbose, developers only |
+
+### Key distinction
+
+`PhobosLib.debug()` does **NOT** depend on PZ's `-debug` startup flag. It only requires the per-mod sandbox option `SandboxVars.<modId>.EnableDebugLogging = true`. This means players and mod authors can enable debug output without the `-debug` flag, which is important because the `-debug` flag can cause issues with certain third-party mods.
+
+`PhobosLib.trace()` requires **both** the sandbox option **and** the `-debug` flag. This double gate keeps extremely verbose output (per-tick, per-item loops) from flooding the console during normal debug sessions.
+
+### Checking log levels
+
+```lua
+PhobosLib.isDebugEnabled(modId)  -- true if sandbox EnableDebugLogging is ON
+PhobosLib.isTraceEnabled(modId)  -- true if debug ON + PZ -debug flag active
+```
+
+Results are cached after first read — sandbox vars don't change mid-session.
+
+### Boot-phase buffering
+
+Before `OnGameStart`, sandbox vars are unavailable. Calls to `debug()` and `trace()` during module loading are **buffered** in memory. Once `OnGameStart` fires:
+
+1. The sandbox option is read and cached.
+2. PZ's `-debug` flag is probed via `pcall(getDebug)`.
+3. Buffered messages are flushed (printed) if their level is enabled, or silently discarded.
+
+This means you can safely call `PhobosLib.debug()` from top-level module code — nothing crashes, and the message appears if logging is enabled.
+
+### Per-mod sandbox option
+
+Each Phobos mod defines its own `EnableDebugLogging` sandbox boolean. The `modId` parameter (first argument to `debug()`/`trace()`) selects which mod's toggle to check:
+
+```lua
+-- Only prints if SandboxVars.POS.EnableDebugLogging == true
+PhobosLib.debug("POS", "[POS:Market]", "Scanning 16 categories")
+
+-- Only prints if SandboxVars.PhobosLib.EnableDebugLogging == true
+PhobosLib.debug("PhobosLib", _TAG, "Strict mode: " .. tostring(_strictMode))
+```
+
+### Enabling debug output (for players / testers)
+
+1. Open sandbox settings (Host → Settings → Sandbox Options).
+2. Find the mod's page (e.g., "PhobosLib", "POSnet", "PCP").
+3. Set **Enable Debug Logging** to `true`.
+4. Restart the game (sandbox vars are read once at game start).
+5. Check the PZ console (`~` key) or `console.txt` for `[DEBUG]` lines.
