@@ -838,3 +838,44 @@ function PhobosLib.filter(tbl, predicate)
     end
     return result
 end
+
+
+---------------------------------------------------------------
+-- Deferred initialisation & throttling
+---------------------------------------------------------------
+
+--- Create a lazy-init guard that runs initFn exactly once on first call.
+--- Subsequent calls are a single boolean check (no-op).
+--- Use to defer expensive module initialisation to first access.
+---@param initFn fun() One-time initialisation function
+---@return fun()        Guard function — call before accessing module state
+function PhobosLib.lazyInit(initFn)
+    local done = false
+    return function()
+        if done then return end
+        done = true
+        initFn()
+    end
+end
+
+
+--- Wrap a function so it only executes once every N game-minutes.
+--- Returns a new function suitable for Events.EveryOneMinute.Add().
+--- The wrapped function fires immediately on first call, then skips
+--- subsequent calls until intervalMinutes game-minutes have elapsed.
+---@param fn               fun()   Function to throttle
+---@param intervalMinutes  number  Minimum game-minutes between executions
+---@return fun()                   Throttled wrapper function
+function PhobosLib.throttle(fn, intervalMinutes)
+    local lastMinute = -1
+    return function()
+        local gt = getGameTime and getGameTime()
+        if not gt then return end
+        local now = math.floor(gt:getWorldAgeHours() * 60)
+        if lastMinute >= 0 and (now - lastMinute) < intervalMinutes then
+            return
+        end
+        lastMinute = now
+        fn()
+    end
+end
