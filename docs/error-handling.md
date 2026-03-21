@@ -96,6 +96,34 @@ Transform each element of an array-style table. `fn(value, index)` returns the n
 ### `PhobosLib.filter(tbl, predicate)` → table
 Keep elements where `predicate(value, index)` returns true. Returns a new table.
 
+## Deferred Initialisation & Throttling
+
+### `PhobosLib.lazyInit(initFn)`
+- **Parameters:** `initFn` (function) — one-time initialisation function
+- **Returns:** Guard function — call before accessing module state
+- **Behaviour:** Runs `initFn` exactly once on first call. Subsequent calls are a no-op (single boolean check).
+- **Use case:** Defer expensive module initialisation (e.g. iterating all game items) from `OnGameStart` to first access.
+
+```lua
+local ensureInit = PhobosLib.lazyInit(function()
+    -- expensive one-time setup
+end)
+function MyModule.getData()
+    ensureInit()
+    return _data
+end
+```
+
+### `PhobosLib.throttle(fn, intervalMinutes)`
+- **Parameters:** `fn` (function), `intervalMinutes` (number)
+- **Returns:** Throttled wrapper function suitable for `Events.EveryOneMinute.Add()`
+- **Behaviour:** Executes `fn` immediately on first call, then skips until `intervalMinutes` game-minutes elapse. Tracks time via `getGameTime():getWorldAgeHours()`.
+- **Use case:** Reduce frequency of `EveryOneMinute` handlers performing spatial scans.
+
+```lua
+Events.EveryOneMinute.Add(PhobosLib.throttle(doExpensiveScan, 5))
+```
+
 ---
 
 ## Logging Levels
