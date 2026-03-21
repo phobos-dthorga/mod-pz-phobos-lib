@@ -228,6 +228,42 @@ end)
 
 ---
 
+## Empty-Data Return Convention
+
+Two rules govern what functions return when they have no data:
+
+1. **Functions that compute/aggregate data** (`getSummary`, `getCommoditySummary`,
+   `resolveAddress`) MUST return `nil` when input data is empty — never a table
+   with nil-valued named fields.
+2. **Functions that list/collect items** (`getRecords`, `getNotes`, `getCache`)
+   MAY return `{}` (empty array) — downstream code handles via `#result == 0`
+   or `ipairs()`.
+
+**Anti-pattern (BAD):**
+
+```lua
+-- BAD: returns non-nil table with nil fields — callers treat as valid data
+local summary = { low = nil, high = nil, avg = nil, sourceCount = 0 }
+if #records == 0 then return summary end
+```
+
+**Correct (GOOD):**
+
+```lua
+-- GOOD: forces callers to nil-check before field access
+if #records == 0 then return nil end
+```
+
+**Why:** In Kahlua, passing `nil` from a named field into string concatenation
+or arithmetic triggers a Java `RuntimeException` that `pcall`/`safecall` cannot
+catch, causing a silent JVM crash (CTD with no stack trace).
+
+**Implementation references:**
+`POS_MarketDatabase.getSummary`, `PhobosLib_Address.resolveAddress`,
+`PN_ChannelRegistry.getMutedSet`
+
+---
+
 ## Logging Levels
 
 PhobosLib provides three log levels, each with different gating requirements:
