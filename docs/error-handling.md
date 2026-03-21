@@ -124,6 +124,69 @@ end
 Events.EveryOneMinute.Add(PhobosLib.throttle(doExpensiveScan, 5))
 ```
 
+## Chunked File Writing
+
+For large data stores that must be serialised to disk, writing everything in a
+single frame causes a visible hitch. PhobosLib provides a chunked writer that
+spreads the work across multiple `EveryOneMinute` ticks.
+
+### `PhobosLib.createChunkedWriter(opts)` → writer
+
+Factory. Returns a writer handle used by the other chunked-write functions.
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `filePath` | string | Destination path passed to `getFileWriter` |
+| `chunkSize` | number | Items to serialise per tick |
+| `onSerialize` | function(item, fileWriter) | Called once per item — write the item's data |
+| `onComplete` | function() | Called after the final chunk is flushed and the file is closed |
+
+### `PhobosLib.startChunkedWrite(writer, source)`
+
+Queue a write operation. `source` is an array-style table of items to
+serialise. The writer copies the list internally so the caller may continue
+to mutate the original table.
+
+### `PhobosLib.tickChunkedWrite(writer)` → boolean
+
+Process the next chunk (up to `chunkSize` items). Returns `true` when the
+entire source has been written and the file has been closed; `false` while
+work remains.
+
+### `PhobosLib.isChunkedWriteActive(writer)` → boolean
+
+Returns `true` if the writer has queued items that have not yet been fully
+flushed. Useful for preventing overlapping writes.
+
+### Usage example — market data save
+
+```lua
+local writer = PhobosLib.createChunkedWriter({
+    filePath    = "POSnet/market_prices.txt",
+    chunkSize   = 4,
+    onSerialize = function(category, fw)
+        fw:writeln(category.id .. ";" .. tostring(category.price))
+    end,
+    onComplete  = function()
+        PhobosLib.debug("POS", "[Market]", "Chunked save complete")
+    end,
+})
+
+-- Start a save (e.g. from an EveryTenMinutes handler)
+PhobosLib.startChunkedWrite(writer, allCategories)
+
+-- Tick the writer every game-minute until done
+Events.EveryOneMinute.Add(function()
+    if PhobosLib.isChunkedWriteActive(writer) then
+        PhobosLib.tickChunkedWrite(writer)
+    end
+end)
+```
+
+> **Important:** Callers must call `tickChunkedWrite` each `EveryOneMinute`
+> tick while the writer is active. The writer does not register its own event
+> handler — ownership of the tick loop stays with the consumer.
+
 ---
 
 ## Logging Levels
