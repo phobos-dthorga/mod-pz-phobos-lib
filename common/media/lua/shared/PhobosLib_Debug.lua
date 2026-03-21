@@ -189,7 +189,7 @@ local function _onGameStartDebug()
             shouldPrint = PhobosLib.isTraceEnabled(entry.modId)
         end
         if shouldPrint then
-            print(entry.tag .. " [" .. entry.level .. "] (boot) " .. entry.msg)
+            print(tostring(entry.tag) .. " [" .. entry.level .. "] (boot) " .. tostring(entry.msg))
         end
     end
     _bootBuffer = {}
