@@ -604,7 +604,7 @@ function PhobosLib.showOnWorldMap(playerNum, x, y, zoom)
         end
     end)
     if ok then
-        PhobosLib.debug("PhobosLib", "[World] Opened map at "
+        PhobosLib.debug("PhobosLib", "[World]", "Opened map at "
             .. math.floor(x) .. ", " .. math.floor(y)
             .. " (zoom " .. zoom .. ")")
     end

@@ -170,7 +170,7 @@ local function loadStreetData()
     buildGridIndex()
 
     if PhobosLib and PhobosLib.debug then
-        PhobosLib.debug("PhobosLib", "[Address] Loaded "
+        PhobosLib.debug("PhobosLib", "[Address]", "Loaded "
             .. #streets .. " streets from "
             .. dirs:size() .. " map directories")
     end
