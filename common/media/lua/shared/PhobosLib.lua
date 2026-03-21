@@ -21,7 +21,7 @@
 ---------------------------------------------------------------
 
 PhobosLib = PhobosLib or {}
-PhobosLib.VERSION = "1.48.0"
+PhobosLib.VERSION = "1.49.0"
 
 require "PhobosLib_Debug"    -- must be first: other modules use debug API
 require "PhobosLib_Util"
@@ -50,3 +50,6 @@ require "PhobosLib_Document"
 require "PhobosLib_Danger"
 require "PhobosLib_Notify"
 require "PhobosLib_Milestone"
+require "PhobosLib_Schema"
+require "PhobosLib_Registry"
+require "PhobosLib_DataLoader"

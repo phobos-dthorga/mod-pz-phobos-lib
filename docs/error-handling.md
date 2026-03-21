@@ -149,3 +149,120 @@ PhobosLib.debug("PhobosLib", _TAG, "Strict mode: " .. tostring(_strictMode))
 3. Set **Enable Debug Logging** to `true`.
 4. Restart the game (sandbox vars are read once at game start).
 5. Check the PZ console (`~` key) or `console.txt` for `[DEBUG]` lines.
+
+---
+
+## Schema Validation, Registry & Data Loader
+
+PhobosLib provides a three-module data-pack architecture for validated, registry-driven content systems. Any mod can define schemas, create registries, and load data-only Lua definition files through this pipeline.
+
+### Schema Validation (`PhobosLib_Schema`)
+
+Validate any Lua table against a declarative schema definition.
+
+**Schema format:**
+
+```lua
+local mySchema = {
+    schemaVersion = 1,
+    fields = {
+        id   = { type = "string", required = true },
+        name = { type = "string", required = true },
+        behaviour = { type = "string", required = true, enum = { "trader", "wholesaler" } },
+        tuning = { type = "table", required = true, fields = {
+            reliability = { type = "number", min = 0, max = 1, default = 0.5 },
+            volatility  = { type = "number", min = 0, max = 1, default = 0.3 },
+        }},
+        tags    = { type = "array" },
+        enabled = { type = "boolean", default = true },
+    }
+}
+```
+
+**Supported types:** `string`, `number`, `boolean`, `table` (with optional nested `fields`), `array`
+
+**Supported constraints:**
+
+| Constraint | Applies to | Purpose |
+|------------|-----------|---------|
+| `required` | all | Field must be present |
+| `default` | all | Value to fill when field is nil |
+| `min` / `max` | number | Numeric range check |
+| `enum` | string | Set of valid values |
+| `minLength` | string | Minimum string length |
+| `fields` | table | Nested sub-schema |
+
+**Functions:**
+
+```lua
+-- Validate data against schema. Returns ok + error array.
+local ok, errors = PhobosLib.validateSchema(data, schema)
+-- errors: { {field="tuning.volatility", message="must be at most 1.0", value=1.5}, ... }
+
+-- Apply default values for missing optional fields (mutates in place).
+PhobosLib.applyDefaults(data, schema)
+
+-- Format errors into human-readable log strings.
+local lines = PhobosLib.formatValidationErrors(errors, "[MyMod]")
+-- { "[MyMod] tuning.volatility: must be at most 1.0 (got: 1.5)" }
+```
+
+### Registry (`PhobosLib_Registry`)
+
+Create typed registries that validate definitions on registration and provide safe lookup.
+
+```lua
+local registry = PhobosLib.createRegistry({
+    name = "Archetypes",           -- for log messages
+    schema = mySchema,             -- PhobosLib_Schema definition
+    idField = "id",                -- unique key field (default "id")
+    allowOverwrite = false,        -- reject duplicate IDs (default false)
+    tag = "[MyMod:Archetype]",     -- debug log prefix
+})
+```
+
+**Instance methods:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `registry:register(def)` | `ok, errors` | Validate + store. Logs errors on failure. |
+| `registry:get(id)` | `table\|nil` | Lookup by ID |
+| `registry:getAll()` | `table[]` | Shallow-copied array of all definitions |
+| `registry:exists(id)` | `boolean` | Check if ID is registered |
+| `registry:count()` | `number` | Number of registered definitions |
+| `registry:seal()` | — | Freeze; further `register()` calls fail |
+| `registry:remove(id)` | `boolean` | Remove by ID (for testing/migration) |
+
+**Error logging example:**
+```
+[MyMod:Archetype] "road_king" rejected: tuning.volatility: must be at most 1.0 (got: 1.5)
+```
+
+### Data Loader (`PhobosLib_DataLoader`)
+
+Batch-load data-only Lua definition files via `require` and register them.
+
+```lua
+-- Load multiple definitions at once
+local result = PhobosLib.loadDefinitions({
+    registry = registry,
+    paths = {
+        "Definitions/Archetypes/scavenger_trader",
+        "Definitions/Archetypes/quartermaster",
+    },
+    tag = "[MyMod:Loader]",
+})
+-- result: { loaded = 2, failed = 0, errors = {} }
+
+-- Load a single definition
+local ok, errors = PhobosLib.loadDefinition(
+    "Definitions/Archetypes/custom_agent", registry, "[MyMod:Loader]")
+```
+
+**Error handling:** `require` failures (syntax errors, missing files), non-table returns, and validation failures are all logged with clear messages and never crash the game. Failed definitions are skipped; valid ones are registered.
+
+**Addon mod integration:** Third-party mods register content via the registry API directly:
+```lua
+require "POS_MarketAgent"
+POS_MarketAgent.getRegistry():register(require "MyMod/my_custom_agent")
+```
