@@ -747,3 +747,83 @@ function PhobosLib.getItemDisplayName(fullType)
     end
     return fullType:match("[^.]+$") or fullType
 end
+
+
+---------------------------------------------------------------
+-- Math & Table Utilities
+---------------------------------------------------------------
+
+--- Clamp a numeric value to the range [min, max].
+---@param value number  The value to clamp
+---@param min   number  Lower bound
+---@param max   number  Upper bound
+---@return number       Clamped value
+function PhobosLib.clamp(value, min, max)
+    if value < min then return min end
+    if value > max then return max end
+    return value
+end
+
+
+--- Linearly interpolate between two values.
+--- Returns a when t=0, b when t=1, and proportional values in between.
+---@param a number  Start value
+---@param b number  End value
+---@param t number  Interpolation factor (typically 0..1, but not clamped)
+---@return number   Interpolated value
+function PhobosLib.lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+
+--- Generate a random float in the range [min, max) using ZombRand.
+--- Uses 10000-step precision for smooth distribution.
+---@param min number  Lower bound (inclusive)
+---@param max number  Upper bound (exclusive)
+---@return number     Random float in [min, max)
+function PhobosLib.randFloat(min, max)
+    local precision = 10000
+    local raw = ZombRand(precision) / precision
+    return min + raw * (max - min)
+end
+
+
+--- Round a number to a given number of decimal places.
+--- Defaults to 0 decimal places (integer rounding).
+---@param value    number         The value to round
+---@param decimals number|nil     Decimal places (default 0)
+---@return number                 Rounded value
+function PhobosLib.round(value, decimals)
+    local mult = 10 ^ (decimals or 0)
+    return math.floor(value * mult + 0.5) / mult
+end
+
+
+--- Transform each element of an array-style table using a function.
+--- Returns a new table; the original is not modified.
+---@param tbl table              Array-style table
+---@param fn  fun(v:any, i:number):any  Transform function (value, index) → new value
+---@return table                 New table with transformed elements
+function PhobosLib.map(tbl, fn)
+    local result = {}
+    for i, v in ipairs(tbl) do
+        result[i] = fn(v, i)
+    end
+    return result
+end
+
+
+--- Filter an array-style table, keeping only elements where predicate returns true.
+--- Returns a new table; the original is not modified.
+---@param tbl       table                    Array-style table
+---@param predicate fun(v:any, i:number):boolean  Predicate function (value, index) → keep?
+---@return table                             New table with matching elements
+function PhobosLib.filter(tbl, predicate)
+    local result = {}
+    for i, v in ipairs(tbl) do
+        if predicate(v, i) then
+            result[#result + 1] = v
+        end
+    end
+    return result
+end

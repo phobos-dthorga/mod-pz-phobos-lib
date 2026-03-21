@@ -71,6 +71,30 @@ Consumer mods (POSnet, PCP, PIP, etc.) should replace their defensive pcalls wit
 - **Bug reports**: Ask players to enable it and reproduce the crash for better diagnostics.
 - **Normal play**: OFF (default) — defensive pcalls protect against edge-case crashes.
 
+## Math & Table Utilities
+
+PhobosLib provides generic utilities for numeric operations and table transforms. Consumer mods should use these instead of local reimplementations.
+
+### `PhobosLib.clamp(value, min, max)` → number
+Clamp a numeric value to [min, max]. Used extensively in simulation formulas, price bounds, and risk calculations.
+
+### `PhobosLib.lerp(a, b, t)` → number
+Linear interpolation between `a` (t=0) and `b` (t=1). `t` is not clamped — values outside 0..1 extrapolate.
+
+### `PhobosLib.randFloat(min, max)` → number
+Generate a random float in [min, max) using `ZombRand(10000)` for precision. Deterministic within PZ's RNG seed.
+
+### `PhobosLib.round(value, decimals)` → number
+Round to `decimals` decimal places (default 0). Uses the `floor(x * mult + 0.5) / mult` pattern.
+
+### `PhobosLib.map(tbl, fn)` → table
+Transform each element of an array-style table. `fn(value, index)` returns the new value. Returns a new table.
+
+### `PhobosLib.filter(tbl, predicate)` → table
+Keep elements where `predicate(value, index)` returns true. Returns a new table.
+
+---
+
 ## Logging Levels
 
 PhobosLib provides three log levels, each with different gating requirements:
