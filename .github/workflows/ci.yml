@@ -133,6 +133,9 @@ jobs:
           print("All sandbox translation keys present in Lua (42.14).")
           PYEOF
 
+      - name: PZ API deny-list scan
+        run: python3 .github/pz-api-denylist.py common/media/lua/
+
       - name: Encoding check (UTF-8)
         run: |
           FAIL=0
