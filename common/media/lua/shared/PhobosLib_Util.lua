@@ -766,6 +766,21 @@ function PhobosLib.getRegistryDisplayName(registry, id, fallback)
 end
 
 
+--- Returns the player's level in a given perk, or 0 on any failure.
+--- Safe wrapper around player:getPerkLevel(Perks.FromString(perkId)).
+--- @param player IsoPlayer
+--- @param perkId string  -- e.g. "Electricity", "Passiv"
+--- @return number level  -- 0..10, or 0 on nil/error
+function PhobosLib.getPlayerPerkLevel(player, perkId)
+    if not player or not perkId then return 0 end
+    local ok, perk = PhobosLib.safecall(Perks.FromString, perkId)
+    if not ok or not perk then return 0 end
+    local ok2, level = PhobosLib.safecall(player.getPerkLevel, player, perk)
+    if not ok2 or not level then return 0 end
+    return level
+end
+
+
 ---------------------------------------------------------------
 -- Infrastructure Utilities
 ---------------------------------------------------------------

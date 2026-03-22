@@ -660,3 +660,33 @@ if not req.ok then
     end
 end
 ```
+
+### `PhobosLib.getPlayerPerkLevel(player, perkId)` → number
+
+Returns the player's level in a given perk, or 0 on any failure. Safe wrapper that resolves the perk via `Perks.FromString` and reads the level via `player:getPerkLevel`, with both calls protected by `safecall`.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `player` | IsoPlayer | The player to query |
+| `perkId` | string | PZ perk identifier (e.g. `"Electricity"`, `"Passiv"`) |
+
+**Returns:** Perk level as a number (0–10). Returns 0 if `player` is nil, `perkId` is invalid or unrecognised, or any Java exception occurs during resolution.
+
+**Behaviour:**
+
+1. Returns 0 immediately if `player` or `perkId` is nil.
+2. Calls `Perks.FromString(perkId)` via `safecall` — returns 0 if the perk ID is not recognised.
+3. Calls `player:getPerkLevel(perk)` via `safecall` — returns 0 on any Java-side error.
+
+**Usage — satellite wiring Electrical check:**
+
+```lua
+local elecLevel = PhobosLib.getPlayerPerkLevel(player, "Electricity")
+if elecLevel < 5 then
+    PhobosLib.say(player, "Need Electricity 5 to wire the satellite dish.")
+    return
+end
+-- proceed with wiring
+```
