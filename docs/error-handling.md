@@ -779,6 +779,145 @@ local quality = PhobosLib.resolveThresholdTier(signalStrength, SIGNAL_TIERS, "un
 
 ---
 
+## Text Compositor
+
+Utilities for template-based text generation with weighted random selection, conditional filtering, and anti-repetition. Designed for procedural content systems (mission briefings, market reports, NPC dialogue) where text is assembled from data-driven pools.
+
+### `PhobosLib.resolveTokens(text, ctx)` → string
+
+Replace `{key}` placeholders in a template string with values from a context table. Placeholders whose keys are not found in `ctx` are left unreplaced.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `text` | string\|nil | Template string with `{key}` placeholders. Nil-safe — returns `""` |
+| `ctx` | table\|nil | Key-value lookup table for replacements. Nil-safe — returns `text` unchanged |
+
+**Returns:** Resolved string with matched placeholders replaced.
+
+**Usage — mission briefing template:**
+
+```lua
+local briefing = PhobosLib.resolveTokens(
+    "Deliver {item} to {location} within {hours} hours.",
+    { item = "Radio Parts", location = "Muldraugh", hours = 48 }
+)
+-- "Deliver Radio Parts to Muldraugh within 48 hours."
+
+-- Missing keys are preserved
+local partial = PhobosLib.resolveTokens("Hello {name}, status: {status}", { name = "Gecko" })
+-- "Hello Gecko, status: {status}"
+
+-- Nil-safe
+PhobosLib.resolveTokens(nil, {})   -- ""
+PhobosLib.resolveTokens("test", nil) -- "test"
+```
+
+### `PhobosLib.conditionsPass(entry, ctx)` → boolean
+
+Check if an entry's conditions match a context. Supports `minDifficulty`, `maxDifficulty` (numeric comparisons against `ctx.difficulty`), and arbitrary keys where the condition value is an array of allowed values (membership check against the corresponding `ctx` field).
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `entry` | table\|nil | Entry with optional `conditions` field. Nil-safe — returns `true` |
+| `ctx` | table\|nil | Context table to check against. Nil returns `false` if entry has conditions |
+
+**Returns:** `true` if all conditions pass or no conditions exist.
+
+**Condition fields:**
+
+| Condition | Type | Logic |
+|-----------|------|-------|
+| `minDifficulty` | number | `ctx.difficulty >= value` |
+| `maxDifficulty` | number | `ctx.difficulty <= value` |
+| `<key>` | array | `ctx[key]` must be one of the allowed values |
+
+**Usage — conditional text pool entry:**
+
+```lua
+local entry = {
+    text = "Enemy patrol spotted near {location}.",
+    weight = 3,
+    conditions = {
+        minDifficulty = 2,
+        category = { "recon", "military" },
+    },
+}
+
+-- Passes: difficulty 3, category "recon"
+PhobosLib.conditionsPass(entry, { difficulty = 3, category = "recon" })  -- true
+
+-- Fails: difficulty too low
+PhobosLib.conditionsPass(entry, { difficulty = 1, category = "recon" })  -- false
+
+-- Fails: wrong category
+PhobosLib.conditionsPass(entry, { difficulty = 3, category = "market" }) -- false
+
+-- No conditions = always passes
+PhobosLib.conditionsPass({ text = "Hello" }, {})  -- true
+```
+
+### `PhobosLib.pickWeighted(entries, ctx)` → table|nil
+
+Select a random entry from a weighted pool. Filters entries by `conditionsPass`, sums remaining weights, picks via `ZombRand(totalWeight)` and walks cumulative weights.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `entries` | table[]\|nil | Array of `{text, weight, id, conditions}`. Nil-safe — returns `nil` |
+| `ctx` | table\|nil | Context table passed to `conditionsPass` for filtering |
+
+**Returns:** The selected entry table, or `nil` if no valid entries remain after filtering.
+
+**Usage — weighted random text selection:**
+
+```lua
+local pool = {
+    { text = "All clear on frequency {freq}.", weight = 5, id = "clear" },
+    { text = "Interference detected on {freq}.", weight = 2, id = "noise" },
+    { text = "Emergency broadcast on {freq}!", weight = 1, id = "emergency",
+      conditions = { minDifficulty = 3 } },
+}
+
+local picked = PhobosLib.pickWeighted(pool, { difficulty = 4 })
+if picked then
+    local msg = PhobosLib.resolveTokens(picked.text, { freq = "91.5 MHz" })
+end
+```
+
+### `PhobosLib.avoidRecent(entryId, history, maxSize)` → boolean
+
+Anti-repetition guard. Returns `false` if `entryId` is already in the `history` array (recently used). Otherwise appends `entryId` to `history`, trims to `maxSize` by removing oldest entries, and returns `true`.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `entryId` | string | ID to check and record |
+| `history` | table\|nil | Array of recent IDs (mutated in place). Nil-safe — returns `true` |
+| `maxSize` | number\|nil | Maximum history size (default 10) |
+
+**Returns:** `true` if `entryId` was NOT recently used; `false` if it was.
+
+**Usage — prevent repeated messages:**
+
+```lua
+local recentMessages = {}
+
+local picked = PhobosLib.pickWeighted(pool, ctx)
+if picked and PhobosLib.avoidRecent(picked.id, recentMessages, 5) then
+    -- Use picked.text — it hasn't appeared in the last 5 selections
+else
+    -- Re-roll or use fallback
+end
+```
+
+---
+
 ## Cross-Module Communication
 
 When a module depends on another module that may not be present (optional

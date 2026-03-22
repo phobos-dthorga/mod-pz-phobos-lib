@@ -1074,6 +1074,116 @@ end
 
 
 ---------------------------------------------------------------
+-- Text Compositor
+---------------------------------------------------------------
+
+--- Replace {key} placeholders in text with values from a context table.
+--- If ctx[key] is nil, the placeholder is left unreplaced.
+--- Nil-safe on both args (returns "" if text is nil).
+---@param text string|nil  Template string with {key} placeholders
+---@param ctx table|nil    Key-value lookup table for replacements
+---@return string          Resolved string with placeholders replaced
+function PhobosLib.resolveTokens(text, ctx)
+    if not text then return "" end
+    if not ctx then return text end
+    return text:gsub("{(.-)}", function(key)
+        local val = ctx[key]
+        if val == nil then return "{" .. key .. "}" end
+        return tostring(val)
+    end)
+end
+
+
+--- Check if an entry's conditions match a context.
+--- Supports minDifficulty, maxDifficulty, and arbitrary keys where value
+--- is an array of allowed values. Returns true if entry has no conditions
+--- field. Nil-safe on both args (returns true if either is nil).
+---@param entry table|nil  Entry with optional conditions field
+---@param ctx table|nil    Context table to check against
+---@return boolean         True if all conditions pass or none exist
+function PhobosLib.conditionsPass(entry, ctx)
+    if not entry or not entry.conditions then return true end
+    if not ctx then return false end
+    local cond = entry.conditions
+    if cond.minDifficulty and (not ctx.difficulty or ctx.difficulty < cond.minDifficulty) then
+        return false
+    end
+    if cond.maxDifficulty and (not ctx.difficulty or ctx.difficulty > cond.maxDifficulty) then
+        return false
+    end
+    for key, allowed in pairs(cond) do
+        if key ~= "minDifficulty" and key ~= "maxDifficulty" then
+            if type(allowed) == "table" then
+                local ctxVal = ctx[key]
+                if ctxVal == nil then return false end
+                local found = false
+                for i = 1, #allowed do
+                    if allowed[i] == ctxVal then
+                        found = true
+                        break
+                    end
+                end
+                if not found then return false end
+            end
+        end
+    end
+    return true
+end
+
+
+--- Select a random entry from a weighted pool.
+--- Filters entries by conditionsPass(entry, ctx), sums remaining weights,
+--- picks via ZombRand and walks cumulative weights.
+--- Nil-safe on entries (returns nil).
+---@param entries table[]|nil  Array of {text=string, weight=number, id=string, conditions=table|nil}
+---@param ctx table|nil        Context table passed to conditionsPass
+---@return table|nil           The selected entry table, or nil if no valid entries
+function PhobosLib.pickWeighted(entries, ctx)
+    if not entries then return nil end
+    local valid = {}
+    local totalWeight = 0
+    for i = 1, #entries do
+        local e = entries[i]
+        if e and e.weight and PhobosLib.conditionsPass(e, ctx) then
+            valid[#valid + 1] = e
+            totalWeight = totalWeight + e.weight
+        end
+    end
+    if totalWeight <= 0 or #valid == 0 then return nil end
+    local roll = ZombRand(totalWeight)
+    local cumulative = 0
+    for i = 1, #valid do
+        cumulative = cumulative + valid[i].weight
+        if roll < cumulative then
+            return valid[i]
+        end
+    end
+    return valid[#valid]
+end
+
+
+--- Anti-repetition guard. Returns false if entryId is already in history.
+--- Otherwise appends entryId to history, trims to maxSize, and returns true.
+--- Nil-safe on history (returns true if nil).
+---@param entryId string       ID to check and record
+---@param history table|nil    Array of recent IDs (mutated in place)
+---@param maxSize number|nil   Maximum history size (default 10)
+---@return boolean             True if entryId was NOT recently used
+function PhobosLib.avoidRecent(entryId, history, maxSize)
+    if not history then return true end
+    maxSize = maxSize or 10
+    for i = 1, #history do
+        if history[i] == entryId then return false end
+    end
+    history[#history + 1] = entryId
+    while #history > maxSize do
+        table.remove(history, 1)
+    end
+    return true
+end
+
+
+---------------------------------------------------------------
 -- Deferred initialisation & throttling
 ---------------------------------------------------------------
 
