@@ -1,5 +1,45 @@
 [h1]PhobosLib — Changelog[/h1]
 
+
+[h2]v1.57.0 — PhobosLib v1.57.0[/h2]
+[list]
+[*] add getPlayerPerkLevel safe perk lookup (v1.57.0)
+[*] add filterByField utility (v1.56.0)
+[*] add infrastructure utilities — manhattanDistance, consumeItems, grantItems, checkRequirements (v1.55.0)
+[*] add getRegistryDisplayName utility (v1.54.0)
+[*] add formatPlayerLocation() for combined address+room display (v1.53.0)
+[*] add PhobosLib_ChunkedWriter for staggered file I/O (v1.52.0)
+[*] add lazyInit() and throttle() utilities (v1.51.0)
+[*] add PhobosLib.approach() smoothing utility (v1.50.0)
+[*] add Schema, Registry, and DataLoader modules (v1.49.0)
+[*] add math/table utilities (clamp, lerp, randFloat, round, map, filter)
+[*] add sanitiseUsername() to prevent JVM crash on special chars
+[*] add strict mode — sandbox-gated pcall bypass for debugging
+[*] add PhobosLib_Milestone generic milestone tracker
+[*] add findItemsByTag and countItemsByTag utilities
+[*] add PhobosLib.notifyOrSay() for unified PN/say fallback
+[*] add PhobosLib.generateId() unique ID generator
+[*] add automated changelog generation from conventional commits
+[*] add getItemDisplayName() and rollChance() utilities
+[*] (Fix) resolveAddress returns nil when no street or intersection found
+[*] (Fix) add missing _TAG argument to PhobosLib.debug calls in Address and World modules
+[*] (Fix) tostring() boot buffer flush to prevent __concat on nil
+[*] (Fix) make debug() and trace() nil-safe with tostring()
+[*] (Fix) harden hasTag pcall + add split() and hasTrait() utilities
+[*] (Fix) guard titleCase gsub callback against Kahlua null captures
+[*] add cross-module communication pattern to error-handling guide
+[*] add Per-Player ModData Access section
+[*] add Empty-Data Return Convention to error-handling guide
+[*] add Chunked File Writing section to error-handling.md
+[*] add lazyInit and throttle utility documentation
+[*] document logging levels and debug vs trace gating
+[*] sync deny-list with 2-arg debug/trace detection rule
+[*] add PZ API deny-list scanner to catch known-bad Java method calls
+[*] extract helpers, consolidate duplicates, bump v1.42.0
+[/list]
+
+[hr][/hr]
+
 [h2]v1.30.0 — PZ 42.15 OnCreate Compatibility (2026-03-18)[/h2]
 
 [h3]New Functions[/h3]
