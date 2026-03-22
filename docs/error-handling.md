@@ -690,3 +690,28 @@ if elecLevel < 5 then
 end
 -- proceed with wiring
 ```
+
+---
+
+## Cross-Module Communication
+
+When a module depends on another module that may not be present (optional
+cross-mod dependency, or a module from a different loading phase), use the
+safecall-require pattern:
+
+```lua
+local ok, OtherModule = PhobosLib.safecall(require, "OtherModule")
+if ok and OtherModule and OtherModule.someFunction then
+    PhobosLib.safecall(OtherModule.someFunction, arg1, arg2)
+end
+```
+
+Rules:
+
+- Never assume a module exists at call time — always guard
+- Prefer lazy require (inside the function that needs it) over top-level require
+  for optional deps
+- For hard dependencies (modules that MUST exist), use normal `require` at file
+  top
+- See POSnet `docs/design-guidelines.md` §28.5 for the full cross-system call
+  discipline
