@@ -693,6 +693,92 @@ end
 
 ---
 
+## Recipe & Configuration Utilities
+
+General-purpose helpers for item lookup, configuration resolution, and threshold-based tier matching. These reduce boilerplate in consumer mods that need to find items in recipe callbacks, read optional configuration, or map numeric values to discrete tiers.
+
+### `PhobosLib.findItemInList(items, fullType)` → item, index
+
+Find the first item in a list matching the given full type. Uses `PhobosLib.iterateItems()` internally for B42 ArrayList/table safety, and `PhobosLib.safecall()` on `getFullType` for defensive error handling.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `items` | any | Items parameter from OnCreate callback (ArrayList or table). Nil-safe — returns `nil, nil` |
+| `fullType` | string | Full item type to match (e.g. `"Base.Screwdriver"`) |
+
+**Returns:** `(item, index)` for the first match, or `(nil, nil)` if not found.
+
+**Usage — find a specific input in a recipe callback:**
+
+```lua
+function MyMod.onCreateChemicalBatch(items, result, player, recipe)
+    local flask, idx = PhobosLib.findItemInList(items, "ZVV.GlassFlask")
+    if flask then
+        local purity = PhobosLib.getModDataValue(flask, "purity", 0.5)
+        PhobosLib.setModDataValue(result, "purity", purity * 0.9)
+    end
+end
+```
+
+### `PhobosLib.getConfigurable(module, methodName, fallback)` → any
+
+Safely retrieve a configurable value from a module by calling a named getter method. Returns the fallback if the module is nil, the method does not exist, the call fails, or the result is nil. Uses `safecall` internally.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `module` | table\|nil | Module table to call the method on. Nil-safe — returns fallback |
+| `methodName` | string | Name of the getter method (e.g. `"getMaxRetries"`) |
+| `fallback` | any | Value returned when module, method, or result is nil |
+
+**Returns:** The method's return value, or `fallback`.
+
+**Usage — read optional cross-mod configuration:**
+
+```lua
+-- If POSnet is loaded, use its configured scan interval; otherwise default to 5
+local ok, POS_Config = PhobosLib.safecall(require, "POS_Config")
+local interval = PhobosLib.getConfigurable(
+    ok and POS_Config, "getScanInterval", 5
+)
+```
+
+### `PhobosLib.resolveThresholdTier(value, tiers, default)` → any
+
+Resolve a numeric value against a sorted threshold tier list. Walks tiers in order; returns the `result` of the first tier where `value <= tier.threshold`. Returns `default` if no tier matches. Nil-safe on both `value` and `tiers`.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `value` | number\|nil | Value to test against thresholds. Nil-safe — returns `default` |
+| `tiers` | table[]\|nil | Sorted array of `{threshold=number, result=any}`. Nil-safe — returns `default` |
+| `default` | any | Value returned when no tier matches or inputs are nil |
+
+**Returns:** The matching tier's `result`, or `default`.
+
+**Usage — map signal strength to quality label:**
+
+```lua
+local SIGNAL_TIERS = {
+    { threshold = 0.2, result = "critical" },
+    { threshold = 0.5, result = "weak" },
+    { threshold = 0.8, result = "moderate" },
+    { threshold = 1.0, result = "strong" },
+}
+
+local quality = PhobosLib.resolveThresholdTier(signalStrength, SIGNAL_TIERS, "unknown")
+-- signalStrength = 0.3 → "weak"
+-- signalStrength = 0.9 → "strong"
+-- signalStrength = 1.5 → "unknown" (no tier matches)
+-- signalStrength = nil  → "unknown" (nil-safe)
+```
+
+---
+
 ## Cross-Module Communication
 
 When a module depends on another module that may not be present (optional

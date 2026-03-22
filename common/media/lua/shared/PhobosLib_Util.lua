@@ -1014,6 +1014,66 @@ end
 
 
 ---------------------------------------------------------------
+-- Recipe & Configuration Utilities
+---------------------------------------------------------------
+
+--- Find the first item in a list matching the given full type.
+--- Uses PhobosLib.iterateItems() for B42 ArrayList/table safety.
+---@param items any   Items parameter (ArrayList or table) — nil-safe
+---@param fullType string  Full item type to match (e.g. "Base.Screwdriver")
+---@return InventoryItem|nil item  First matching item, or nil
+---@return number|nil        index Index of the match, or nil
+function PhobosLib.findItemInList(items, fullType)
+    if not items or not fullType then return nil, nil end
+    for i, item in PhobosLib.iterateItems(items) do
+        if item then
+            local ok, ft = PhobosLib.safecall(item.getFullType, item)
+            if ok and ft == fullType then
+                return item, i
+            end
+        end
+    end
+    return nil, nil
+end
+
+--- Get a configurable value from a module, with fallback.
+--- Safely calls module[methodName]() and returns the result, or fallback
+--- if module, method, or result is nil. Uses safecall internally.
+---@param module table|nil   Module table (may be nil)
+---@param methodName string  Name of the getter method on module
+---@param fallback any       Value returned when module/method/result is nil
+---@return any               The method's return value, or fallback
+function PhobosLib.getConfigurable(module, methodName, fallback)
+    if not module then return fallback end
+    if not module[methodName] then return fallback end
+    local ok, result = PhobosLib.safecall(module[methodName], module)
+    if ok and result ~= nil then
+        return result
+    end
+    return fallback
+end
+
+--- Resolve a value against a sorted threshold tier list.
+--- Walks tiers in order; returns the result of the first tier where
+--- value <= tier.threshold. Returns default if no tier matches.
+--- Nil-safe on value and tiers (returns default).
+---@param value number|nil     Value to test against thresholds
+---@param tiers table[]|nil    Sorted array of {threshold=number, result=any}
+---@param default any          Value returned when no tier matches
+---@return any                 The matching tier's result, or default
+function PhobosLib.resolveThresholdTier(value, tiers, default)
+    if value == nil or not tiers then return default end
+    for i = 1, #tiers do
+        local tier = tiers[i]
+        if tier and tier.threshold and value <= tier.threshold then
+            return tier.result
+        end
+    end
+    return default
+end
+
+
+---------------------------------------------------------------
 -- Deferred initialisation & throttling
 ---------------------------------------------------------------
 
