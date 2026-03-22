@@ -58,6 +58,7 @@ read_globals = {
     "ISCurePlantAction",
     "ISLabel",
     "ISFarmingCursorMouse",
+    "ISPanel",
     "ISPanelJoypad",
     "ISRichTextPanel",
     "ISScrollingListBox",
