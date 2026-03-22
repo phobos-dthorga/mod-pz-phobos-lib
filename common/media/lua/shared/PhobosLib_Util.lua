@@ -979,6 +979,24 @@ function PhobosLib.filter(tbl, predicate)
     return result
 end
 
+--- Filter an array by field equality.
+--- Returns a new array containing only entries where entry[fieldName] == value.
+--- Returns {} on nil input (§25.6 collection convention).
+---@param array table Array of tables to filter
+---@param fieldName string Field name to check on each entry
+---@param value any Value to match (equality check)
+---@return table[] Filtered results (new array, never nil)
+function PhobosLib.filterByField(array, fieldName, value)
+    if not array or not fieldName then return {} end
+    local results = {}
+    for i = 1, #array do
+        if array[i] and array[i][fieldName] == value then
+            results[#results + 1] = array[i]
+        end
+    end
+    return results
+end
+
 
 ---------------------------------------------------------------
 -- Deferred initialisation & throttling

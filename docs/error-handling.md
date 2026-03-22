@@ -96,6 +96,33 @@ Transform each element of an array-style table. `fn(value, index)` returns the n
 ### `PhobosLib.filter(tbl, predicate)` → table
 Keep elements where `predicate(value, index)` returns true. Returns a new table.
 
+## Field-Based Filtering
+
+### `PhobosLib.filterByField(array, fieldName, value)` → table[]
+
+Filter an array of tables by field equality. Returns a new array containing only entries where `entry[fieldName] == value`. Returns `{}` on nil input (§25.6 collection convention).
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `array` | table | Array of tables to filter |
+| `fieldName` | string | Field name to check on each entry |
+| `value` | any | Value to match (equality check) |
+
+**Returns:** New array containing only matching entries (never nil).
+
+**Usage — filter agents by behaviour:**
+
+```lua
+local allAgents = registry:getAll()
+local traders = PhobosLib.filterByField(allAgents, "behaviour", "trader")
+-- traders contains only entries where entry.behaviour == "trader"
+
+-- Safe on nil input
+local empty = PhobosLib.filterByField(nil, "id", "foo")  -- returns {}
+```
+
 ## Deferred Initialisation & Throttling
 
 ### `PhobosLib.lazyInit(initFn)`
