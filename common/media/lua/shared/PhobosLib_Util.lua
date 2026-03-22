@@ -1184,6 +1184,258 @@ end
 
 
 ---------------------------------------------------------------
+-- Terminal UI Utilities
+---------------------------------------------------------------
+
+--- Default colours for terminal UI elements.
+local DEFAULT_TAB_ACTIVE_COLOUR   = { r = 0.9, g = 0.9, b = 0.9, a = 1.0 }
+local DEFAULT_TAB_INACTIVE_COLOUR = { r = 0.5, g = 0.5, b = 0.5, a = 1.0 }
+local DEFAULT_TAB_HEIGHT          = 25
+local DEFAULT_TAB_WIDTH           = 100
+local DEFAULT_TAB_GAP             = 2
+local DEFAULT_BADGE_FONT          = UIFont.Small
+
+
+--- Create a tabbed view with tab header buttons and a content panel.
+--- Returns a controller table for switching tabs and cleanup.
+---@param panel  table   ISPanel parent to add children to
+---@param tabs   table[] Array of { id=string, labelKey=string, renderFn=function(contentPanel, y) }
+---@param opts   table|nil  Optional: { x, y, width, height, activeTab, colours }
+---@return table controller { switchTab(id), getActiveTab(), contentPanel, destroy() }
+function PhobosLib.createTabbedView(panel, tabs, opts)
+    if not panel or not tabs or #tabs == 0 then return nil end
+    opts = opts or {}
+
+    local x       = opts.x or 0
+    local y       = opts.y or 0
+    local width   = opts.width or panel:getWidth()
+    local height  = opts.height or (panel:getHeight() - y)
+    local colours = opts.colours or {}
+    local activeColour   = colours.active or DEFAULT_TAB_ACTIVE_COLOUR
+    local inactiveColour = colours.inactive or DEFAULT_TAB_INACTIVE_COLOUR
+
+    local activeTabId = opts.activeTab or tabs[1].id
+    local tabButtons  = {}
+
+    -- Content panel below tab headers
+    local contentY = y + DEFAULT_TAB_HEIGHT + DEFAULT_TAB_GAP
+    local contentPanel = ISPanel:new(x, contentY, width, height - DEFAULT_TAB_HEIGHT - DEFAULT_TAB_GAP)
+    contentPanel:initialise()
+    contentPanel:instantiate()
+    panel:addChild(contentPanel)
+
+    --- Remove all children from the content panel.
+    local function clearContent()
+        local children = contentPanel:getControls()
+        if children then
+            for i = children:size() - 1, 0, -1 do
+                local child = children:get(i)
+                contentPanel:removeChild(child)
+            end
+        end
+    end
+
+    --- Render the active tab's content using safecall.
+    local function renderActiveTab()
+        clearContent()
+        for i = 1, #tabs do
+            if tabs[i].id == activeTabId and tabs[i].renderFn then
+                PhobosLib.safecall(tabs[i].renderFn, contentPanel, 0)
+                break
+            end
+        end
+    end
+
+    --- Update button colours to reflect active state.
+    local function updateButtonColours()
+        for id, btn in pairs(tabButtons) do
+            if id == activeTabId then
+                btn:setTextureColor(ColorInfo.new(activeColour.r, activeColour.g, activeColour.b, activeColour.a))
+                btn.textColor = activeColour
+            else
+                btn:setTextureColor(ColorInfo.new(inactiveColour.r, inactiveColour.g, inactiveColour.b, inactiveColour.a))
+                btn.textColor = inactiveColour
+            end
+        end
+    end
+
+    -- Create tab header buttons
+    local btnX = x
+    for i = 1, #tabs do
+        local tab = tabs[i]
+        local label = PhobosLib.safeGetText(tab.labelKey)
+        local btn = ISButton:new(btnX, y, DEFAULT_TAB_WIDTH, DEFAULT_TAB_HEIGHT, label, nil, nil)
+        btn:initialise()
+        btn:instantiate()
+        btn.internal = tab.id
+        btn.onclick = function()
+            activeTabId = tab.id
+            updateButtonColours()
+            renderActiveTab()
+        end
+        panel:addChild(btn)
+        tabButtons[tab.id] = btn
+        btnX = btnX + DEFAULT_TAB_WIDTH + DEFAULT_TAB_GAP
+    end
+
+    -- Initial render
+    updateButtonColours()
+    renderActiveTab()
+
+    -- Controller
+    local controller = {}
+
+    --- Switch to a tab by id.
+    ---@param id string Tab id to switch to
+    function controller.switchTab(id)
+        if not id then return end
+        for i = 1, #tabs do
+            if tabs[i].id == id then
+                activeTabId = id
+                updateButtonColours()
+                renderActiveTab()
+                return
+            end
+        end
+    end
+
+    --- Get the currently active tab id.
+    ---@return string
+    function controller.getActiveTab()
+        return activeTabId
+    end
+
+    --- Reference to the content panel for direct access.
+    controller.contentPanel = contentPanel
+
+    --- Destroy all created UI elements and clean up.
+    function controller.destroy()
+        for _, btn in pairs(tabButtons) do
+            panel:removeChild(btn)
+        end
+        panel:removeChild(contentPanel)
+        tabButtons = {}
+    end
+
+    return controller
+end
+
+
+--- Create a coloured text label for status/type indicators.
+--- Simple wrapper that enforces consistent badge sizing and font.
+---@param panel  table   ISPanel parent
+---@param x      number  X position
+---@param y      number  Y position
+---@param text   string  Text to display
+---@param colour table   { r, g, b, a } text colour
+---@return table         The ISLabel element
+function PhobosLib.createStatusBadge(panel, x, y, text, colour)
+    if not panel then return nil end
+    text = text or ""
+    colour = colour or DEFAULT_TAB_ACTIVE_COLOUR
+
+    local label = ISLabel:new(x, y, DEFAULT_TAB_HEIGHT, text, colour.r, colour.g, colour.b, colour.a, DEFAULT_BADGE_FONT, true)
+    label:initialise()
+    label:instantiate()
+    panel:addChild(label)
+    return label
+end
+
+
+--- Create a collapsible row with a header panel and a detail panel.
+--- The detail panel is hidden by default unless startExpanded is true.
+--- Detail content is populated lazily on first expand.
+---@param panel table  ISPanel parent
+---@param opts  table  { x, y, width, headerHeight, detailHeight, headerFn, detailFn, startExpanded }
+---@return table|nil   controller { toggle(), isExpanded(), destroy(), totalHeight() }
+function PhobosLib.createExpandableRow(panel, opts)
+    if not panel or not opts then return nil end
+
+    local x             = opts.x or 0
+    local y             = opts.y or 0
+    local width         = opts.width or panel:getWidth()
+    local headerHeight  = opts.headerHeight or DEFAULT_TAB_HEIGHT
+    local detailHeight  = opts.detailHeight or 50
+    local startExpanded = opts.startExpanded or false
+
+    local expanded       = startExpanded
+    local detailRendered = false
+
+    -- Header panel
+    local headerPanel = ISPanel:new(x, y, width, headerHeight)
+    headerPanel:initialise()
+    headerPanel:instantiate()
+    panel:addChild(headerPanel)
+
+    -- Detail panel (below header)
+    local detailPanel = ISPanel:new(x, y + headerHeight, width, detailHeight)
+    detailPanel:initialise()
+    detailPanel:instantiate()
+    detailPanel:setVisible(expanded)
+    panel:addChild(detailPanel)
+
+    -- Populate header content
+    if opts.headerFn then
+        PhobosLib.safecall(opts.headerFn, headerPanel)
+    end
+
+    --- Lazily render detail content on first expand.
+    local function ensureDetailRendered()
+        if detailRendered then return end
+        detailRendered = true
+        if opts.detailFn then
+            PhobosLib.safecall(opts.detailFn, detailPanel)
+        end
+    end
+
+    -- If starting expanded, render detail immediately
+    if expanded then
+        ensureDetailRendered()
+    end
+
+    -- Header click toggles detail visibility
+    headerPanel.onMouseUp = function(self, mouseX, mouseY)
+        expanded = not expanded
+        if expanded then ensureDetailRendered() end
+        detailPanel:setVisible(expanded)
+    end
+
+    -- Controller
+    local controller = {}
+
+    --- Toggle the expanded/collapsed state.
+    function controller.toggle()
+        expanded = not expanded
+        if expanded then ensureDetailRendered() end
+        detailPanel:setVisible(expanded)
+    end
+
+    --- Check if the row is currently expanded.
+    ---@return boolean
+    function controller.isExpanded()
+        return expanded
+    end
+
+    --- Destroy all created UI elements.
+    function controller.destroy()
+        panel:removeChild(headerPanel)
+        panel:removeChild(detailPanel)
+    end
+
+    --- Get the total height of the row (header only when collapsed, header + detail when expanded).
+    ---@return number
+    function controller.totalHeight()
+        if expanded then
+            return headerHeight + detailHeight
+        end
+        return headerHeight
+    end
+
+    return controller
+end
+
+
+---------------------------------------------------------------
 -- Deferred initialisation & throttling
 ---------------------------------------------------------------
 
