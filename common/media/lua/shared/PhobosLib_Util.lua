@@ -767,6 +767,129 @@ end
 
 
 ---------------------------------------------------------------
+-- Infrastructure Utilities
+---------------------------------------------------------------
+
+--- Compute Manhattan distance between two 3D points with optional Z-level penalty.
+---@param x1 number Source X coordinate
+---@param y1 number Source Y coordinate
+---@param z1 number Source Z coordinate (floor level)
+---@param x2 number Target X coordinate
+---@param y2 number Target Y coordinate
+---@param z2 number Target Z coordinate (floor level)
+---@param zPenalty number|nil Extra cost per Z-level difference (default 1)
+---@return number Total Manhattan distance including Z penalty
+function PhobosLib.manhattanDistance(x1, y1, z1, x2, y2, z2, zPenalty)
+    zPenalty = zPenalty or 1
+    return math.abs(x2 - x1) + math.abs(y2 - y1) + (math.abs(z2 - z1) * zPenalty)
+end
+
+
+--- Consume N items of a given type from the player's main inventory.
+--- Removes items one at a time via getFirstType/Remove loop.
+---@param player IsoPlayer The player whose inventory to consume from
+---@param fullType string Full item type (e.g. "Base.ElectricWire")
+---@param count number Number of items to consume
+---@return number Actual number consumed (may be less than count if inventory short)
+function PhobosLib.consumeItems(player, fullType, count)
+    if not player or not fullType or not count or count <= 0 then return 0 end
+    local inv = player:getInventory()
+    if not inv then return 0 end
+    local consumed = 0
+    for i = 1, count do
+        local item = inv:getFirstType(fullType)
+        if not item then break end
+        inv:Remove(item)
+        consumed = consumed + 1
+    end
+    return consumed
+end
+
+
+--- Grant N items of a given type to the player's main inventory.
+---@param player IsoPlayer The player to grant items to
+---@param fullType string Full item type (e.g. "Base.ElectricWire")
+---@param count number Number of items to grant
+---@return number Actual number granted
+function PhobosLib.grantItems(player, fullType, count)
+    if not player or not fullType or not count or count <= 0 then return 0 end
+    local inv = player:getInventory()
+    if not inv then return 0 end
+    local granted = 0
+    for i = 1, count do
+        inv:AddItem(fullType)
+        granted = granted + 1
+    end
+    return granted
+end
+
+
+--- Check whether a player meets a set of requirements (items, tools, skill).
+--- Returns a structured result suitable for tooltip generation.
+---@param player IsoPlayer The player to check
+---@param opts table Requirements table:
+---   items = {fullType, count} or nil — item type and quantity needed
+---   tools = {"Base.Screwdriver", "Base.Pliers"} or nil — tool types that must be in inventory
+---   minSkill = number or nil — minimum skill level required
+---   skillType = string or nil — PZ perk name (e.g. "Electrical")
+---@return table Result: { ok=bool, missingItems={type,need,have}, missingTools={type,...}, skillTooLow=bool, skillHave=n, skillNeed=n }
+function PhobosLib.checkRequirements(player, opts)
+    if not player or not opts then
+        return { ok = false, missingItems = {}, missingTools = {}, skillTooLow = false, skillHave = 0, skillNeed = 0 }
+    end
+
+    local result = {
+        ok = true,
+        missingItems = {},
+        missingTools = {},
+        skillTooLow = false,
+        skillHave = 0,
+        skillNeed = 0,
+    }
+
+    local inv = player:getInventory()
+
+    -- Check items
+    if opts.items and inv then
+        local itemType = opts.items[1]
+        local itemNeed = opts.items[2] or 1
+        local itemHave = inv:getCountType(itemType) or 0
+        if itemHave < itemNeed then
+            result.ok = false
+            result.missingItems = { type = itemType, need = itemNeed, have = itemHave }
+        end
+    end
+
+    -- Check tools
+    if opts.tools and inv then
+        for _, toolType in ipairs(opts.tools) do
+            if not inv:containsType(toolType) then
+                result.ok = false
+                table.insert(result.missingTools, toolType)
+            end
+        end
+    end
+
+    -- Check skill
+    if opts.minSkill and opts.skillType then
+        local perk = Perks.FromString(opts.skillType)
+        local skillHave = 0
+        if perk then
+            skillHave = player:getPerkLevel(perk)
+        end
+        result.skillHave = skillHave
+        result.skillNeed = opts.minSkill
+        if skillHave < opts.minSkill then
+            result.ok = false
+            result.skillTooLow = true
+        end
+    end
+
+    return result
+end
+
+
+---------------------------------------------------------------
 -- Math & Table Utilities
 ---------------------------------------------------------------
 

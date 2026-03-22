@@ -505,3 +505,131 @@ local zoneName = PhobosLib.getRegistryDisplayName(zoneRegistry, "rural_outpost")
 -- With explicit fallback
 local name = PhobosLib.getRegistryDisplayName(zoneRegistry, zoneId, "Unknown Zone")
 ```
+
+---
+
+## Infrastructure Utilities
+
+General-purpose helpers for distance calculations, inventory manipulation, and requirement checking. These reduce boilerplate in consumer mods that need spatial logic, item grants/consumes, or pre-condition validation.
+
+### `PhobosLib.manhattanDistance(x1, y1, z1, x2, y2, z2, zPenalty)` → number
+
+Compute Manhattan distance between two 3D points with an optional Z-level penalty multiplier.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `x1` | number | Source X coordinate |
+| `y1` | number | Source Y coordinate |
+| `z1` | number | Source Z coordinate (floor level) |
+| `x2` | number | Target X coordinate |
+| `y2` | number | Target Y coordinate |
+| `z2` | number | Target Z coordinate (floor level) |
+| `zPenalty` | number\|nil | Extra cost per Z-level difference (default 1) |
+
+**Returns:** Total Manhattan distance including Z penalty.
+
+**Formula:** `|x2-x1| + |y2-y1| + (|z2-z1| * zPenalty)`
+
+**Usage — proximity gating:**
+
+```lua
+local dist = PhobosLib.manhattanDistance(px, py, pz, tx, ty, tz, 5)
+if dist > 50 then
+    -- too far away
+end
+```
+
+### `PhobosLib.consumeItems(player, fullType, count)` → number
+
+Consume N items of a given type from the player's main inventory. Removes items one at a time via `getFirstType`/`Remove` loop.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `player` | IsoPlayer | The player whose inventory to consume from |
+| `fullType` | string | Full item type (e.g. `"Base.ElectricWire"`) |
+| `count` | number | Number of items to consume |
+
+**Returns:** Actual number consumed (may be less than `count` if inventory is short).
+
+**Usage — crafting cost:**
+
+```lua
+local consumed = PhobosLib.consumeItems(player, "Base.ElectricWire", 3)
+if consumed < 3 then
+    PhobosLib.say(player, "Not enough wire!")
+end
+```
+
+### `PhobosLib.grantItems(player, fullType, count)` → number
+
+Grant N items of a given type to the player's main inventory.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `player` | IsoPlayer | The player to grant items to |
+| `fullType` | string | Full item type (e.g. `"Base.ElectricWire"`) |
+| `count` | number | Number of items to grant |
+
+**Returns:** Actual number granted.
+
+**Usage — mission reward:**
+
+```lua
+PhobosLib.grantItems(player, "Base.ElectricWire", 5)
+```
+
+### `PhobosLib.checkRequirements(player, opts)` → table
+
+Check whether a player meets a set of requirements (items, tools, skill level). Returns a structured result suitable for tooltip generation or UI gating.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `player` | IsoPlayer | The player to check |
+| `opts` | table | Requirements table (see fields below) |
+
+**`opts` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | table\|nil | `{fullType, count}` — item type and quantity needed |
+| `tools` | table\|nil | Array of tool fullType strings that must be in inventory |
+| `minSkill` | number\|nil | Minimum skill level required |
+| `skillType` | string\|nil | PZ perk name (e.g. `"Electrical"`) |
+
+**Returns:** Result table with fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ok` | boolean | `true` if all requirements met |
+| `missingItems` | table | `{type, need, have}` or empty table |
+| `missingTools` | table | Array of missing tool fullType strings |
+| `skillTooLow` | boolean | `true` if skill check failed |
+| `skillHave` | number | Player's current skill level |
+| `skillNeed` | number | Required skill level |
+
+**Usage — pre-craft check with tooltip feedback:**
+
+```lua
+local req = PhobosLib.checkRequirements(player, {
+    items = {"Base.ElectricWire", 3},
+    tools = {"Base.Screwdriver"},
+    minSkill = 4,
+    skillType = "Electrical",
+})
+if not req.ok then
+    if req.skillTooLow then
+        PhobosLib.say(player, "Need Electrical " .. req.skillNeed)
+    end
+    if #req.missingTools > 0 then
+        PhobosLib.say(player, "Missing: " .. table.concat(req.missingTools, ", "))
+    end
+end
+```
