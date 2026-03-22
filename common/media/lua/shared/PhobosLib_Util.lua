@@ -1436,6 +1436,118 @@ end
 
 
 ---------------------------------------------------------------
+-- Discovery & Selection Utilities
+---------------------------------------------------------------
+
+--- Pick N random entries from an array without replacement.
+--- If count >= #pool, returns a copy of the entire pool.
+--- Optional weightFn(entry) returns numeric weight (higher = more likely).
+--- Uses ZombRand for PZ determinism. Never modifies the original pool.
+---@param pool table|nil   Array of entries to select from
+---@param count number     Number of entries to pick
+---@param weightFn fun(entry):number|nil  Optional weight function (nil = equal weight)
+---@return table           New array of selected entries (may be smaller than count)
+function PhobosLib.selectRandomFromPool(pool, count, weightFn)
+    if not pool or #pool == 0 then return {} end
+    count = count or 1
+    if count >= #pool then
+        local copy = {}
+        for i = 1, #pool do copy[i] = pool[i] end
+        return copy
+    end
+
+    -- Build working list with indices so we can remove without mutating original
+    local candidates = {}
+    for i = 1, #pool do
+        candidates[i] = { idx = i, entry = pool[i] }
+    end
+
+    local selected = {}
+    for _ = 1, count do
+        if #candidates == 0 then break end
+
+        if weightFn then
+            -- Weighted selection
+            local totalWeight = 0
+            for i = 1, #candidates do
+                local w = weightFn(candidates[i].entry) or 1
+                if w < 0 then w = 0 end
+                totalWeight = totalWeight + w
+            end
+            if totalWeight <= 0 then break end
+
+            local roll = ZombRand(math.floor(totalWeight * 1000)) / 1000
+            local cumulative = 0
+            local pickedIdx = 1
+            for i = 1, #candidates do
+                local w = weightFn(candidates[i].entry) or 1
+                if w < 0 then w = 0 end
+                cumulative = cumulative + w
+                if roll < cumulative then
+                    pickedIdx = i
+                    break
+                end
+            end
+            selected[#selected + 1] = candidates[pickedIdx].entry
+            table.remove(candidates, pickedIdx)
+        else
+            -- Equal weight: simple ZombRand pick
+            local pickedIdx = ZombRand(#candidates) + 1
+            selected[#selected + 1] = candidates[pickedIdx].entry
+            table.remove(candidates, pickedIdx)
+        end
+    end
+
+    return selected
+end
+
+
+--- Track a discovery for a player within a namespace.
+--- Uses PhobosLib.getPlayerModDataTable for storage. If the id already
+--- exists in the namespace table, returns false (already discovered).
+--- Otherwise stores metadata (or true if nil) and returns true.
+---@param player any        IsoPlayer (or any object with getModData())
+---@param namespace string  ModData sub-table key (e.g. "PIP_Discoveries")
+---@param id string         Unique identifier for the discovery
+---@param metadata any|nil  Data to store (defaults to true)
+---@return boolean          true if newly discovered, false if already known
+function PhobosLib.trackDiscovery(player, namespace, id, metadata)
+    if not player or not namespace or not id then return false end
+    local tbl = PhobosLib.getPlayerModDataTable(player, namespace)
+    if not tbl then return false end
+    if tbl[id] then return false end
+    if metadata == nil then metadata = true end
+    tbl[id] = metadata
+    return true
+end
+
+
+--- Check whether a discovery has been made.
+---@param player any        IsoPlayer
+---@param namespace string  ModData sub-table key
+---@param id string         Discovery identifier
+---@return boolean          true if discovered
+function PhobosLib.isDiscovered(player, namespace, id)
+    if not player or not namespace or not id then return false end
+    local tbl = PhobosLib.getPlayerModDataTable(player, namespace)
+    if not tbl then return false end
+    return tbl[id] ~= nil
+end
+
+
+--- Get all discoveries for a player within a namespace.
+--- Returns the full table (id -> metadata) or {} if none.
+---@param player any        IsoPlayer
+---@param namespace string  ModData sub-table key
+---@return table            id -> metadata mapping
+function PhobosLib.getDiscoveries(player, namespace)
+    if not player or not namespace then return {} end
+    local tbl = PhobosLib.getPlayerModDataTable(player, namespace)
+    return tbl or {}
+end
+
+
+---------------------------------------------------------------
 -- Deferred initialisation & throttling
 ---------------------------------------------------------------
 
