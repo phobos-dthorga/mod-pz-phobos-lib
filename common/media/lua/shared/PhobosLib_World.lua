@@ -542,6 +542,57 @@ function PhobosLib.getPlayerRoomName(player)
 end
 
 
+--- Minimum room name length to be considered valid.
+--- Single-letter room names (e.g. "B") from modded buildings are filtered out.
+local MIN_ROOM_NAME_LENGTH = 2
+
+--- Format a human-readable location string for the player's current position.
+--- Combines street address (via PhobosLib_Address) and room name when available.
+--- Filters out short/invalid room names from modded buildings.
+---
+--- Format priority:
+---   1. Street + valid room: "423 Main Street (Kitchen)"
+---   2. Street only: "423 Main Street"
+---   3. Valid room only: "Kitchen" (title-cased)
+---   4. Fallback: opts.fallback or "Unknown Location"
+---
+---@param player any IsoPlayer
+---@param opts table|nil Options: { fallback = string }
+---@return string Human-readable location
+function PhobosLib.formatPlayerLocation(player, opts)
+    opts = opts or {}
+    local fallback = opts.fallback or "Unknown Location"
+
+    if not player then return fallback end
+
+    -- Get room name
+    local roomName = PhobosLib.getPlayerRoomName(player)
+    local validRoom = roomName and #roomName >= MIN_ROOM_NAME_LENGTH
+
+    -- Get street address
+    local streetAddr = nil
+    local sq = nil
+    pcall(function() sq = player:getCurrentSquare() end)
+    if sq and PhobosLib_Address and PhobosLib_Address.resolveAddress then
+        local addr = PhobosLib_Address.resolveAddress(sq:getX(), sq:getY())
+        if addr and addr.street then
+            streetAddr = PhobosLib_Address.formatAddress(addr)
+        end
+    end
+
+    -- Combine based on available data
+    if streetAddr and validRoom then
+        return streetAddr .. " (" .. PhobosLib.titleCase(roomName) .. ")"
+    elseif streetAddr then
+        return streetAddr
+    elseif validRoom then
+        return PhobosLib.titleCase(roomName)
+    end
+
+    return fallback
+end
+
+
 --- Place a named marker on the PZ world map.
 --- Uses the WorldMarkers API to create a grid-square marker.
 ---@param id string Unique marker identifier (for later removal)

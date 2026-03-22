@@ -309,6 +309,12 @@ function PhobosLib_Address.resolveAddress(x, y)
         end
     end
 
+    -- Return nil when no address data was resolved (avoids returning a
+    -- table with all-nil named fields — see §25.6 Empty-Data Return Convention)
+    if not result.street and not result.intersection then
+        return nil
+    end
+
     return result
 end
 

@@ -749,6 +749,161 @@ function PhobosLib.getItemDisplayName(fullType)
 end
 
 
+--- Resolve a display name from a registry-backed definition.
+--- Looks up the definition by ID, reads its displayNameKey field,
+--- and returns the translated text via safeGetText.
+--- Enforces convention: registry definitions should have a displayNameKey field.
+---@param registry table     PhobosLib registry instance (from createRegistry)
+---@param id string          Definition ID to look up
+---@param fallback string|nil Fallback if definition not found (default: the ID itself)
+---@return string            Localised display name, or fallback
+function PhobosLib.getRegistryDisplayName(registry, id, fallback)
+    fallback = fallback or id
+    if not registry or not id then return fallback end
+    local def = registry:get(id)
+    if not def or not def.displayNameKey then return fallback end
+    return PhobosLib.safeGetText(def.displayNameKey, id)
+end
+
+
+--- Returns the player's level in a given perk, or 0 on any failure.
+--- Safe wrapper around player:getPerkLevel(Perks.FromString(perkId)).
+--- @param player IsoPlayer
+--- @param perkId string  -- e.g. "Electricity", "Passiv"
+--- @return number level  -- 0..10, or 0 on nil/error
+function PhobosLib.getPlayerPerkLevel(player, perkId)
+    if not player or not perkId then return 0 end
+    local ok, perk = PhobosLib.safecall(Perks.FromString, perkId)
+    if not ok or not perk then return 0 end
+    local ok2, level = PhobosLib.safecall(player.getPerkLevel, player, perk)
+    if not ok2 or not level then return 0 end
+    return level
+end
+
+
+---------------------------------------------------------------
+-- Infrastructure Utilities
+---------------------------------------------------------------
+
+--- Compute Manhattan distance between two 3D points with optional Z-level penalty.
+---@param x1 number Source X coordinate
+---@param y1 number Source Y coordinate
+---@param z1 number Source Z coordinate (floor level)
+---@param x2 number Target X coordinate
+---@param y2 number Target Y coordinate
+---@param z2 number Target Z coordinate (floor level)
+---@param zPenalty number|nil Extra cost per Z-level difference (default 1)
+---@return number Total Manhattan distance including Z penalty
+function PhobosLib.manhattanDistance(x1, y1, z1, x2, y2, z2, zPenalty)
+    zPenalty = zPenalty or 1
+    return math.abs(x2 - x1) + math.abs(y2 - y1) + (math.abs(z2 - z1) * zPenalty)
+end
+
+
+--- Consume N items of a given type from the player's main inventory.
+--- Removes items one at a time via getFirstType/Remove loop.
+---@param player IsoPlayer The player whose inventory to consume from
+---@param fullType string Full item type (e.g. "Base.ElectricWire")
+---@param count number Number of items to consume
+---@return number Actual number consumed (may be less than count if inventory short)
+function PhobosLib.consumeItems(player, fullType, count)
+    if not player or not fullType or not count or count <= 0 then return 0 end
+    local inv = player:getInventory()
+    if not inv then return 0 end
+    local consumed = 0
+    for i = 1, count do
+        local item = inv:getFirstType(fullType)
+        if not item then break end
+        inv:Remove(item)
+        consumed = consumed + 1
+    end
+    return consumed
+end
+
+
+--- Grant N items of a given type to the player's main inventory.
+---@param player IsoPlayer The player to grant items to
+---@param fullType string Full item type (e.g. "Base.ElectricWire")
+---@param count number Number of items to grant
+---@return number Actual number granted
+function PhobosLib.grantItems(player, fullType, count)
+    if not player or not fullType or not count or count <= 0 then return 0 end
+    local inv = player:getInventory()
+    if not inv then return 0 end
+    local granted = 0
+    for i = 1, count do
+        inv:AddItem(fullType)
+        granted = granted + 1
+    end
+    return granted
+end
+
+
+--- Check whether a player meets a set of requirements (items, tools, skill).
+--- Returns a structured result suitable for tooltip generation.
+---@param player IsoPlayer The player to check
+---@param opts table Requirements table:
+---   items = {fullType, count} or nil — item type and quantity needed
+---   tools = {"Base.Screwdriver", "Base.Pliers"} or nil — tool types that must be in inventory
+---   minSkill = number or nil — minimum skill level required
+---   skillType = string or nil — PZ perk name (e.g. "Electrical")
+---@return table Result: { ok=bool, missingItems={type,need,have}, missingTools={type,...}, skillTooLow=bool, skillHave=n, skillNeed=n }
+function PhobosLib.checkRequirements(player, opts)
+    if not player or not opts then
+        return { ok = false, missingItems = {}, missingTools = {}, skillTooLow = false, skillHave = 0, skillNeed = 0 }
+    end
+
+    local result = {
+        ok = true,
+        missingItems = {},
+        missingTools = {},
+        skillTooLow = false,
+        skillHave = 0,
+        skillNeed = 0,
+    }
+
+    local inv = player:getInventory()
+
+    -- Check items
+    if opts.items and inv then
+        local itemType = opts.items[1]
+        local itemNeed = opts.items[2] or 1
+        local itemHave = inv:getCountType(itemType) or 0
+        if itemHave < itemNeed then
+            result.ok = false
+            result.missingItems = { type = itemType, need = itemNeed, have = itemHave }
+        end
+    end
+
+    -- Check tools
+    if opts.tools and inv then
+        for _, toolType in ipairs(opts.tools) do
+            if not inv:containsType(toolType) then
+                result.ok = false
+                table.insert(result.missingTools, toolType)
+            end
+        end
+    end
+
+    -- Check skill
+    if opts.minSkill and opts.skillType then
+        local perk = Perks.FromString(opts.skillType)
+        local skillHave = 0
+        if perk then
+            skillHave = player:getPerkLevel(perk)
+        end
+        result.skillHave = skillHave
+        result.skillNeed = opts.minSkill
+        if skillHave < opts.minSkill then
+            result.ok = false
+            result.skillTooLow = true
+        end
+    end
+
+    return result
+end
+
+
 ---------------------------------------------------------------
 -- Math & Table Utilities
 ---------------------------------------------------------------
@@ -799,6 +954,17 @@ function PhobosLib.round(value, decimals)
 end
 
 
+--- Smoothly approach a target value at a given rate per tick.
+--- Formula: current + (target - current) * rate
+---@param current number  Current value
+---@param target  number  Target value to approach
+---@param rate    number  Approach rate (0.0 = no change, 1.0 = instant snap)
+---@return number         New value closer to target
+function PhobosLib.approach(current, target, rate)
+    return current + (target - current) * rate
+end
+
+
 --- Transform each element of an array-style table using a function.
 --- Returns a new table; the original is not modified.
 ---@param tbl table              Array-style table
@@ -826,4 +992,63 @@ function PhobosLib.filter(tbl, predicate)
         end
     end
     return result
+end
+
+--- Filter an array by field equality.
+--- Returns a new array containing only entries where entry[fieldName] == value.
+--- Returns {} on nil input (§25.6 collection convention).
+---@param array table Array of tables to filter
+---@param fieldName string Field name to check on each entry
+---@param value any Value to match (equality check)
+---@return table[] Filtered results (new array, never nil)
+function PhobosLib.filterByField(array, fieldName, value)
+    if not array or not fieldName then return {} end
+    local results = {}
+    for i = 1, #array do
+        if array[i] and array[i][fieldName] == value then
+            results[#results + 1] = array[i]
+        end
+    end
+    return results
+end
+
+
+---------------------------------------------------------------
+-- Deferred initialisation & throttling
+---------------------------------------------------------------
+
+--- Create a lazy-init guard that runs initFn exactly once on first call.
+--- Subsequent calls are a single boolean check (no-op).
+--- Use to defer expensive module initialisation to first access.
+---@param initFn fun() One-time initialisation function
+---@return fun()        Guard function — call before accessing module state
+function PhobosLib.lazyInit(initFn)
+    local done = false
+    return function()
+        if done then return end
+        done = true
+        initFn()
+    end
+end
+
+
+--- Wrap a function so it only executes once every N game-minutes.
+--- Returns a new function suitable for Events.EveryOneMinute.Add().
+--- The wrapped function fires immediately on first call, then skips
+--- subsequent calls until intervalMinutes game-minutes have elapsed.
+---@param fn               fun()   Function to throttle
+---@param intervalMinutes  number  Minimum game-minutes between executions
+---@return fun()                   Throttled wrapper function
+function PhobosLib.throttle(fn, intervalMinutes)
+    local lastMinute = -1
+    return function()
+        local gt = getGameTime and getGameTime()
+        if not gt then return end
+        local now = math.floor(gt:getWorldAgeHours() * 60)
+        if lastMinute >= 0 and (now - lastMinute) < intervalMinutes then
+            return
+        end
+        lastMinute = now
+        fn()
+    end
 end
