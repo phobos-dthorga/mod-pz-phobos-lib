@@ -20,6 +20,12 @@
 -- Each registry stores definitions keyed by a configurable ID
 -- field, validates against a PhobosLib_Schema definition, and
 -- provides safe lookup/enumeration.
+--
+-- Supports optional schema version migration: when a definition
+-- has schemaVersion < registry.schemaVersion, registered
+-- migrator functions run sequentially to upgrade the definition
+-- in-place before validation. Non-breaking — registries without
+-- schemaVersion/migrators work exactly as before.
 ---------------------------------------------------------------
 
 local _DEFAULT_TAG = "[PhobosLib:Registry]"
@@ -46,6 +52,40 @@ function RegistryMT:register(def)
         local msg = "definition must be a table"
         PhobosLib.debug("PhobosLib", self._tag, msg)
         return false, {{ field = "*", message = msg, value = def }}
+    end
+
+    -- Schema version migration: upgrade definition in-place if needed.
+    -- Only runs when the registry has schemaVersion + migrators configured
+    -- AND the definition's schemaVersion is lower than the registry's.
+    if self._schemaVersion and def.schemaVersion
+            and type(def.schemaVersion) == "number"
+            and def.schemaVersion < self._schemaVersion
+            and self._migrators then
+        local startVersion = def.schemaVersion
+        for v = startVersion, self._schemaVersion - 1 do
+            local migrator = self._migrators[v]
+            if migrator then
+                local mOk, mErr = PhobosLib.safecall(migrator, def)
+                if mOk then
+                    def.schemaVersion = v + 1
+                else
+                    PhobosLib.warn("PhobosLib", self._tag,
+                        "Migration v" .. tostring(v) .. "→v" .. tostring(v + 1)
+                        .. " failed for '" .. tostring(def[self._idField] or "?")
+                        .. "': " .. tostring(mErr))
+                end
+            else
+                -- No migrator for this step; bump version anyway
+                -- (allows skipping intermediate versions if no changes)
+                def.schemaVersion = v + 1
+            end
+        end
+        if def.schemaVersion > startVersion then
+            PhobosLib.debug("PhobosLib", self._tag,
+                "Migrated '" .. tostring(def[self._idField] or "?")
+                .. "' from schema v" .. tostring(startVersion)
+                .. " to v" .. tostring(def.schemaVersion))
+        end
     end
 
     -- Apply defaults before validation
@@ -143,6 +183,8 @@ end
 ---   idField:        string  (unique key field, default "id")
 ---   allowOverwrite: boolean (allow re-registration, default false)
 ---   tag:            string  (debug log prefix)
+---   schemaVersion:  number  (optional — current schema version for migration)
+---   migrators:      table   (optional — { [fromVersion] = function(def) } upgrade functions)
 --- @return table Registry instance
 function PhobosLib.createRegistry(opts)
     opts = opts or {}
@@ -155,6 +197,8 @@ function PhobosLib.createRegistry(opts)
         _tag            = opts.tag or _DEFAULT_TAG,
         _defs           = {},
         _sealed         = false,
+        _schemaVersion  = opts.schemaVersion or nil,
+        _migrators      = opts.migrators or nil,
     }, RegistryMT)
 
     return registry
