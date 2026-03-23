@@ -1679,3 +1679,49 @@ function PhobosLib.createScrollPanel(parent, x, y, w, h)
     parent:addChild(panel)
     return panel
 end
+
+
+---------------------------------------------------------------
+-- Rolling Buffer
+---------------------------------------------------------------
+
+--- Create a generic capped FIFO buffer. Items are pushed to the front;
+--- oldest items are evicted when maxSize is exceeded.
+--- Useful for bounded event feeds, notification history, etc.
+---@param maxSize number  Maximum number of items to retain
+---@return table  Buffer object with push/getAll/clear/count methods
+function PhobosLib.createRollingBuffer(maxSize)
+    local buf = {
+        _items = {},
+        _max = maxSize or 20,
+    }
+
+    --- Push an item to the front of the buffer.
+    --- If the buffer exceeds maxSize, the oldest item is evicted.
+    ---@param item any
+    function buf:push(item)
+        table.insert(self._items, 1, item)
+        while #self._items > self._max do
+            self._items[#self._items] = nil
+        end
+    end
+
+    --- Get all items (newest first).
+    ---@return table
+    function buf:getAll()
+        return self._items
+    end
+
+    --- Clear all items from the buffer.
+    function buf:clear()
+        self._items = {}
+    end
+
+    --- Get the current number of items.
+    ---@return number
+    function buf:count()
+        return #self._items
+    end
+
+    return buf
+end
