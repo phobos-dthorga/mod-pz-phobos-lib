@@ -39,7 +39,7 @@ A shared utility library for Project Zomboid mods (Build 42 focused).
 - Improve resilience to minor B42 API changes through safe wrappers
 
 <p align="center">
-  <img src="docs/images/modules-banner.png" alt="PhobosLib Modules" width="200">
+  <img src="docs/architecture/images/modules-banner.png" alt="PhobosLib Modules" width="200">
 </p>
 
 ## Modules
@@ -85,7 +85,10 @@ Public functions in PhobosLib should be treated as API surface. Changes should:
 
 ## Documentation
 
-- [Module Overview & API Reference](docs/diagrams/module-overview.md) — All 24 modules (13 shared + 11 client/server) with function signatures, parameters, and descriptions
+- [Module Overview & API Reference](docs/architecture/diagrams/module-overview.md) — All modules with function signatures, parameters, and descriptions
+- [Getting Started (for mod developers)](docs/guides/getting-started.md) — Add PhobosLib as a dependency, key modules, quick examples
+- [For Players](docs/guides/for-players.md) — What PhobosLib is and why you have it
+- [FAQ](docs/guides/faq.md) — Common questions
 
 See [docs/README.md](docs/README.md) for the full index.
 

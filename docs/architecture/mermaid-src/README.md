@@ -20,6 +20,8 @@
 Standalone `.mmd` diagram sources for CLI rendering.
 These are the same diagrams embedded in [`../diagrams/*.md`](../diagrams/), extracted for batch processing.
 
+> **Note:** This directory was moved from `docs/mermaid-src/` to `docs/architecture/mermaid-src/` as part of the docs restructure.
+
 ## Files
 
 | File | Diagram |

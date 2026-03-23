@@ -17,22 +17,35 @@
 
 # PhobosLib Documentation
 
-Technical reference for the PhobosLib shared utility library.
+PhobosLib is a shared utility library for Project Zomboid Build 42 mods. It is a dependency -- players install it because other mods require it.
 
-## Contents
+## Guides
+
+| Document | Audience | Description |
+|----------|----------|-------------|
+| [Getting Started](guides/getting-started.md) | Mod developers | Add PhobosLib as a dependency, key modules, quick examples |
+| [For Players](guides/for-players.md) | Players | What PhobosLib is, installation, troubleshooting |
+| [FAQ](guides/faq.md) | Everyone | Common questions about PhobosLib |
+
+## Architecture & API Reference
 
 | Document | Description |
 |----------|-------------|
-| [Module Overview & API Reference](diagrams/module-overview.md) | All 24 modules (13 shared + 11 client/server) with function signatures, parameters, and descriptions |
+| [Module Overview & API Reference](architecture/diagrams/module-overview.md) | All modules with function signatures, parameters, and descriptions |
+| [Data Systems Reference](architecture/data-systems-reference.md) | Schema, Registry, and DataLoader systems |
+| [UI Reference](architecture/ui-reference.md) | Tooltip, Popup, RecipeFilter, and other client-side modules |
+| [Utilities Reference](architecture/utilities-reference.md) | Util, Sandbox, Debug, and other shared helpers |
+| [Error Handling](architecture/error-handling.md) | safecall patterns, Strict Mode, and error propagation |
 
-PhobosLib is a dependency library with no user-facing recipes, items, or sandbox options. It provides safe wrappers, helpers, and reusable systems for all Phobos PZ mods.
+## Diagrams & Images
 
-All diagrams use [Mermaid.js](https://mermaid.js.org/) syntax and render natively on GitHub.
+Pre-rendered PNG diagrams are in [`architecture/images/`](architecture/images/) for use in Steam Workshop descriptions and Discord.
 
-## Exported Images
+Mermaid `.mmd` source files for CLI re-rendering are in [`architecture/mermaid-src/`](architecture/mermaid-src/). See the [mermaid-src README](architecture/mermaid-src/README.md) for batch render instructions.
 
-Pre-rendered PNG versions are in [`images/`](images/) for use in Steam Workshop descriptions and Discord.
+## Steam Workshop
 
-## Mermaid Sources
-
-Standalone `.mmd` source files for CLI re-rendering are in [`mermaid-src/`](mermaid-src/). See the [README](mermaid-src/README.md) for batch render instructions.
+| File | Description |
+|------|-------------|
+| [steam-workshop-description.bbcode](steam-workshop-description.bbcode) | Workshop page description |
+| [steam-workshop-changelog.bbcode](steam-workshop-changelog.bbcode) | Workshop changelog |
