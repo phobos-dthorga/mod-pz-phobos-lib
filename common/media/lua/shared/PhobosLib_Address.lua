@@ -173,8 +173,64 @@ local function loadHardcodedStreetData(rawData)
     end
 end
 
+--- Get the loaded world's coordinate bounds from MetaGrid.
+--- Returns nil if the world isn't loaded yet (shouldn't happen
+--- since loadStreetData is deferred to first query during gameplay).
+---@return table|nil { minX, maxX, minY, maxY } in world tiles
+local function getLoadedWorldBounds()
+    local worldOk, world = pcall(getWorld)
+    if not worldOk or not world then return nil end
+    local mg = world:getMetaGrid()
+    if not mg then return nil end
+    -- MetaGrid coordinates are in cells (300 tiles each)
+    return {
+        minX = mg:getMinX() * 300,
+        maxX = (mg:getMaxX() + 1) * 300,
+        minY = mg:getMinY() * 300,
+        maxY = (mg:getMaxY() + 1) * 300,
+    }
+end
+
+--- Check if a street has at least one segment endpoint within bounds.
+---@param street table { name, segments = { {x1,y1,x2,y2}, ... } }
+---@param bounds table { minX, maxX, minY, maxY }
+---@return boolean
+local function isStreetInBounds(street, bounds)
+    for _, seg in ipairs(street.segments) do
+        -- Check either endpoint
+        if (seg[1] >= bounds.minX and seg[1] <= bounds.maxX
+                and seg[2] >= bounds.minY and seg[2] <= bounds.maxY)
+            or (seg[3] >= bounds.minX and seg[3] <= bounds.maxX
+                and seg[4] >= bounds.minY and seg[4] <= bounds.maxY) then
+            return true
+        end
+    end
+    return false
+end
+
+--- Filter hardcoded streets to only those within the loaded world.
+--- Prevents phantom street names on custom maps that don't include
+--- vanilla Knox County areas.
+---@param bounds table|nil World bounds; nil = no filtering (keep all)
+---@return number Number of streets removed
+local function filterByWorldBounds(bounds)
+    if not bounds or not streets then return 0 end
+    local kept = {}
+    local removed = 0
+    for _, street in ipairs(streets) do
+        if isStreetInBounds(street, bounds) then
+            kept[#kept + 1] = street
+        else
+            removed = removed + 1
+        end
+    end
+    streets = kept
+    return removed
+end
+
 --- Load street data using three-tier fallback:
 --- 1. PhobosLib_StreetData (hardcoded Knox County, ~1087 segments)
+---    → filtered by loaded world bounds (prevents phantom streets)
 --- 2. streets.xml from all loaded map directories
 --- 3. (raw coordinates — handled at query time, no loading needed)
 local function loadStreetData()
@@ -188,6 +244,16 @@ local function loadStreetData()
     if ok and type(rawData) == "table" then
         loadHardcodedStreetData(rawData)
         hardcodedCount = #streets
+    end
+
+    -- Filter hardcoded streets by loaded world bounds
+    -- (prevents returning Knox County street names on custom-only maps)
+    local filteredOut = 0
+    if hardcodedCount > 0 then
+        local bounds = getLoadedWorldBounds()
+        if bounds then
+            filteredOut = filterByWorldBounds(bounds)
+        end
     end
 
     -- Tier 2: streets.xml from map directories (mod-added maps)
@@ -208,10 +274,15 @@ local function loadStreetData()
     buildGridIndex()
 
     if PhobosLib and PhobosLib.debug then
+        local filterMsg = ""
+        if filteredOut > 0 then
+            filterMsg = ", " .. filteredOut .. " filtered out-of-bounds"
+        end
         PhobosLib.debug("PhobosLib", "[Address]",
             "Loaded " .. #streets .. " streets ("
-            .. hardcodedCount .. " hardcoded + "
-            .. xmlCount .. " from streets.xml)")
+            .. (hardcodedCount - filteredOut) .. " hardcoded + "
+            .. xmlCount .. " from streets.xml"
+            .. filterMsg .. ")")
     end
 end
 
