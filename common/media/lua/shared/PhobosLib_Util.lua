@@ -1588,16 +1588,16 @@ function PhobosLib.throttle(fn, intervalMinutes)
 end
 
 
---- Create a stencil-clipped scrolling ISPanel.
+--- Create a scrolling ISPanel with overflow clipping.
 --- Content taller than the panel height scrolls with mouse wheel.
---- The panel has transparent background and border so it blends with
---- any parent container. Use setScrollChildren(true) for child clipping.
+--- Uses stencil rect to clip child widgets that extend beyond the
+--- panel bounds during scroll. Transparent background for blending.
 ---@param parent any   ISPanel parent to add the scroll panel to
 ---@param x      number X position relative to parent
 ---@param y      number Y position relative to parent
 ---@param w      number Width
 ---@param h      number Height
----@return any          ISPanel with scroll and stencil clipping enabled
+---@return any          ISPanel with scroll and overflow clipping
 function PhobosLib.createScrollPanel(parent, x, y, w, h)
     local panel = ISPanel:new(x, y, w, h)
     panel.backgroundColor = { r = 0, g = 0, b = 0, a = 0 }
