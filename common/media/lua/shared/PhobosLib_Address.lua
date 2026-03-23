@@ -16,11 +16,16 @@
 
 ---------------------------------------------------------------
 -- PhobosLib_Address.lua
--- Street address resolution from PZ streets.xml data.
+-- Street address resolution with three-tier data fallback:
 --
--- Parses streets.xml from all loaded map directories (vanilla
--- + mods) and provides nearest-street lookup with spatial
--- indexing for fast queries. Deterministic house numbers.
+-- 1. PhobosLib_StreetData — 1,087 hardcoded Knox County
+--    segments (primary; richest coverage of all vanilla towns)
+-- 2. streets.xml — parsed from all loaded map directories
+--    (catches mod-added map packs like Raven Creek, Greenport)
+-- 3. Raw coordinates — returned when no data covers the area
+--
+-- Spatial grid indexing for fast queries. Deterministic house
+-- numbers. Intersection detection.
 ---------------------------------------------------------------
 
 PhobosLib_Address = {}
@@ -150,29 +155,63 @@ local function parseStreetsXML(filePath)
     reader:close()
 end
 
---- Load all streets.xml files from all map directories.
+--- Convert PhobosLib_StreetData format (points array) to internal
+--- format (segments array of {x1,y1,x2,y2}).
+---@param rawData table Array of { name, points = { {x,y}, ... } }
+local function loadHardcodedStreetData(rawData)
+    if not rawData then return end
+    for _, entry in ipairs(rawData) do
+        if entry.name and entry.points and #entry.points >= 2 then
+            local street = { name = entry.name, segments = {} }
+            for i = 1, #entry.points - 1 do
+                local p1 = entry.points[i]
+                local p2 = entry.points[i + 1]
+                table.insert(street.segments, { p1.x, p1.y, p2.x, p2.y })
+            end
+            table.insert(streets, street)
+        end
+    end
+end
+
+--- Load street data using three-tier fallback:
+--- 1. PhobosLib_StreetData (hardcoded Knox County, ~1087 segments)
+--- 2. streets.xml from all loaded map directories
+--- 3. (raw coordinates — handled at query time, no loading needed)
 local function loadStreetData()
     if loaded then return end
     loaded = true
     streets = {}
 
-    local ok, dirs = pcall(getLotDirectories)
-    if not ok or not dirs then return end
+    -- Tier 1: Hardcoded Knox County street network
+    local hardcodedCount = 0
+    local ok, rawData = pcall(require, "PhobosLib_StreetData")
+    if ok and type(rawData) == "table" then
+        loadHardcodedStreetData(rawData)
+        hardcodedCount = #streets
+    end
 
-    for i = 0, dirs:size() - 1 do
-        local dir = dirs:get(i)
-        local path = "media/maps/" .. dir .. "/streets.xml"
-        if fileExists(path) then
-            parseStreetsXML(path)
+    -- Tier 2: streets.xml from map directories (mod-added maps)
+    local xmlCount = 0
+    local dirsOk, dirs = pcall(getLotDirectories)
+    if dirsOk and dirs then
+        local preCount = #streets
+        for i = 0, dirs:size() - 1 do
+            local dir = dirs:get(i)
+            local path = "media/maps/" .. dir .. "/streets.xml"
+            if fileExists(path) then
+                parseStreetsXML(path)
+            end
         end
+        xmlCount = #streets - preCount
     end
 
     buildGridIndex()
 
     if PhobosLib and PhobosLib.debug then
-        PhobosLib.debug("PhobosLib", "[Address]", "Loaded "
-            .. #streets .. " streets from "
-            .. dirs:size() .. " map directories")
+        PhobosLib.debug("PhobosLib", "[Address]",
+            "Loaded " .. #streets .. " streets ("
+            .. hardcodedCount .. " hardcoded + "
+            .. xmlCount .. " from streets.xml)")
     end
 end
 
