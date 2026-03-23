@@ -154,3 +154,41 @@ currentY = currentY + row.totalHeight()
 -- Programmatic toggle
 row.toggle()
 ```
+
+---
+
+## Scroll Panel
+
+`PhobosLib.createScrollPanel(parent, x, y, w, h)` — creates a stencil-clipped
+ISPanel that scrolls its children with the mouse wheel when content exceeds the
+visible height.
+
+The panel has transparent background/border so it blends with any parent. Use it
+to wrap variable-height content areas while keeping fixed headers/footers outside
+the scroll region.
+
+**Parameters:**
+
+| Param | Type | Description |
+|---|---|---|
+| `parent` | ISPanel | Parent container to add the scroll panel to |
+| `x` | number | X position relative to parent |
+| `y` | number | Y position relative to parent |
+| `w` | number | Width |
+| `h` | number | Height (content beyond this scrolls) |
+
+**Returns:** ISPanel with stencil clipping and `setScrollChildren(true)` enabled.
+
+**Example:**
+
+```lua
+-- Create a scroll area below a header, leaving room for a footer button
+local headerY = 40  -- after drawing header
+local footerH = 30  -- space for back button
+local scrollH = contentPanel:getHeight() - headerY - footerH
+local scrollPanel = PhobosLib.createScrollPanel(contentPanel, 0, headerY,
+    contentPanel:getWidth(), scrollH)
+
+-- All content widgets added to scrollPanel use y=0 as their origin
+-- Mouse wheel scrolling activates when total child height > scrollH
+```

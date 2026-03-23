@@ -313,3 +313,57 @@ local count = 0
 for _ in pairs(discoveries) do count = count + 1 end
 PhobosLib.say(player, "Specimens discovered: " .. tostring(count))
 ```
+
+---
+
+## World ModData Utilities
+
+Functions for world-scoped ModData (shared across all players via
+`ModData.getOrCreate()`). Auto-persisted with the world save.
+
+### `PhobosLib.getWorldModData(namespace)`
+
+Get or create a world-scoped ModData table by namespace.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `namespace` | string | ModData namespace (e.g. `"POSNET"`) |
+
+**Returns:** Table (auto-created if missing).
+
+### `PhobosLib.getWorldModDataTable(namespace, key)`
+
+Get or create a sub-table within a world ModData namespace.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `namespace` | string | ModData namespace |
+| `key` | string | Sub-table key (e.g. `"EventLog"`) |
+
+**Returns:** Table (auto-created if missing).
+
+### `PhobosLib.appendWorldLog(namespace, key, line)`
+
+Append a newline-delimited line to a string-based log in world ModData.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `namespace` | string | ModData namespace |
+| `key` | string | Log key (e.g. `"economy_day821"`) |
+| `line` | string | Line to append |
+
+### `PhobosLib.getWorldLog(namespace, key)`
+
+Read a string-based log from world ModData.
+
+**Returns:** `string` or `nil`.
+
+### `PhobosLib.clearWorldKey(namespace, key)`
+
+Delete a key from a world ModData namespace (set to `nil`).
+
+**Usage — event log purge:**
+
+```lua
+PhobosLib.clearWorldKey("POSNET", "economy_day800")
+```
