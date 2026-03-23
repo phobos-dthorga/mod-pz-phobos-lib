@@ -673,6 +673,70 @@ function PhobosLib.getPlayerModDataTable(player, key)
 end
 
 
+---------------------------------------------------------------
+-- World ModData Utilities
+---------------------------------------------------------------
+
+--- Get or create a world-scoped ModData table by namespace.
+--- Uses PZ's ModData.getOrCreate() which auto-persists with the save.
+---@param namespace string  e.g. "POSNET"
+---@return table  The ModData table (auto-created if missing)
+function PhobosLib.getWorldModData(namespace)
+    if not namespace or type(namespace) ~= "string" then return {} end
+    return ModData.getOrCreate(namespace)
+end
+
+
+--- Get or create a sub-table within a world ModData namespace.
+---@param namespace string  e.g. "POSNET"
+---@param key string        e.g. "EventLog"
+---@return table  The sub-table (auto-created if missing)
+function PhobosLib.getWorldModDataTable(namespace, key)
+    local md = PhobosLib.getWorldModData(namespace)
+    if not key then return md end
+    if not md[key] then md[key] = {} end
+    return md[key]
+end
+
+
+--- Append a line to a string-based log stored in world ModData.
+--- Creates the key if it doesn't exist. Lines are newline-delimited.
+---@param namespace string  e.g. "POSNET"
+---@param key string        e.g. "economy_day821"
+---@param line string       The line to append
+function PhobosLib.appendWorldLog(namespace, key, line)
+    local md = PhobosLib.getWorldModData(namespace)
+    if not md or not key then return end
+    local existing = md[key]
+    if existing and type(existing) == "string" then
+        md[key] = existing .. line .. "\n"
+    else
+        md[key] = line .. "\n"
+    end
+end
+
+
+--- Read a string-based log from world ModData.
+---@param namespace string
+---@param key string
+---@return string|nil  The log content, or nil if not found
+function PhobosLib.getWorldLog(namespace, key)
+    local md = PhobosLib.getWorldModData(namespace)
+    if not md or not key then return nil end
+    local val = md[key]
+    return (type(val) == "string") and val or nil
+end
+
+
+--- Clear a key from a world ModData namespace (set to nil).
+---@param namespace string
+---@param key string
+function PhobosLib.clearWorldKey(namespace, key)
+    local md = PhobosLib.getWorldModData(namespace)
+    if md and key then md[key] = nil end
+end
+
+
 --- Generate a unique identifier string.
 --- Combines the current game time (milliseconds) with a random suffix to produce
 --- a collision-resistant ID suitable for tagging items and event log entries.
