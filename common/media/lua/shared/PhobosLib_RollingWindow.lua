@@ -31,11 +31,47 @@
 --- @return number Count of entries removed
 function PhobosLib.trimArray(arr, maxCount)
     if not arr or type(arr) ~= "table" then return 0 end
-    local removed = 0
-    while #arr > maxCount do
-        table.remove(arr, 1)
-        removed = removed + 1
+    -- Count using pairs() for ModData compat (# crashes on Java tables)
+    local count = 0
+    local maxIdx = 0
+    for k, _ in pairs(arr) do
+        if type(k) == "number" then
+            count = count + 1
+            if k > maxIdx then maxIdx = k end
+        end
     end
+    if count <= maxCount then return 0 end
+    -- Rebuild: keep only the last maxCount entries (by highest indices)
+    local sorted = {}
+    for k, v in pairs(arr) do
+        if type(k) == "number" and type(v) == "table" then
+            sorted[#sorted + 1] = { idx = k, val = v }
+        end
+    end
+    table.sort(sorted, function(a, b) return a.idx < b.idx end)
+    -- Remove oldest entries
+    local toRemove = count - maxCount
+    local removed = 0
+    for i = 1, toRemove do
+        if sorted[i] then
+            arr[sorted[i].idx] = nil
+            removed = removed + 1
+        end
+    end
+    -- Reindex to sequential keys (1..N)
+    local reindexed = {}
+    local newIdx = 1
+    for i = toRemove + 1, #sorted do
+        if sorted[i] then
+            reindexed[newIdx] = sorted[i].val
+            newIdx = newIdx + 1
+        end
+    end
+    -- Clear and rewrite
+    for k, _ in pairs(arr) do
+        if type(k) == "number" then arr[k] = nil end
+    end
+    for k, v in pairs(reindexed) do arr[k] = v end
     return removed
 end
 
@@ -51,7 +87,12 @@ end
 --- @return number Count of entries removed by trimming
 function PhobosLib.pushRolling(arr, value, maxCount)
     if not arr or type(arr) ~= "table" then return 0 end
-    arr[#arr + 1] = value
+    -- Append using pairs() count for ModData compat (# crashes on Java tables)
+    local maxIdx = 0
+    for k, _ in pairs(arr) do
+        if type(k) == "number" and k > maxIdx then maxIdx = k end
+    end
+    arr[maxIdx + 1] = value
     return PhobosLib.trimArray(arr, maxCount)
 end
 
