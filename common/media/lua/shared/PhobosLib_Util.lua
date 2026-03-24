@@ -699,6 +699,40 @@ function PhobosLib.getWorldModDataTable(namespace, key)
 end
 
 
+--- Replace a sub-table in world ModData.
+--- Copies all key-value pairs from the provided table into the ModData
+--- sub-table, clearing any existing keys first. This is necessary because
+--- ModData tables are Java-backed and cannot be replaced by direct
+--- assignment (md[key] = newTable would lose the Java binding).
+---@param namespace string  e.g. "POSNET"
+---@param key string        e.g. "ActiveEvents"
+---@param newTable table    The new table to write
+function PhobosLib.setWorldModDataTable(namespace, key, newTable)
+    local md = PhobosLib.getWorldModData(namespace)
+    if not md or not key then return end
+
+    -- Get existing sub-table (or create)
+    if not md[key] then md[key] = {} end
+    local target = md[key]
+
+    -- Clear existing contents (pairs-safe for Java tables)
+    local keysToRemove = {}
+    for k, _ in pairs(target) do
+        keysToRemove[#keysToRemove + 1] = k
+    end
+    for _, k in ipairs(keysToRemove) do
+        target[k] = nil
+    end
+
+    -- Copy new contents
+    if type(newTable) == "table" then
+        for k, v in pairs(newTable) do
+            target[k] = v
+        end
+    end
+end
+
+
 --- Append a line to a string-based log stored in world ModData.
 --- Creates the key if it doesn't exist. Lines are newline-delimited.
 ---@param namespace string  e.g. "POSNET"
