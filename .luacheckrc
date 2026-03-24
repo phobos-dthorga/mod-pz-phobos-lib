@@ -34,6 +34,10 @@ globals = {
     "PhobosLib",
     "PhobosLib_Pagination",
     "PhobosLib_Address",
+    "PhobosLib_DualTab",
+    -- Downstream mod globals accessed by PhobosLib utility functions
+    "POS_ConnectionManager",
+    "POS_TerminalUI",
     -- PZ engine core (PhobosLib writes to SandboxVars for sandbox management)
     "SandboxVars",
     -- PZ UI classes PhobosLib overrides methods on

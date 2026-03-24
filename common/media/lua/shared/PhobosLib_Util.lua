@@ -1612,6 +1612,31 @@ end
 
 
 ---------------------------------------------------------------
+-- Terminal connection state
+---------------------------------------------------------------
+
+--- Check whether the player is currently connected to a POSnet terminal.
+--- Queries POS_ConnectionManager (shared) first, then falls back to
+--- checking if POS_TerminalUI.instance exists (client).
+--- Returns false if POSnet is not loaded.
+---@return boolean
+function PhobosLib.isTerminalConnected()
+    -- Shared-side: POS_ConnectionManager tracks connection state
+    if POS_ConnectionManager and POS_ConnectionManager.getConnectionState then
+        local ok, state = PhobosLib.safecall(POS_ConnectionManager.getConnectionState)
+        if ok and type(state) == "table" and state.connected then
+            return true
+        end
+    end
+    -- Client-side fallback: terminal UI is open
+    if POS_TerminalUI and POS_TerminalUI.instance then
+        return true
+    end
+    return false
+end
+
+
+---------------------------------------------------------------
 -- Deferred initialisation & throttling
 ---------------------------------------------------------------
 
