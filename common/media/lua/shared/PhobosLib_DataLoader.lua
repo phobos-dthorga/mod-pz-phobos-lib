@@ -28,6 +28,9 @@ local _DEFAULT_TAG = "[PhobosLib:Loader]"
 ---------------------------------------------------------------
 
 --- Load and register a single definition file.
+--- The file may return either a single record table or an array of record
+--- tables. An array is detected by checking whether `result[1]` is a table.
+--- When an array is returned, each element is registered individually.
 --- @param path     string  require path (e.g. "Definitions/Archetypes/scavenger_trader")
 --- @param registry table   PhobosLib registry instance
 --- @param tag      string  optional log prefix
@@ -50,7 +53,27 @@ function PhobosLib.loadDefinition(path, registry, tag)
         return false, {{ field = "*", message = msg, value = path }}
     end
 
-    -- Register (validates internally)
+    -- Array detection: if result[1] is a table, treat as array of records.
+    -- Each element is registered individually.
+    if result[1] and type(result[1]) == "table" then
+        local allOk = true
+        local allErrors = {}
+        for _, record in ipairs(result) do
+            local ok, errors = registry:register(record)
+            if not ok then
+                allOk = false
+                if errors then
+                    for _, err in ipairs(errors) do
+                        allErrors[#allErrors + 1] = err
+                    end
+                end
+            end
+        end
+        if not allOk then return false, allErrors end
+        return true
+    end
+
+    -- Single record (existing behaviour)
     return registry:register(result)
 end
 
