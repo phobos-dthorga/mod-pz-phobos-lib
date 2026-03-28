@@ -127,6 +127,37 @@ function PhobosLib.getQualityTier(value, tiers)
 end
 
 
+--- Map a numeric value to a qualitative band via configurable thresholds.
+--- Canonical threshold resolver for any system that needs label + colour
+--- from a numeric metric: purity, freshness, entropy, signal quality, etc.
+--- Bands must be sorted highest-min-first.
+---
+--- Example:
+---   local bands = {
+---       {name="clear", min=0.80, key="UI_Clear", r=0.3, g=0.9, b=0.4},
+---       {name="ageing", min=0.60, key="UI_Ageing", r=1.0, g=0.8, b=0.2},
+---       {name="cold", min=0.00, key="UI_Cold", r=1.0, g=0.3, b=0.3},
+---   }
+---   local band = PhobosLib.resolveQualitativeBand(0.72, bands)
+---   -- returns {name="ageing", min=0.60, key="UI_Ageing", r=1.0, ...}
+---
+---@param value   number        The metric value to classify
+---@param bands   table         Array of band definitions, highest-min first
+---@param default table|nil     Fallback if no band matches (nil = last band)
+---@return table                The matching band definition table
+function PhobosLib.resolveQualitativeBand(value, bands, default)
+    if not bands or #bands == 0 then
+        return default or { name = "unknown", r = 1, g = 1, b = 1 }
+    end
+    for _, band in ipairs(bands) do
+        if value >= (band.min or 0) then
+            return band
+        end
+    end
+    return default or bands[#bands]
+end
+
+
 ---------------------------------------------------------------
 -- Input Quality Averaging
 ---------------------------------------------------------------

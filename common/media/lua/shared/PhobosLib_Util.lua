@@ -1062,6 +1062,21 @@ function PhobosLib.approach(current, target, rate)
     return current + (target - current) * rate
 end
 
+--- Apply multiplicative decay to a value, enforcing a floor.
+--- Formula: max(floor, value * rate)
+--- Use this for freshness degradation, quality aging, contamination
+--- spread, and any system where values should shrink by a percentage
+--- each tick rather than converge toward a fixed target.
+--- For convergence toward a target, use approach() instead.
+---@param value number  Current value
+---@param rate  number  Decay multiplier per tick (e.g. 0.88 = 12% loss)
+---@param floor number  Minimum value (default 0)
+---@return number       Decayed value, never below floor
+function PhobosLib.decayMultiplicative(value, rate, floor)
+    floor = floor or 0
+    return math.max(floor, (value or 0) * (rate or 1))
+end
+
 
 --- Transform each element of an array-style table using a function.
 --- Returns a new table; the original is not modified.
