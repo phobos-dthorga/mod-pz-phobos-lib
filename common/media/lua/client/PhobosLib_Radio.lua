@@ -18,8 +18,9 @@
 -- PhobosLib_Radio.lua
 -- Reusable radio hardware utilities for PZ Build 42.
 --
--- Provides transmit range lookup and device category detection
--- for both inventory items and world-placed radio objects.
+-- Provides transmit range lookup, device category detection,
+-- and radio proximity scanning for both inventory items and
+-- world-placed radio objects.
 -- Compatible with AZAS Frequency Index categorisation.
 ---------------------------------------------------------------
 
@@ -66,19 +67,34 @@ local TYPE_CATEGORY = {
 }
 
 ---------------------------------------------------------------
+-- Defaults
+---------------------------------------------------------------
+
+--- Default tile radius for world radio scanning.
+PhobosLib_Radio.DEFAULT_SCAN_RADIUS = 20
+
+--- Default minimum volume for a radio to count as hearable.
+PhobosLib_Radio.DEFAULT_MIN_VOLUME  = 0.01
+
+---------------------------------------------------------------
 -- DeviceData helpers
 ---------------------------------------------------------------
 
 --- Safely extract DeviceData from a radio object (inventory or world).
 ---@param radioObj any InventoryItem or IsoWaveSignal
 ---@return any|nil DeviceData
-local function getDeviceData(radioObj)
+function PhobosLib_Radio.getDeviceData(radioObj)
     if not radioObj then return nil end
     local ok, dd = pcall(function()
         return radioObj:getDeviceData()
     end)
     if ok and dd then return dd end
     return nil
+end
+
+--- Keep a local alias for internal use.
+local function getDeviceData(radioObj)
+    return PhobosLib_Radio.getDeviceData(radioObj)
 end
 
 ---------------------------------------------------------------
@@ -165,4 +181,155 @@ function PhobosLib_Radio.getDeviceCategory(radioObj)
     end
 
     return "commercial"
+end
+
+---------------------------------------------------------------
+-- Radio proximity detection
+---------------------------------------------------------------
+
+--- Check whether a DeviceData represents a powered, unmuted radio
+--- tuned to a matching frequency.
+---@param dd any          DeviceData from a radio
+---@param opts table      { frequencyMatch, minVolume }
+---@return boolean match
+---@return any|nil matchResult   Return value from frequencyMatch
+local function isRadioQualified(dd, opts)
+    if not dd then return false, nil end
+
+    -- Must be turned on
+    local okOn, isOn = pcall(function() return dd:getIsTurnedOn() end)
+    if not okOn or not isOn then return false, nil end
+
+    -- Must be audible (volume above threshold)
+    local okVol, volume = pcall(function() return dd:getDeviceVolume() end)
+    if okVol and volume and volume <= (opts.minVolume or PhobosLib_Radio.DEFAULT_MIN_VOLUME) then
+        return false, nil
+    end
+
+    -- Must have power (battery or grid)
+    local hasPower = false
+    pcall(function()
+        if dd:getIsBatteryPowered() then
+            local power = dd:getPower()
+            if power and power > 0 then
+                hasPower = true
+            end
+        end
+    end)
+    if not hasPower then
+        pcall(function()
+            local parent = dd:getParent()
+            if parent then
+                local sq = parent:getSquare()
+                if sq and PhobosLib.hasPower(sq) then
+                    hasPower = true
+                end
+            end
+        end)
+    end
+    if not hasPower then return false, nil end
+
+    -- Must match the caller's frequency filter
+    if opts.frequencyMatch then
+        local okCh, channel = pcall(function()
+            if dd.getChannel then return dd:getChannel() end
+            if dd.getFrequency then return dd:getFrequency() end
+            return nil
+        end)
+        if not okCh or not channel then return false, nil end
+        local matchResult = opts.frequencyMatch(channel)
+        if not matchResult then return false, nil end
+        return true, matchResult
+    end
+
+    return true, nil
+end
+
+--- Find the first powered, tuned, audible radio near a player.
+--- Searches inventory radios, nearby world radios, and vehicle radios
+--- in that order. Returns on the first qualifying match.
+---
+--- opts fields:
+---   frequencyMatch  function(channel) → truthy|nil  Caller's frequency filter
+---   scanRadius      number  Tile radius for world radios (default 20)
+---   minVolume       number  Minimum getDeviceVolume() (default 0.01)
+---
+---@param player any       IsoPlayer
+---@param opts table       Search options
+---@return any|nil radioObj   The qualifying radio object, or nil
+---@return any|nil dd         Its DeviceData, or nil
+function PhobosLib_Radio.findNearbyTunedRadio(player, opts)
+    if not player then return nil, nil end
+    opts = opts or {}
+
+    -- 1. Inventory radios (on person — always within hearing range if audible)
+    local okInv, inv = pcall(function() return player:getInventory() end)
+    if okInv and inv then
+        local okItems, items = pcall(function() return inv:getItems() end)
+        if okItems and items then
+            for i = 0, items:size() - 1 do
+                local item = items:get(i)
+                local dd = getDeviceData(item)
+                if dd then
+                    local qualified, matchResult = isRadioQualified(dd, opts)
+                    if qualified then return item, dd end
+                end
+            end
+        end
+    end
+
+    -- 2. World radios (IsoWaveSignal objects in nearby tiles)
+    local playerSquare = PhobosLib.getSquareFromPlayer(player)
+    if playerSquare then
+        local scanRadius = opts.scanRadius or PhobosLib_Radio.DEFAULT_SCAN_RADIUS
+        local foundRadio, foundDD
+        PhobosLib.scanNearbySquares(playerSquare, scanRadius, function(sq)
+            local okObjs, objects = pcall(function() return sq:getObjects() end)
+            if not okObjs or not objects then return false end
+            for j = 0, objects:size() - 1 do
+                local obj = objects:get(j)
+                if instanceof(obj, "IsoWaveSignal") then
+                    local dd = getDeviceData(obj)
+                    if dd then
+                        local qualified, matchResult = isRadioQualified(dd, opts)
+                        if qualified then
+                            -- Use vanilla hearing check as final authority
+                            local okHear, inRange = pcall(function()
+                                return obj:HasPlayerInRange()
+                            end)
+                            if okHear and inRange then
+                                foundRadio = obj
+                                foundDD = dd
+                                return true -- stop scanning
+                            end
+                        end
+                    end
+                end
+            end
+            return false
+        end)
+        if foundRadio then return foundRadio, foundDD end
+    end
+
+    -- 3. Vehicle radios (player seated in vehicle)
+    local okVeh, vehicle = pcall(function() return player:getVehicle() end)
+    if okVeh and vehicle then
+        local okPart, radioPart = pcall(function()
+            return vehicle:getPartById("Radio")
+        end)
+        if okPart and radioPart then
+            local okItem, radioItem = pcall(function()
+                return radioPart:getInventoryItem()
+            end)
+            if okItem and radioItem then
+                local dd = getDeviceData(radioItem)
+                if dd then
+                    local qualified, matchResult = isRadioQualified(dd, opts)
+                    if qualified then return radioItem, dd end
+                end
+            end
+        end
+    end
+
+    return nil, nil
 end
