@@ -46,6 +46,10 @@ PhobosLib_Radio.TRANSMIT_RANGE = {
     ["Base.RadioRed"]             = 0,
     ["Base.RadioMakeShift"]       = 0,
     ["Base.CDplayer"]             = 0,
+    -- Television sets (listen-only, grid-powered)
+    ["Base.TvAntique"]            = 0,
+    ["Base.TvBlack"]              = 0,
+    ["Base.TvWideScreen"]         = 0,
 }
 
 --- Full type → device category mapping (mirrors AZAS deviceTypeMap).
@@ -64,6 +68,9 @@ local TYPE_CATEGORY = {
     ["Base.RadioRed"]             = "commercial",
     ["Base.RadioMakeShift"]       = "commercial",
     ["Base.CDplayer"]             = "commercial",
+    ["Base.TvAntique"]            = "tv",
+    ["Base.TvBlack"]              = "tv",
+    ["Base.TvWideScreen"]         = "tv",
 }
 
 ---------------------------------------------------------------
@@ -85,6 +92,12 @@ PhobosLib_Radio.DEFAULT_MIN_VOLUME  = 0.01
 ---@return any|nil DeviceData
 function PhobosLib_Radio.getDeviceData(radioObj)
     if not radioObj then return nil end
+    -- Pre-filter: only Radio (inventory) and IsoWaveSignal (world) items
+    -- have valid getDeviceData(). Calling it on other PZ objects throws
+    -- Java RuntimeExceptions that Kahlua pcall cannot catch.
+    if not instanceof(radioObj, "Radio") and not instanceof(radioObj, "IsoWaveSignal") then
+        return nil
+    end
     local ok, dd = pcall(function()
         return radioObj:getDeviceData()
     end)
@@ -184,6 +197,124 @@ function PhobosLib_Radio.getDeviceCategory(radioObj)
 end
 
 ---------------------------------------------------------------
+-- Television detection
+---------------------------------------------------------------
+
+--- Check whether a radio object is a television set.
+--- Uses TYPE_CATEGORY lookup first (fastest), falls back to
+--- DeviceData.getIsTelevision() for unregistered types.
+---@param radioObj any InventoryItem or IsoWaveSignal
+---@return boolean
+function PhobosLib_Radio.isTelevision(radioObj)
+    if not radioObj then return false end
+    -- Fast path: full type lookup
+    if radioObj.getFullType then
+        local ok, fullType = pcall(function() return radioObj:getFullType() end)
+        if ok and fullType and TYPE_CATEGORY[fullType] == "tv" then
+            return true
+        end
+    end
+    -- Fallback: DeviceData property
+    local dd = getDeviceData(radioObj)
+    if dd and dd.getIsTelevision then
+        local ok, isTV = pcall(function() return dd:getIsTelevision() end)
+        if ok and isTV then return true end
+    end
+    return false
+end
+
+---------------------------------------------------------------
+-- Receiver quality
+---------------------------------------------------------------
+
+--- Check whether an item's full type contains "MakeShift" (case-sensitive).
+---@param radioObj any  InventoryItem or IsoWaveSignal
+---@return boolean
+local function isMakeshift(radioObj)
+    if not radioObj or not radioObj.getFullType then return false end
+    local ok, fullType = pcall(function() return radioObj:getFullType() end)
+    if not ok or not fullType then return false end
+    return fullType:find("MakeShift") ~= nil
+end
+
+--- Compute a receiver quality factor for a radio device.
+--- Lower factor = better reception (0.0 = perfect, 1.0 = no benefit).
+--- The factor is used as a multiplier on the ecology dropout rate.
+---
+--- opts fields (all required — PhobosLib has no built-in defaults):
+---   profileLookup   function(fullType) → profile|nil  Registry callback
+---   rangeNormaliser  number   Max transmit range for normalisation (e.g. 20000)
+---   rangeWeight      number   How much range contributes to quality (e.g. 0.70)
+---   hamBonus         number   Subtracted from factor for ham category (e.g. 0.10)
+---   makeshiftPenalty number   Added to factor for makeshift items (e.g. 0.15)
+---   commercialBase   number   Fixed factor for 0-range commercial/tv (e.g. 0.75)
+---   factorMin        number   Absolute floor (e.g. 0.20)
+---   factorMax        number   Absolute ceiling (e.g. 0.95)
+---   conditionWeight  number   Minimum condition multiplier at 0% (e.g. 0.50)
+---
+---@param radioObj any   InventoryItem or IsoWaveSignal
+---@param opts table     Tuning constants (see above)
+---@return number factor Quality factor [factorMin..factorMax]
+function PhobosLib_Radio.getReceiverQualityFactor(radioObj, opts)
+    if not radioObj or not opts then
+        return opts and opts.factorMax or 1.0
+    end
+
+    local factor
+
+    -- 1. Try profile lookup (data-pack driven, exact per-type override)
+    local fullType
+    if radioObj.getFullType then
+        local ok, ft = pcall(function() return radioObj:getFullType() end)
+        if ok then fullType = ft end
+    end
+    if fullType and opts.profileLookup then
+        local profile = opts.profileLookup(fullType)
+        if profile and profile.baseFactor then
+            factor = profile.baseFactor
+        end
+    end
+
+    -- 2. Fallback: formula-based calculation for unregistered types
+    if not factor then
+        local transmitRange = PhobosLib_Radio.getTransmitRange(radioObj)
+        local category = PhobosLib_Radio.getDeviceCategory(radioObj)
+
+        if (category == "commercial" or category == "tv") and transmitRange == 0 then
+            factor = opts.commercialBase or 0.75
+        else
+            local rangeNorm = PhobosLib.clamp(
+                transmitRange / (opts.rangeNormaliser or 20000), 0, 1)
+            factor = 1.0 - rangeNorm * (opts.rangeWeight or 0.70)
+
+            if category == "ham" then
+                factor = factor - (opts.hamBonus or 0.10)
+            end
+        end
+
+        if isMakeshift(radioObj) then
+            factor = factor + (opts.makeshiftPenalty or 0.15)
+        end
+    end
+
+    -- 3. Item condition scaling
+    local condWeight = opts.conditionWeight or 0.50
+    if PhobosLib.getItemCondition then
+        local condition = PhobosLib.getItemCondition(radioObj)
+        if condition and condition >= 0 then
+            -- conditionMult ranges from condWeight (wrecked) to 1.0 (pristine)
+            local conditionMult = condWeight + (1.0 - condWeight) * condition
+            factor = factor / conditionMult
+        end
+    end
+
+    -- 4. Clamp to bounds
+    local fMin = opts.factorMin or 0.20
+    local fMax = opts.factorMax or 0.95
+    return PhobosLib.clamp(factor, fMin, fMax)
+end
+
+---------------------------------------------------------------
 -- Radio proximity detection
 ---------------------------------------------------------------
 
@@ -269,10 +400,12 @@ function PhobosLib_Radio.findNearbyTunedRadio(player, opts)
         if okItems and items then
             for i = 0, items:size() - 1 do
                 local item = items:get(i)
-                local dd = getDeviceData(item)
-                if dd then
-                    local qualified, matchResult = isRadioQualified(dd, opts)
-                    if qualified then return item, dd end
+                if instanceof(item, "Radio") then
+                    local dd = getDeviceData(item)
+                    if dd then
+                        local qualified, matchResult = isRadioQualified(dd, opts)
+                        if qualified then return item, dd end
+                    end
                 end
             end
         end
@@ -288,7 +421,8 @@ function PhobosLib_Radio.findNearbyTunedRadio(player, opts)
             if not okObjs or not objects then return false end
             for j = 0, objects:size() - 1 do
                 local obj = objects:get(j)
-                if instanceof(obj, "IsoWaveSignal") then
+                if instanceof(obj, "IsoWaveSignal")
+                        and not PhobosLib_Radio.isTelevision(obj) then
                     local dd = getDeviceData(obj)
                     if dd then
                         local qualified, matchResult = isRadioQualified(dd, opts)
